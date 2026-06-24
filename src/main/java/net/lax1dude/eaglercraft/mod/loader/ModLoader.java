@@ -1,61 +1,61 @@
 package net.lax1dude.eaglercraft.mod.loader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
 import net.lax1dude.eaglercraft.mod.api.Mod;
-import net.lax1dude.eaglercraft.internal.PlatformApplication;
+import net.lax1dude.eaglercraft.mod.api.ModMetadata;
+import net.lax1dude.eaglercraft.mod.api.events.ModEventManager;
+import net.lax1dude.eaglercraft.mod.api.events.ModEventType;
 
 public class ModLoader {
+
     private static final List<Mod> loadedMods = new ArrayList<>();
     private static boolean modsEnabled = true;
+    private static boolean initialized = false;
 
     public static void loadMods() {
+        if (initialized) return;
+        initialized = true;
         loadedMods.clear();
         registerBuiltInMods();
+        ModEventManager.getInstance().fireEvent(ModEventType.MODS_LOADED);
     }
 
     private static void registerBuiltInMods() {
-        // Built-in test mod
         registerMod(new net.lax1dude.eaglercraft.mod.TestMod());
-        // Fly mod
         registerMod(new net.lax1dude.eaglercraft.mod.FlyMod());
     }
-
 
     public static void registerMod(Mod mod) {
         loadedMods.add(mod);
         mod.onInitialize();
-        System.out.println("[ModLoader] Loaded mod: " + mod.getName() + " v" + mod.getVersion());
-    }
-
-    public static void loadModFromFile() {
-        // Trigger browser file picker for .jar or .class files
-        PlatformApplication.displayFileChooser("application/java-archive", ".jar");
-    }
-
-    public static void update() {
-        if (PlatformApplication.fileChooserHasResult()) {
-            net.lax1dude.eaglercraft.internal.FileChooserResult result = PlatformApplication.getFileChooserResult();
-            if (result != null) {
-                System.out.println("[ModLoader] Loading mod from file: " + result.fileName);
-                processModFile(result.fileData);
-                PlatformApplication.clearFileChooserResult();
-            }
+        for (ModEventType type : ModEventType.values()) {
+            ModEventManager.getInstance().registerListener(type, mod);
+        }
+        getLogger().info("Loaded mod: " + mod.getName() + " v" + mod.getVersion());
+        String desc = mod.getDescription();
+        if (!desc.isEmpty()) {
+            getLogger().info("  Description: " + desc);
         }
     }
 
-    private static void processModFile(byte[] data) {
-        // In a full implementation, this would involve a custom ClassLoader for WASM/TeaVM
-        // For this project, we'll simulate loading a mod from the bytes
-        System.out.println("[ModLoader] Received mod data, size: " + data.length + " bytes");
-        
-        // Simulation: If the file name was "test.jar", we'd load the TestMod
-        // For now, let's just register a generic LoadedMod to show it works
-        registerMod(new LoadedMod("File Mod", "1.0", "Browser User"));
+    private static ModLogger getLogger() {
+        return new ModLogger("ModLoader");
     }
 
     public static List<Mod> getLoadedMods() {
-        return new ArrayList<>(loadedMods);
+        return Collections.unmodifiableList(loadedMods);
+    }
+
+    public static Mod getModByName(String name) {
+        for (Mod mod : loadedMods) {
+            if (mod.getName().equals(name)) {
+                return mod;
+            }
+        }
+        return null;
     }
 
     public static boolean isModsEnabled() {
@@ -67,31 +67,59 @@ public class ModLoader {
     }
 
     public static void onGameStart() {
-        for (Mod mod : loadedMods) {
-            mod.onGameStart();
-        }
+        if (!modsEnabled) return;
+        ModEventManager.getInstance().fireEvent(ModEventType.GAME_STARTED);
+    }
+
+    public static void onGameShutdown() {
+        if (!modsEnabled) return;
+        ModEventManager.getInstance().fireEvent(ModEventType.GAME_SHUTDOWN);
+    }
+
+    public static void onWorldLoad() {
+        if (!modsEnabled) return;
+        ModEventManager.getInstance().fireEvent(ModEventType.WORLD_LOADED);
+    }
+
+    public static void onWorldUnload() {
+        if (!modsEnabled) return;
+        ModEventManager.getInstance().fireEvent(ModEventType.WORLD_UNLOADED);
+    }
+
+    public static void onTickInGame() {
+        if (!modsEnabled) return;
+        ModEventManager.getInstance().fireEvent(ModEventType.TICK_IN_GAME);
+    }
+
+    public static void onTickInGui() {
+        if (!modsEnabled) return;
+        ModEventManager.getInstance().fireEvent(ModEventType.TICK_IN_GUI);
     }
 
     public static void onActionPerformed(net.minecraft.client.gui.GuiButton button) {
+        if (!modsEnabled) return;
         for (Mod mod : loadedMods) {
-            mod.onActionPerformed(button);
+            try {
+                mod.onActionPerformed(button);
+            } catch (Exception e) {
+                System.err.println("[ModLoader] " + mod.getName() + " threw exception in onActionPerformed: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
-    private static class LoadedMod implements Mod {
-        private final String name;
-        private final String version;
-        private final String author;
-
-        public LoadedMod(String name, String version, String author) {
-            this.name = name;
-            this.version = version;
-            this.author = author;
+    public static Mod findMod(String name) {
+        for (Mod mod : loadedMods) {
+            if (mod.getName().equalsIgnoreCase(name)) {
+                return mod;
+            }
         }
+        return null;
+    }
 
-        @Override public String getName() { return name; }
-        @Override public String getVersion() { return version; }
-        @Override public String getAuthor() { return author; }
-        @Override public void onInitialize() { System.out.println("[" + name + "] Initialized from file."); }
+    private static class ModLogger {
+        private final String prefix;
+        ModLogger(String prefix) { this.prefix = prefix; }
+        void info(String msg) { System.out.println("[" + prefix + "] " + msg); }
     }
 }

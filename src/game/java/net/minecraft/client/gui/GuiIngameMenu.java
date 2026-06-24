@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import net.lax1dude.eaglercraft.PauseMenuCustomizeState;
 import net.lax1dude.eaglercraft.minecraft.GuiButtonWithStupidIcons;
+import net.lax1dude.eaglercraft.mod.loader.ModLoader;
 import net.lax1dude.eaglercraft.notifications.GuiButtonNotifBell;
 import net.lax1dude.eaglercraft.notifications.GuiScreenNotifications;
 import net.lax1dude.eaglercraft.opengl.GlStateManager;
@@ -74,6 +75,11 @@ public class GuiIngameMenu extends GuiScreen {
 			lanButton.id = 8;
 			lanButton.displayString = "" + PauseMenuCustomizeState.discordButtonText;
 		}
+
+		this.buttonList.add(new GuiButtonWithStupidIcons(12, this.width / 2 - 100, this.height / 4 + 144 - 16, 200, 20,
+				"Mods", PauseMenuCustomizeState.icon_options_L,
+				PauseMenuCustomizeState.icon_options_L_aspect, PauseMenuCustomizeState.icon_options_R,
+				PauseMenuCustomizeState.icon_options_R_aspect));
 		
 		if (PauseMenuCustomizeState.serverInfoMode != PauseMenuCustomizeState.DISCORD_MODE_NONE) {
 			this.buttonList.add(new GuiButtonWithStupidIcons(9, this.width / 2 - 100, this.height / 4 + 72 + (byte)-16,
@@ -112,7 +118,7 @@ public class GuiIngameMenu extends GuiScreen {
 
 		case 2:
 		case 3:
-		default:
+			ModLoader.onActionPerformed(button);
 			break;
 
 		case 4:
@@ -171,6 +177,9 @@ public class GuiIngameMenu extends GuiScreen {
 			break;
 		case 11:
 			this.mc.displayGuiScreen(new GuiScreenNotifications(this));
+			break;
+		case 12:
+			this.mc.displayGuiScreen(new net.lax1dude.eaglercraft.mod.gui.GuiModsMenu(this));
 			break;
 		}
 	}
