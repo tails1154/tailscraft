@@ -481,20 +481,24 @@ public class Minecraft implements IThreadListener {
 			this.fontRendererObj.setUnicodeFlag(this.isUnicode());
 			this.fontRendererObj.setBidiFlag(this.mcLanguageManager.isCurrentLanguageBidirectional());
 		}
+		this.renderSplashScreen(23);
 
 		this.standardGalacticFontRenderer = EaglerFontRenderer.createSupportedFontRenderer(this.gameSettings,
 				new ResourceLocation("textures/font/ascii_sga.png"), this.renderEngine, false);
 		this.mcResourceManager.registerReloadListener(this.fontRendererObj);
+		this.renderSplashScreen(25);
 		this.mcResourceManager.registerReloadListener(this.standardGalacticFontRenderer);
 		this.mcResourceManager.registerReloadListener(new GrassColorReloadListener());
 		this.mcResourceManager.registerReloadListener(new FoliageColorReloadListener());
 		this.renderSplashScreen(30);
 		this.mouseHelper = new MouseHelper();
 		this.checkGLError("Pre startup");
+		this.renderSplashScreen(31);
 		GlStateManager.enableTexture2D();
 		GlStateManager.shadeModel(7425);
 		GlStateManager.clearDepth(1.0F);
 		GlStateManager.enableDepth();
+		this.renderSplashScreen(33);
 		GlStateManager.depthFunc(515);
 		GlStateManager.enableAlpha();
 		GlStateManager.alphaFunc(516, 0.1F);
@@ -502,6 +506,7 @@ public class Minecraft implements IThreadListener {
 		GlStateManager.matrixMode(5889);
 		GlStateManager.loadIdentity();
 		GlStateManager.matrixMode(5888);
+		this.renderSplashScreen(35);
 		this.checkGLError("Startup");
 		this.textureMapBlocks = new TextureMap("textures");
 		this.textureMapBlocks.setMipmapLevels(this.gameSettings.mipmapLevels);
