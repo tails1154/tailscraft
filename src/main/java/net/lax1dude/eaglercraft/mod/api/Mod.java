@@ -1,8 +1,10 @@
 package net.lax1dude.eaglercraft.mod.api;
 
+import java.util.Collections;
 import java.util.List;
 import net.lax1dude.eaglercraft.mod.api.events.ModEventListener;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiScreen;
 
 public interface Mod extends ModEventListener {
 
@@ -25,6 +27,7 @@ public interface Mod extends ModEventListener {
     default void onTickInGame() {}
     default void onTickInGui() {}
     default void onActionPerformed(GuiButton button) {}
+    default List<GuiButton> getCustomButtons(GuiScreen screen) { return Collections.emptyList(); }
 
     default String getDocumentationContent(String page) { return ""; }
 
