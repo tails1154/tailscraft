@@ -461,16 +461,19 @@ public class Minecraft implements IThreadListener {
 		this.mcResourceManager = new SimpleReloadableResourceManager(this.metadataSerializer_);
 		this.mcLanguageManager = new LanguageManager(this.metadataSerializer_, this.gameSettings.language);
 		this.mcResourceManager.registerReloadListener(this.mcLanguageManager);
+		this.scaledResolution = new ScaledResolution(this);
 		this.refreshResources();
 		Bootstrap.register2();
 		this.renderEngine = new TextureManager(this.mcResourceManager);
 		this.mcResourceManager.registerReloadListener(this.renderEngine);
-		this.drawSplashScreen(this.renderEngine);
+		this.initSplashScreen(this.renderEngine);
+		this.renderSplashScreen(0);
 		this.saveLoader = new EaglerSaveFormat(new VFile2(this.mcDataDir, "worlds"), this.dataFixer);
+		this.renderSplashScreen(10);
 		this.mcSoundHandler = new SoundHandler(this.mcResourceManager, this.gameSettings);
 		this.mcResourceManager.registerReloadListener(this.mcSoundHandler);
-		this.scaledResolution = new ScaledResolution(this);
 		this.mcMusicTicker = new MusicTicker(this);
+		this.renderSplashScreen(20);
 		this.fontRendererObj = EaglerFontRenderer.createSupportedFontRenderer(this.gameSettings,
 				new ResourceLocation("textures/font/ascii.png"), this.renderEngine, false);
 
@@ -485,6 +488,7 @@ public class Minecraft implements IThreadListener {
 		this.mcResourceManager.registerReloadListener(this.standardGalacticFontRenderer);
 		this.mcResourceManager.registerReloadListener(new GrassColorReloadListener());
 		this.mcResourceManager.registerReloadListener(new FoliageColorReloadListener());
+		this.renderSplashScreen(30);
 		this.mouseHelper = new MouseHelper();
 		this.checkGLError("Pre startup");
 		GlStateManager.enableTexture2D();
@@ -506,24 +510,29 @@ public class Minecraft implements IThreadListener {
 		this.textureMapBlocks.setBlurMipmapDirect(false, this.gameSettings.mipmapLevels > 0);
 		this.modelManager = new ModelManager(this.textureMapBlocks);
 		this.mcResourceManager.registerReloadListener(this.modelManager);
+		this.renderSplashScreen(40);
 		this.blockColors = BlockColors.init();
 		this.itemColors = ItemColors.init(this.blockColors);
 		this.renderItem = new RenderItem(this.renderEngine, this.modelManager, this.itemColors);
 		this.renderManager = new RenderManager(this.renderEngine, this.renderItem);
 		this.itemRenderer = new ItemRenderer(this);
 		this.mcResourceManager.registerReloadListener(this.renderItem);
+		this.renderSplashScreen(50);
 		this.entityRenderer = new EntityRenderer(this, this.mcResourceManager);
 		this.mcResourceManager.registerReloadListener(this.entityRenderer);
 		this.blockRenderDispatcher = new BlockRendererDispatcher(this.modelManager.getBlockModelShapes(),
 				this.blockColors);
 		this.mcResourceManager.registerReloadListener(this.blockRenderDispatcher);
+		this.renderSplashScreen(60);
 		this.renderGlobal = new RenderGlobal(this);
 		this.mcResourceManager.registerReloadListener(this.renderGlobal);
 		this.func_193986_ar();
 		this.mcResourceManager.registerReloadListener(this.field_193995_ae);
+		this.renderSplashScreen(70);
 		GlStateManager.viewport(0, 0, this.displayWidth, this.displayHeight);
 		this.effectRenderer = new ParticleManager(this.world, this.renderEngine);
 		SkinPreviewRenderer.initialize();
+		this.renderSplashScreen(80);
 		this.checkGLError("Post startup");
 		this.ingameGUI = new GuiIngame(this);
 		
@@ -533,11 +542,13 @@ public class Minecraft implements IThreadListener {
 		this.notifRenderer.init();
 		this.notifRenderer.setResolution(this, scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(),
 				scaledResolution.getScaleFactor());
-
+		this.renderSplashScreen(90);
+		
 		ServerList.initServerList(this);
 		EaglerProfile.read();
 		ServerCookieDataStore.load();
-
+		this.renderSplashScreen(100);
+		
 		if (this.serverName != null) {
 			this.displayGuiScreen(new GuiConnecting(new GuiScreenEditProfile(new GuiMainMenu()), this, this.serverName,
 					this.serverPort));
@@ -678,7 +689,20 @@ public class Minecraft implements IThreadListener {
 		this.scaledResolution = new ScaledResolution(this);
 	}
 
-	private void drawSplashScreen(TextureManager textureManagerInstance) {
+	private void initSplashScreen(TextureManager textureManagerInstance) {
+		InputStream inputstream = null;
+		try {
+			inputstream = this.mcDefaultResourcePack.getInputStream(LOCATION_MOJANG_PNG);
+			this.mojangLogo = textureManagerInstance.getDynamicTextureLocation("logo",
+					new DynamicTexture(ImageData.loadImageFile(inputstream)));
+		} catch (IOException ioexception) {
+			LOGGER.error("Unable to load logo: {}", LOCATION_MOJANG_PNG, ioexception);
+		} finally {
+			IOUtils.closeQuietly(inputstream);
+		}
+	}
+
+	private void renderSplashScreen(int progress) {
 		Display.update();
 		updateDisplayMode();
 		GlStateManager.viewport(0, 0, displayWidth, displayHeight);
@@ -693,17 +717,9 @@ public class Minecraft implements IThreadListener {
 		GlStateManager.disableFog();
 		GlStateManager.disableDepth();
 		GlStateManager.enableTexture2D();
-		InputStream inputstream = null;
-
-		try {
-			inputstream = this.mcDefaultResourcePack.getInputStream(LOCATION_MOJANG_PNG);
-			this.mojangLogo = textureManagerInstance.getDynamicTextureLocation("logo",
-					new DynamicTexture(ImageData.loadImageFile(inputstream)));
-			textureManagerInstance.bindTexture(this.mojangLogo);
-		} catch (IOException ioexception) {
-			LOGGER.error("Unable to load logo: {}", LOCATION_MOJANG_PNG, ioexception);
-		} finally {
-			IOUtils.closeQuietly(inputstream);
+		
+		if (this.mojangLogo != null) {
+			this.renderEngine.bindTexture(this.mojangLogo);
 		}
 
 		Tessellator tessellator = Tessellator.getInstance();
@@ -721,6 +737,28 @@ public class Minecraft implements IThreadListener {
 		short short2 = 256;
 		this.draw((scaledResolution.getScaledWidth() - short1) / 2,
 				(scaledResolution.getScaledHeight() - short2) / 2, 0, 0, short1, short2, 255, 255, 255, 255);
+		
+		if (progress >= 0) {
+			int k = scaledResolution.getScaledWidth();
+			int l = scaledResolution.getScaledHeight();
+			int k1 = k / 2 - 50;
+			int l1 = l / 2 + 16;
+			GlStateManager.disableTexture2D();
+			bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+			bufferbuilder.pos((double) k1, (double) l1, 0.0D).color(128, 128, 128, 255).endVertex();
+			bufferbuilder.pos((double) k1, (double) (l1 + 2), 0.0D).color(128, 128, 128, 255).endVertex();
+			bufferbuilder.pos((double) (k1 + 100), (double) (l1 + 2), 0.0D).color(128, 128, 128, 255)
+					.endVertex();
+			bufferbuilder.pos((double) (k1 + 100), (double) l1, 0.0D).color(128, 128, 128, 255).endVertex();
+			bufferbuilder.pos((double) k1, (double) l1, 0.0D).color(128, 255, 128, 255).endVertex();
+			bufferbuilder.pos((double) k1, (double) (l1 + 2), 0.0D).color(128, 255, 128, 255).endVertex();
+			bufferbuilder.pos((double) (k1 + progress), (double) (l1 + 2), 0.0D).color(128, 255, 128, 255)
+					.endVertex();
+			bufferbuilder.pos((double) (k1 + progress), (double) l1, 0.0D).color(128, 255, 128, 255)
+					.endVertex();
+			tessellator.draw();
+			GlStateManager.enableTexture2D();
+		}
 		GlStateManager.disableLighting();
 		GlStateManager.disableFog();
 		GlStateManager.enableAlpha();
