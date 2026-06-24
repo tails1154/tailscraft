@@ -237,7 +237,7 @@ public class GuiConnecting extends GuiScreen {
 					webSocket.close();
 				}
 				mc.displayGuiScreen(new GuiDisconnected(previousGuiScreen, "connect.failed",
-						new TextComponentString("Handshake timed out")));
+						new TextComponentString("Please try rejoning.")));
 			}
 		}
 	}
