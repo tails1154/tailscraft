@@ -467,38 +467,41 @@ public class Minecraft implements IThreadListener {
 		this.renderEngine = new TextureManager(this.mcResourceManager);
 		this.mcResourceManager.registerReloadListener(this.renderEngine);
 		this.initSplashScreen(this.renderEngine);
-		this.renderSplashScreen(0);
+		this.renderSplashScreen(0, "Initializing...");
+		this.renderSplashScreen(2, "Loading save format...");
 		this.saveLoader = new EaglerSaveFormat(new VFile2(this.mcDataDir, "worlds"), this.dataFixer);
-		this.renderSplashScreen(10);
+		this.renderSplashScreen(10, "Initializing Sound System...");
 		this.mcSoundHandler = new SoundHandler(this.mcResourceManager, this.gameSettings);
 		this.mcResourceManager.registerReloadListener(this.mcSoundHandler);
 		this.mcMusicTicker = new MusicTicker(this);
-		this.renderSplashScreen(20);
+		this.renderSplashScreen(20, "Loading fonts...");
 		this.fontRendererObj = EaglerFontRenderer.createSupportedFontRenderer(this.gameSettings,
 				new ResourceLocation("textures/font/ascii.png"), this.renderEngine, false);
 
 		if (this.gameSettings.language != null) {
+			this.renderSplashScreen(21, "Setting unicode and language flags...");
 			this.fontRendererObj.setUnicodeFlag(this.isUnicode());
 			this.fontRendererObj.setBidiFlag(this.mcLanguageManager.isCurrentLanguageBidirectional());
 		}
-		this.renderSplashScreen(23);
+		this.renderSplashScreen(23, "Loading Galactic font...");
 
 		this.standardGalacticFontRenderer = EaglerFontRenderer.createSupportedFontRenderer(this.gameSettings,
 				new ResourceLocation("textures/font/ascii_sga.png"), this.renderEngine, false);
 		this.mcResourceManager.registerReloadListener(this.fontRendererObj);
-		this.renderSplashScreen(25);
+		this.renderSplashScreen(25, "Registering Galactic font reload listener...");
 		this.mcResourceManager.registerReloadListener(this.standardGalacticFontRenderer);
 		this.mcResourceManager.registerReloadListener(new GrassColorReloadListener());
 		this.mcResourceManager.registerReloadListener(new FoliageColorReloadListener());
-		this.renderSplashScreen(30);
+		this.renderSplashScreen(30, "Setting up mouse helper...");
 		this.mouseHelper = new MouseHelper();
+		this.renderSplashScreen(31, "Checking GL errors...");
 		this.checkGLError("Pre startup");
-		this.renderSplashScreen(31);
+		this.renderSplashScreen(32, "Configuring GL state...");
 		GlStateManager.enableTexture2D();
 		GlStateManager.shadeModel(7425);
 		GlStateManager.clearDepth(1.0F);
 		GlStateManager.enableDepth();
-		this.renderSplashScreen(33);
+		this.renderSplashScreen(33, "Setting GL depth function...");
 		GlStateManager.depthFunc(515);
 		GlStateManager.enableAlpha();
 		GlStateManager.alphaFunc(516, 0.1F);
@@ -506,39 +509,56 @@ public class Minecraft implements IThreadListener {
 		GlStateManager.matrixMode(5889);
 		GlStateManager.loadIdentity();
 		GlStateManager.matrixMode(5888);
-		this.renderSplashScreen(35);
+		this.renderSplashScreen(35, "Checking GL startup errors...");
 		this.checkGLError("Startup");
+		this.renderSplashScreen(36, "Creating Block texture map...");
 		this.textureMapBlocks = new TextureMap("textures");
 		this.textureMapBlocks.setMipmapLevels(this.gameSettings.mipmapLevels);
 		this.renderEngine.loadTickableTexture(TextureMap.LOCATION_BLOCKS_TEXTURE, this.textureMapBlocks);
 		this.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 		this.textureMapBlocks.setBlurMipmapDirect(false, this.gameSettings.mipmapLevels > 0);
+		this.renderSplashScreen(40, "Creating Model Manager...");
 		this.modelManager = new ModelManager(this.textureMapBlocks);
+		this.renderSplashScreen(42, "Registering Model Manager reload listener...");
 		this.mcResourceManager.registerReloadListener(this.modelManager);
-		this.renderSplashScreen(40);
+		this.renderSplashScreen(44, "Initializing Block colors...");
 		this.blockColors = BlockColors.init();
+		this.renderSplashScreen(46, "Initializing Item colors...");
 		this.itemColors = ItemColors.init(this.blockColors);
+		this.renderSplashScreen(48, "Creating Render Item...");
 		this.renderItem = new RenderItem(this.renderEngine, this.modelManager, this.itemColors);
+		this.renderSplashScreen(50, "Creating Render Manager...");
 		this.renderManager = new RenderManager(this.renderEngine, this.renderItem);
+		this.renderSplashScreen(52, "Creating Item Renderer...");
 		this.itemRenderer = new ItemRenderer(this);
+		this.renderSplashScreen(54, "Registering Render Item reload listener...");
 		this.mcResourceManager.registerReloadListener(this.renderItem);
-		this.renderSplashScreen(50);
+		this.renderSplashScreen(56, "Creating Entity Renderer...");
 		this.entityRenderer = new EntityRenderer(this, this.mcResourceManager);
+		this.renderSplashScreen(58, "Registering Entity Renderer reload listener...");
 		this.mcResourceManager.registerReloadListener(this.entityRenderer);
+		this.renderSplashScreen(60, "Creating Block Render Dispatcher...");
 		this.blockRenderDispatcher = new BlockRendererDispatcher(this.modelManager.getBlockModelShapes(),
 				this.blockColors);
+		this.renderSplashScreen(62, "Registering Block Render Dispatcher reload listener...");
 		this.mcResourceManager.registerReloadListener(this.blockRenderDispatcher);
-		this.renderSplashScreen(60);
+		this.renderSplashScreen(64, "Creating Render Global...");
 		this.renderGlobal = new RenderGlobal(this);
+		this.renderSplashScreen(66, "Registering Render Global reload listener...");
 		this.mcResourceManager.registerReloadListener(this.renderGlobal);
+		this.renderSplashScreen(68, "Building item search trees...");
 		this.func_193986_ar();
+		this.renderSplashScreen(70, "Registering search tree reload listener...");
 		this.mcResourceManager.registerReloadListener(this.field_193995_ae);
-		this.renderSplashScreen(70);
+		this.renderSplashScreen(72, "Configuring viewport...");
 		GlStateManager.viewport(0, 0, this.displayWidth, this.displayHeight);
+		this.renderSplashScreen(75, "Creating Particle Manager...");
 		this.effectRenderer = new ParticleManager(this.world, this.renderEngine);
+		this.renderSplashScreen(78, "Initializing Skin Preview Renderer...");
 		SkinPreviewRenderer.initialize();
-		this.renderSplashScreen(80);
+		this.renderSplashScreen(80, "Checking post-startup GL errors...");
 		this.checkGLError("Post startup");
+		this.renderSplashScreen(83, "Creating In-game GUI...");
 		this.ingameGUI = new GuiIngame(this);
 		
 		this.eagskullCommand = new SkullCommand(this);
@@ -547,12 +567,15 @@ public class Minecraft implements IThreadListener {
 		this.notifRenderer.init();
 		this.notifRenderer.setResolution(this, scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(),
 				scaledResolution.getScaleFactor());
-		this.renderSplashScreen(90);
+		this.renderSplashScreen(90, "Setting notification resolution...");
 		
+		this.renderSplashScreen(92, "Initializing Server List...");
 		ServerList.initServerList(this);
+		this.renderSplashScreen(95, "Reading profile data...");
 		EaglerProfile.read();
+		this.renderSplashScreen(98, "Loading cookie data store...");
 		ServerCookieDataStore.load();
-		this.renderSplashScreen(100);
+		this.renderSplashScreen(100, "Ready!");
 		
 		if (this.serverName != null) {
 			this.displayGuiScreen(new GuiConnecting(new GuiScreenEditProfile(new GuiMainMenu()), this, this.serverName,
@@ -708,6 +731,10 @@ public class Minecraft implements IThreadListener {
 	}
 
 	private void renderSplashScreen(int progress) {
+		this.renderSplashScreen(progress, null);
+	}
+
+	private void renderSplashScreen(int progress, String status) {
 		Display.update();
 		updateDisplayMode();
 		GlStateManager.viewport(0, 0, displayWidth, displayHeight);
@@ -763,6 +790,13 @@ public class Minecraft implements IThreadListener {
 					.endVertex();
 			tessellator.draw();
 			GlStateManager.enableTexture2D();
+			
+			if (this.fontRendererObj != null && status != null && !status.isEmpty()) {
+				int width = this.fontRendererObj.getStringWidth(status);
+				int x = (k - width) / 2;
+				int y = l1 + 6;
+				this.fontRendererObj.drawStringWithShadow(status, x, y, 16777215);
+			}
 		}
 		GlStateManager.disableLighting();
 		GlStateManager.disableFog();
