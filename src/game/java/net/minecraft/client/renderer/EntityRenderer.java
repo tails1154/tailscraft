@@ -118,6 +118,9 @@ public class EntityRenderer implements IResourceManagerReloadListener {
 	private float bossColorModifier;
 	private float bossColorModifierPrev;
 
+	private float zoomPercent;
+	private float prevZoomPercent;
+
 	/** Cloud fog mode */
 	private boolean cloudFog;
 	private boolean renderHand = true;
@@ -205,12 +208,27 @@ public class EntityRenderer implements IResourceManagerReloadListener {
 	 * Updates the entity renderer
 	 */
 	public void updateRenderer() {
+		this.prevZoomPercent = this.zoomPercent;
+
+		if (this.mc.gameSettings.keyBindZoom.isKeyDown()) {
+			this.zoomPercent += 0.25F;
+			if (this.zoomPercent > 1.0F) {
+				this.zoomPercent = 1.0F;
+			}
+		} else {
+			this.zoomPercent -= 0.25F;
+			if (this.zoomPercent < 0.0F) {
+				this.zoomPercent = 0.0F;
+			}
+		}
+
 		this.updateFovModifierHand();
 		this.updateTorchFlicker();
 		this.fogColor2 = this.fogColor1;
 		this.thirdPersonDistancePrev = 4.0F;
 
-		if (this.mc.gameSettings.smoothCamera) {
+		boolean isSmooth = this.mc.gameSettings.smoothCamera || this.zoomPercent > 0.0F;
+		if (isSmooth) {
 			float f = this.mc.gameSettings.mouseSensitivity * 0.6F + 0.2F;
 			float f1 = f * f * f * 8.0F;
 			this.smoothCamFilterX = this.mouseFilterXAxis.smooth(this.smoothCamYaw, 0.05F * f1);
@@ -386,6 +404,11 @@ public class EntityRenderer implements IResourceManagerReloadListener {
 			if (useFOVSetting) {
 				f = this.mc.gameSettings.fovSetting;
 				f = f * (this.fovModifierHandPrev + (this.fovModifierHand - this.fovModifierHandPrev) * partialTicks);
+			}
+
+			float currentZoom = this.prevZoomPercent + (this.zoomPercent - this.prevZoomPercent) * partialTicks;
+			if (currentZoom > 0.0F) {
+				f /= (1.0F + 3.0F * currentZoom);
 			}
 
 			if (entity instanceof EntityLivingBase && ((EntityLivingBase) entity).getHealth() <= 0.0F) {
@@ -889,7 +912,8 @@ public class EntityRenderer implements IResourceManagerReloadListener {
 				i = -1;
 			}
 
-			if (this.mc.gameSettings.smoothCamera) {
+			boolean isSmooth = this.mc.gameSettings.smoothCamera || this.zoomPercent > 0.0F;
+			if (isSmooth) {
 				this.smoothCamYaw += f2;
 				this.smoothCamPitch += f3;
 				float f4 = partialTicks - this.smoothCamPartialTicks;

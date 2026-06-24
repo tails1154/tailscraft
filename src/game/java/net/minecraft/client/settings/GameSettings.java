@@ -131,6 +131,7 @@ public class GameSettings {
 	public KeyBinding keyBindScreenshot = new KeyBinding("key.screenshot", 60, "key.categories.misc");
 	public KeyBinding keyBindTogglePerspective = new KeyBinding("key.togglePerspective", 63, "key.categories.misc");
 	public KeyBinding keyBindSmoothCamera = new KeyBinding("key.smoothCamera", 0, "key.categories.misc");
+	public KeyBinding keyBindZoom = new KeyBinding("eaglercraft.key.zoomCamera", KeyboardConstants.KEY_C, "key.categories.misc");
 	public KeyBinding keyBindSpectatorOutlines = new KeyBinding("key.spectatorOutlines", 0, "key.categories.misc");
 	public KeyBinding field_194146_ao = new KeyBinding("key.advancements", 38, "key.categories.misc");
 	public KeyBinding[] keyBindsHotbar = new KeyBinding[] {
@@ -197,7 +198,7 @@ public class GameSettings {
 						this.keyBindBack, this.keyBindRight, this.keyBindJump, this.keyBindSneak, this.keyBindSprint,
 						this.keyBindDrop, this.keyBindInventory, this.keyBindChat, this.keyBindPlayerList,
 						this.keyBindPickBlock, this.keyBindCommand, this.keyBindScreenshot,
-						this.keyBindTogglePerspective, this.keyBindSmoothCamera, this.keyBindSpectatorOutlines,
+						this.keyBindTogglePerspective, this.keyBindSmoothCamera, this.keyBindZoom, this.keyBindSpectatorOutlines,
 						this.keyBindSwapHands, this.field_193629_ap, this.field_193630_aq, this.field_194146_ao },
 				this.keyBindsHotbar);
 		this.difficulty = EnumDifficulty.NORMAL;
@@ -217,7 +218,7 @@ public class GameSettings {
 						this.keyBindBack, this.keyBindRight, this.keyBindJump, this.keyBindSneak, this.keyBindSprint,
 						this.keyBindDrop, this.keyBindInventory, this.keyBindChat, this.keyBindPlayerList,
 						this.keyBindPickBlock, this.keyBindCommand, this.keyBindScreenshot,
-						this.keyBindTogglePerspective, this.keyBindSmoothCamera, this.keyBindSpectatorOutlines,
+						this.keyBindTogglePerspective, this.keyBindSmoothCamera, this.keyBindZoom, this.keyBindSpectatorOutlines,
 						this.keyBindSwapHands, this.field_193629_ap, this.field_193630_aq, this.field_194146_ao },
 				this.keyBindsHotbar);
 		this.difficulty = EnumDifficulty.NORMAL;
