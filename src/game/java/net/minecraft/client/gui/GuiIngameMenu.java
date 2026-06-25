@@ -92,12 +92,6 @@ public class GuiIngameMenu extends GuiScreen {
 			hasSentAutoSave = true;
 			SingleplayerServerController.autoSave();
 		}
-
-		for (net.lax1dude.eaglercraft.mod.api.Mod mod : ModLoader.getLoadedMods()) {
-			for (net.minecraft.client.gui.GuiButton btn : mod.getCustomButtons(this)) {
-				this.buttonList.add(btn);
-			}
-		}
 	}
 
 	/**

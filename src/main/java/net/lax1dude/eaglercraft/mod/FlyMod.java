@@ -1,11 +1,12 @@
 package net.lax1dude.eaglercraft.mod;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import net.lax1dude.eaglercraft.mod.api.Mod;
 import net.lax1dude.eaglercraft.mod.api.ModLogger;
 import net.lax1dude.eaglercraft.mod.api.ModMetadata;
+import net.lax1dude.eaglercraft.mod.loader.ModLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiIngameMenu;
@@ -37,6 +38,7 @@ public class FlyMod implements Mod {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.currentScreen instanceof GuiIngameMenu) {
             if (!buttonAdded) {
+                addFlyButton(mc.currentScreen);
                 buttonAdded = true;
             }
         } else {
@@ -44,15 +46,18 @@ public class FlyMod implements Mod {
         }
     }
 
-    @Override
-    public List<GuiButton> getCustomButtons(GuiScreen screen) {
-        if (screen instanceof GuiIngameMenu && !buttonAdded) {
-            List<GuiButton> btns = new ArrayList<>();
-            btns.add(new GuiButton(FLY_BUTTON_ID, screen.width / 2 - 100, screen.height / 4 + 144, 200, 20,
-                    "Fly: " + (flying ? "ON" : "OFF")));
-            return btns;
+    private void addFlyButton(GuiScreen screen) {
+        try {
+            Field buttonListField = GuiScreen.class.getDeclaredField("buttonList");
+            buttonListField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<GuiButton> buttonList = (List<GuiButton>) buttonListField.get(screen);
+
+            String label = "Fly: " + (flying ? "ON" : "OFF");
+            buttonList.add(new GuiButton(FLY_BUTTON_ID, screen.width / 2 - 100, screen.height / 4 + 144, 200, 20, label));
+        } catch (Exception e) {
+            logger.error("Failed to add fly button", e);
         }
-        return new ArrayList<>();
     }
 
     @Override
