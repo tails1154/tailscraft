@@ -28,7 +28,6 @@ import net.lax1dude.eaglercraft.internal.EnumPlatformType;
 import net.lax1dude.eaglercraft.internal.PlatformRuntime;
 import net.lax1dude.eaglercraft.internal.vfs2.VFile2;
 import net.lax1dude.eaglercraft.minecraft.EaglerFontRenderer;
-import net.lax1dude.eaglercraft.mod.loader.ModLoader;
 import net.lax1dude.eaglercraft.notifications.ServerNotificationRenderer;
 import net.lax1dude.eaglercraft.opengl.WorldRenderer;
 import net.lax1dude.eaglercraft.profile.EaglerProfile;
@@ -576,8 +575,6 @@ public class Minecraft implements IThreadListener {
 		EaglerProfile.read();
 		this.renderSplashScreen(98, "Loading cookie data store...");
 		ServerCookieDataStore.load();
-		this.renderSplashScreen(99, "Initializing mods...");
-		ModLoader.loadMods();
 		this.renderSplashScreen(100, "Ready!");
 		
 		if (this.serverName != null) {
@@ -798,7 +795,7 @@ public class Minecraft implements IThreadListener {
 				int width = this.fontRendererObj.getStringWidth(status);
 				int x = (k - width) / 2;
 				int y = l1 + 6;
-				this.fontRendererObj.drawString(status, x, y, 0);
+				this.fontRendererObj.drawStringWithShadow(status, x, y, 16777215);
 			}
 		}
 		GlStateManager.disableLighting();
@@ -921,7 +918,6 @@ public class Minecraft implements IThreadListener {
 				EagUtils.sleep(50l);
 			}
 		} finally {
-			ModLoader.onGameShutdown();
 			EagRuntime.destroy();
 			if (!this.hasCrashed) {
 				EagRuntime.exit();
@@ -1358,8 +1354,6 @@ public class Minecraft implements IThreadListener {
 					});
 					throw new ReportedException(crashreport1);
 				}
-
-				ModLoader.onTickInGui();
 			}
 		}
 
@@ -1434,10 +1428,6 @@ public class Minecraft implements IThreadListener {
 
 			if (!this.isGamePaused) {
 				this.effectRenderer.updateEffects();
-			}
-
-			if (!this.isGamePaused && this.world != null) {
-				ModLoader.onTickInGame();
 			}
 		} else if (this.myNetworkManager != null) {
 			this.myNetworkManager.processReceivedPackets();
