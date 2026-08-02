@@ -48,14 +48,18 @@ public class ViewFrustum {
 	protected void setCountChunksXYZ(int renderDistanceChunks) {
 		int i = renderDistanceChunks * 2 + 1;
 		this.countChunksX = i;
+		// Keep the vanilla allocation of 16 vertical sections, but use it as a
+		// camera-relative ring instead of permanently assigning it to Y=0..255.
 		this.countChunksY = 16;
 		this.countChunksZ = i;
 	}
 
-	public void updateChunkPositions(double viewEntityX, double viewEntityZ) {
+	public void updateChunkPositions(double viewEntityX, double viewEntityY, double viewEntityZ) {
 		int i = MathHelper.floor(viewEntityX) - 8;
 		int j = MathHelper.floor(viewEntityZ) - 8;
 		int k = this.countChunksX * 16;
+		int centerSectionY = MathHelper.floor(viewEntityY) >> 4;
+		int minSectionY = centerSectionY - this.countChunksY / 2;
 
 		for (int l = 0; l < this.countChunksX; ++l) {
 			int i1 = this.getBaseCoordinate(i, k, l);
@@ -64,8 +68,10 @@ public class ViewFrustum {
 				int k1 = this.getBaseCoordinate(j, k, j1);
 
 				for (int l1 = 0; l1 < this.countChunksY; ++l1) {
-					int i2 = l1 * 16;
-					RenderChunk renderchunk = this.renderChunks[(j1 * this.countChunksY + l1) * this.countChunksX + l];
+					int sectionY = minSectionY + l1;
+					int i2 = sectionY * 16;
+					int sectionSlotY = Math.floorMod(sectionY, this.countChunksY);
+					RenderChunk renderchunk = this.renderChunks[(j1 * this.countChunksY + sectionSlotY) * this.countChunksX + l];
 					BlockPos blockpos = new BlockPos(i1, i2, k1);
 					if (!blockpos.equals(renderchunk.getPosition())) {
 						renderchunk.setPosition(blockpos);
@@ -118,7 +124,11 @@ public class ViewFrustum {
 
 					int i3 = (l2 * this.countChunksY + j2) * this.countChunksX + l1;
 					RenderChunk renderchunk = this.renderChunks[i3];
-					renderchunk.setNeedsUpdate(p_187474_7_);
+					BlockPos renderPos = renderchunk.getPosition();
+					if ((renderPos.getX() >> 4) == k1 && (renderPos.getY() >> 4) == i2
+							&& (renderPos.getZ() >> 4) == k2) {
+						renderchunk.setNeedsUpdate(p_187474_7_);
+					}
 				}
 			}
 		}
@@ -130,23 +140,25 @@ public class ViewFrustum {
 		int j = MathHelper.intFloorDiv(pos.y, 16);
 		int k = MathHelper.intFloorDiv(pos.z, 16);
 
-		if (j >= 0 && j < this.countChunksY) {
-			i = i % this.countChunksX;
+		i = i % this.countChunksX;
 
-			if (i < 0) {
-				i += this.countChunksX;
-			}
-
-			k = k % this.countChunksZ;
-
-			if (k < 0) {
-				k += this.countChunksZ;
-			}
-
-			int l = (k * this.countChunksY + j) * this.countChunksX + i;
-			return this.renderChunks[l];
-		} else {
-			return null;
+		if (i < 0) {
+			i += this.countChunksX;
 		}
+
+		k = k % this.countChunksZ;
+
+		if (k < 0) {
+			k += this.countChunksZ;
+		}
+
+		int sectionSlotY = Math.floorMod(j, this.countChunksY);
+
+		int l = (k * this.countChunksY + sectionSlotY) * this.countChunksX + i;
+		RenderChunk renderChunk = this.renderChunks[l];
+		BlockPos renderPos = renderChunk.getPosition();
+		return (renderPos.getX() >> 4) == MathHelper.intFloorDiv(pos.x, 16)
+				&& (renderPos.getY() >> 4) == j
+				&& (renderPos.getZ() >> 4) == MathHelper.intFloorDiv(pos.z, 16) ? renderChunk : null;
 	}
 }

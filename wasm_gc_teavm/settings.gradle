@@ -9,6 +9,7 @@
 
 pluginManagement {
     repositories {
+        mavenLocal()
         maven {
             url = uri("https://eaglercraft-teavm-fork.github.io/maven/")
         }

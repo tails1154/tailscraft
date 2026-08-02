@@ -481,7 +481,7 @@ public class RenderGlobal implements IWorldEventListener, IResourceManagerReload
 				Entity entity = this.mc.getRenderViewEntity();
 
 				if (entity != null) {
-					this.viewFrustum.updateChunkPositions(entity.posX, entity.posZ);
+					this.viewFrustum.updateChunkPositions(entity.posX, entity.posY, entity.posZ);
 				}
 			}
 
@@ -548,9 +548,12 @@ public class RenderGlobal implements IWorldEventListener, IResourceManagerReload
 						.get(ii);
 				Chunk chunk = this.theWorld.getChunkFromBlockCoords(
 						renderglobal$containerlocalrenderinformation.renderChunk.getPosition());
+				int entitySection = renderglobal$containerlocalrenderinformation.renderChunk.getPosition().getY() >> 4;
+				if (entitySection < 0 || entitySection >= chunk.getEntityLists().length) {
+					continue;
+				}
 				ClassInheritanceMultiMap<Entity> classinheritancemultimap = chunk
-						.getEntityLists()[renderglobal$containerlocalrenderinformation.renderChunk.getPosition().getY()
-								/ 16];
+						.getEntityLists()[entitySection];
 				if (!classinheritancemultimap.isEmpty()) {
 					for (Entity entity2 : classinheritancemultimap) {
 						boolean shouldRender = this.renderManager.shouldRender(entity2, camera, d0, d1, d2)
@@ -715,7 +718,7 @@ public class RenderGlobal implements IWorldEventListener, IResourceManagerReload
 			this.frustumUpdatePosChunkX = viewEntity.chunkCoordX;
 			this.frustumUpdatePosChunkY = viewEntity.chunkCoordY;
 			this.frustumUpdatePosChunkZ = viewEntity.chunkCoordZ;
-			this.viewFrustum.updateChunkPositions(viewEntity.posX, viewEntity.posZ);
+			this.viewFrustum.updateChunkPositions(viewEntity.posX, viewEntity.posY, viewEntity.posZ);
 		}
 
 		double d3 = viewEntity.lastTickPosX + (viewEntity.posX - viewEntity.lastTickPosX) * partialTicks;
@@ -887,7 +890,7 @@ public class RenderGlobal implements IWorldEventListener, IResourceManagerReload
 	private RenderChunk getRenderChunkOffset(BlockPos playerPos, RenderChunk renderChunkBase, EnumFacing facing) {
 		BlockPos blockpos = renderChunkBase.getBlockPosOffset16(facing);
 
-        if (blockpos.y >= 0 && blockpos.y < 256) {
+		if (this.viewFrustum.getRenderChunk(blockpos) != null) {
             int i = playerPos.x - blockpos.x;
             int j = playerPos.z - blockpos.z;
 

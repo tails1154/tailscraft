@@ -172,8 +172,13 @@ public class WorldClient extends World {
 			this.clientChunkProvider.loadChunk(chunkX, chunkZ);
 		} else {
 			this.clientChunkProvider.unloadChunk(chunkX, chunkZ);
-			this.markBlockRangeForRenderUpdate(chunkX * 16, 0, chunkZ * 16, chunkX * 16 + 15, 256, chunkZ * 16 + 15);
+			this.markBlockRangeForRenderUpdate(chunkX * 16, -2048, chunkZ * 16, chunkX * 16 + 15, 2047,
+					chunkZ * 16 + 15);
 		}
+	}
+
+	public boolean isChunkLoadedAt(int chunkX, int chunkZ) {
+		return this.clientChunkProvider.func_191062_e(chunkX, chunkZ);
 	}
 
 	/**

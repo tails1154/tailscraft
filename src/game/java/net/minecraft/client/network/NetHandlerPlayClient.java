@@ -260,6 +260,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class NetHandlerPlayClient implements INetHandlerPlayClient {
+	private static final String EXTENDED_HEIGHT_CHANNEL = "eagler:extheight";
+	private static final String EXTENDED_CHUNK_CHANNEL = "eagler:extchunk";
+	private static final int EXTENDED_SECTION_BLOCK_COUNT = 4096;
+	private static final int MAX_EXTENDED_SECTIONS_PER_PACKET = 128;
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	/**
@@ -406,6 +410,10 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 		this.gameController.gameSettings.sendSettingsToServer();
 		this.netManager.sendPacket(new CPacketCustomPayload("MC|Brand",
 				(new PacketBuffer(Unpooled.buffer())).writeString(ClientBrandRetriever.getClientModName())));
+		if (!(this.netManager instanceof SingleplayerNetworkManager)) {
+			this.netManager.sendPacket(new CPacketCustomPayload(EXTENDED_HEIGHT_CHANNEL,
+					new PacketBuffer(Unpooled.buffer(0))));
+		}
 		WebViewOverlayController.setPacketSendCallback(this::webViewSendHandler);
 	}
 
@@ -1753,7 +1761,9 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * the identifier of the default server resourcepack for the client to load.
 	 */
 	public void handleCustomPayload(SPacketCustomPayload packetIn) {
-		if ("MC|TrList".equals(packetIn.getChannelName())) {
+		if (EXTENDED_CHUNK_CHANNEL.equals(packetIn.getChannelName())) {
+			handleExtendedChunk(packetIn.getBufferData());
+		} else if ("MC|TrList".equals(packetIn.getChannelName())) {
 			PacketBuffer packetbuffer = packetIn.getBufferData();
 
 			try {
@@ -1805,6 +1815,50 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 						packetIn.getChannelName());
 				LOGGER.error(e);
 			}
+		}
+	}
+
+	private void handleExtendedChunk(PacketBuffer buffer) {
+		try {
+			int chunkX = buffer.readInt();
+			int chunkZ = buffer.readInt();
+			int count = buffer.readVarIntFromBuffer();
+			if (count < 0 || count > MAX_EXTENDED_SECTIONS_PER_PACKET) {
+				throw new IOException("Invalid extended section count: " + count);
+			}
+
+			int[] sectionYs = new int[count];
+			int[][] stateIds = new int[count][EXTENDED_SECTION_BLOCK_COUNT];
+			for (int section = 0; section < count; ++section) {
+				int sectionY = buffer.readByte();
+				if (sectionY >= 0) {
+					throw new IOException("Extended chunk contains non-negative section Y: " + sectionY);
+				}
+				sectionYs[section] = sectionY;
+				for (int block = 0; block < EXTENDED_SECTION_BLOCK_COUNT; ++block) {
+					int stateId = buffer.readVarIntFromBuffer();
+					if (stateId < 0 || stateId > 65535) {
+						throw new IOException("Invalid 1.12 block state ID: " + stateId);
+					}
+					stateIds[section][block] = stateId;
+				}
+			}
+			if (buffer.isReadable()) {
+				throw new IOException("Trailing data in extended chunk payload: " + buffer.readableBytes() + " bytes");
+			}
+
+			if (!this.clientWorldController.isChunkLoadedAt(chunkX, chunkZ)) {
+				throw new IOException("Extended chunk arrived before its base chunk: " + chunkX + ", " + chunkZ);
+			}
+			Chunk chunk = this.clientWorldController.getChunkFromChunkCoords(chunkX, chunkZ);
+			for (int section = 0; section < count; ++section) {
+				chunk.setExtendedHeightSection(sectionYs[section], stateIds[section]);
+				int minY = sectionYs[section] << 4;
+				this.clientWorldController.markBlockRangeForRenderUpdate(chunkX << 4, minY, chunkZ << 4,
+						(chunkX << 4) + 15, minY + 15, (chunkZ << 4) + 15);
+			}
+		} catch (RuntimeException | IOException ex) {
+			LOGGER.error("Ignoring malformed {} payload", EXTENDED_CHUNK_CHANNEL, ex);
 		}
 	}
 

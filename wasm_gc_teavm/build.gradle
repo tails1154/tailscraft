@@ -17,12 +17,14 @@ sourceSets {
                	"../src/protocol-game/java",
                 "../src/wasm-gc-teavm/java"
             )
+            exclude "net/lax1dude/eaglercraft/v1_21/**"
         }
     }
     
 }
 
 repositories {
+    mavenLocal()
     maven {
         url = uri("https://eaglercraft-teavm-fork.github.io/maven/")
     }

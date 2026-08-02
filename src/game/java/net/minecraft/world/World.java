@@ -243,7 +243,7 @@ public abstract class World implements IBlockAccess {
 	}
 
 	private boolean isOutsideBuildHeight(BlockPos pos) {
-		return pos.getY() < 0 || pos.getY() >= 256;
+		return pos.getY() < -2048 || pos.getY() >= 2048;
 	}
 
 	/**
@@ -596,15 +596,7 @@ public abstract class World implements IBlockAccess {
 	}
 
 	public int getLight(BlockPos pos) {
-		if (pos.getY() < 0) {
-			return 0;
-		} else {
-			if (pos.getY() >= 256) {
-				pos = new BlockPos(pos.getX(), 255, pos.getZ());
-			}
-
-			return this.getChunkFromBlockCoords(pos).getLightSubtracted(pos, 0);
-		}
+		return this.isOutsideBuildHeight(pos) ? 0 : this.getChunkFromBlockCoords(pos).getLightSubtracted(pos, 0);
 	}
 
 	public int getLightFromNeighbors(BlockPos pos) {
@@ -674,10 +666,6 @@ public abstract class World implements IBlockAccess {
 	}
 
 	public int getLightFor(EnumSkyBlock type, BlockPos pos) {
-		if (pos.getY() < 0) {
-			pos = new BlockPos(pos.getX(), 0, pos.getZ());
-		}
-
 		if (!this.isValid(pos)) {
 			return type.defaultLightValue;
 		} else if (!this.isBlockLoaded(pos)) {

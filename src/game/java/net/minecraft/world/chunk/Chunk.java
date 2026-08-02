@@ -56,6 +56,7 @@ public class Chunk {
 	 * stacked vertically.
 	 */
 	private final ExtendedBlockStorage[] storageArrays;
+	private final Map<Integer, ExtendedBlockStorage> extendedHeightStorage = Maps.newHashMap();
 
 	/**
 	 * Contains a 16x16 mapping on the X/Z plane of the biome ID to which each colum
@@ -217,6 +218,64 @@ public class Chunk {
 	 */
 	public ExtendedBlockStorage[] getBlockStorageArray() {
 		return this.storageArrays;
+	}
+
+	private ExtendedBlockStorage getStorageForY(int y) {
+		int sectionY = MathHelper.intFloorDiv(y, 16);
+		return sectionY >= 0 && sectionY < this.storageArrays.length
+				? this.storageArrays[sectionY] : this.extendedHeightStorage.get(Integer.valueOf(sectionY));
+	}
+
+	private ExtendedBlockStorage getOrCreateStorageForY(int y) {
+		int sectionY = MathHelper.intFloorDiv(y, 16);
+		ExtendedBlockStorage storage = getStorageForY(y);
+		if (storage == null) {
+			storage = new ExtendedBlockStorage(sectionY << 4, !this.worldObj.provider.getHasNoSky());
+			if (sectionY >= 0 && sectionY < this.storageArrays.length) {
+				this.storageArrays[sectionY] = storage;
+			} else {
+				this.extendedHeightStorage.put(Integer.valueOf(sectionY), storage);
+			}
+			alfheim$initSkylightForSection(storage);
+		}
+		return storage;
+	}
+
+	/**
+	 * Replaces one non-vanilla vertical section received from the Eagler extended
+	 * height bridge. State IDs use the vanilla 1.12 Block.getStateId encoding.
+	 */
+	public void setExtendedHeightSection(int sectionY, int[] stateIds) {
+		if (sectionY >= 0 || sectionY < -128) {
+			throw new IllegalArgumentException("Extended section Y must be between -128 and -1");
+		}
+		if (stateIds.length != 4096) {
+			throw new IllegalArgumentException("Extended section must contain exactly 4096 block states");
+		}
+
+		ExtendedBlockStorage storage = null;
+		for (int index = 0; index < stateIds.length; ++index) {
+			int stateId = stateIds[index];
+			Block block = Block.getBlockById(stateId & 4095);
+			IBlockState state = block == null ? Blocks.AIR.getDefaultState() : block.getStateFromMeta(stateId >> 12 & 15);
+			if (state.getMaterial() != Material.AIR) {
+				if (storage == null) {
+					storage = new ExtendedBlockStorage(sectionY << 4, !this.worldObj.provider.getHasNoSky());
+				}
+				int x = index & 15;
+				int z = index >> 4 & 15;
+				int y = index >> 8;
+				storage.set(x, y, z, state);
+			}
+		}
+
+		if (storage == null) {
+			this.extendedHeightStorage.remove(Integer.valueOf(sectionY));
+		} else {
+			alfheim$initSkylightForSection(storage);
+			this.extendedHeightStorage.put(Integer.valueOf(sectionY), storage);
+		}
+		this.isModified = true;
 	}
 
 	/**
@@ -425,8 +484,8 @@ public class Chunk {
 			return iblockstate == null ? Blocks.AIR.getDefaultState() : iblockstate;
 		} else {
 			try {
-				if (y >= 0 && y >> 4 < this.storageArrays.length) {
-					ExtendedBlockStorage extendedblockstorage = this.storageArrays[y >> 4];
+				{
+					ExtendedBlockStorage extendedblockstorage = this.getStorageForY(y);
 
 					if (extendedblockstorage != NULL_BLOCK_STORAGE) {
 						return extendedblockstorage.get(x & 15, y & 15, z & 15);
@@ -464,16 +523,14 @@ public class Chunk {
 		} else {
 			Block block = state.getBlock();
 			Block block1 = iblockstate.getBlock();
-			ExtendedBlockStorage extendedblockstorage = this.storageArrays[j >> 4];
+			ExtendedBlockStorage extendedblockstorage = this.getStorageForY(j);
 			boolean flag = false;
 			if (extendedblockstorage == null) {
 				if (block == Blocks.AIR) {
 					return null;
 				}
 
-				extendedblockstorage = this.storageArrays[j >> 4] = new ExtendedBlockStorage(j >> 4 << 4,
-						!this.worldObj.provider.getHasNoSky());
-				alfheim$initSkylightForSection(extendedblockstorage);
+				extendedblockstorage = this.getOrCreateStorageForY(j);
 			}
 
 			extendedblockstorage.set(i, j & 15, k, state);
@@ -540,11 +597,9 @@ public class Chunk {
 		int j = pos.x & 15;
 		int k = pos.y;
 		int l = pos.z & 15;
-		ExtendedBlockStorage extendedblockstorage = this.storageArrays[k >> 4];
+		ExtendedBlockStorage extendedblockstorage = this.getStorageForY(k);
 		if (extendedblockstorage == null) {
-			extendedblockstorage = this.storageArrays[k >> 4] = new ExtendedBlockStorage(k >> 4 << 4,
-					!this.worldObj.provider.getHasNoSky());
-			alfheim$initSkylightForSection(storageArrays[k >> 4]);
+			extendedblockstorage = this.getOrCreateStorageForY(k);
 		}
 
 		this.isModified = true;
@@ -562,7 +617,7 @@ public class Chunk {
 		int j = pos.x & 15;
 		int k = pos.y;
 		int l = pos.z & 15;
-		ExtendedBlockStorage extendedblockstorage = this.storageArrays[k >> 4];
+		ExtendedBlockStorage extendedblockstorage = this.getStorageForY(k);
 		if (extendedblockstorage == null) {
 			return !this.worldObj.provider.getHasNoSky() && amount < EnumSkyBlock.SKY.defaultLightValue
 					? EnumSkyBlock.SKY.defaultLightValue - amount
@@ -962,16 +1017,8 @@ public class Chunk {
 	 * arg 1 to arg 2 are fully empty (true) or not (false).
 	 */
 	public boolean getAreLevelsEmpty(int startY, int endY) {
-		if (startY < 0) {
-			startY = 0;
-		}
-
-		if (endY >= 256) {
-			endY = 255;
-		}
-
-		for (int i = startY; i <= endY; i += 16) {
-			ExtendedBlockStorage extendedblockstorage = this.storageArrays[i >> 4];
+		for (int i = MathHelper.intFloorDiv(startY, 16) << 4; i <= endY; i += 16) {
+			ExtendedBlockStorage extendedblockstorage = this.getStorageForY(i);
 
 			if (extendedblockstorage != NULL_BLOCK_STORAGE && !extendedblockstorage.isEmpty()) {
 				return false;
@@ -1556,7 +1603,7 @@ public class Chunk {
 		final int y = blockPos.y;
 		final int z = blockPos.z & 15;
 
-		final ExtendedBlockStorage extendedblockstorage = storageArrays[y >> 4];
+		final ExtendedBlockStorage extendedblockstorage = getStorageForY(y);
 
 		if (extendedblockstorage == null)
 			return canSeeSky(blockPos) ? (byte) lightType.defaultLightValue : 0;

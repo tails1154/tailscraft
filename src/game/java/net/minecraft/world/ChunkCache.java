@@ -90,7 +90,7 @@ public class ChunkCache implements IBlockAccess {
 	}
 
 	public IBlockState getBlockState(BlockPos pos) {
-		if (pos.getY() >= 0 && pos.getY() < 256) {
+		{
 			int i = (pos.getX() >> 4) - this.chunkX;
 			int j = (pos.getZ() >> 4) - this.chunkZ;
 
@@ -125,13 +125,9 @@ public class ChunkCache implements IBlockAccess {
 	}
 	
 	private IBlockState getBlockStateRawFaster(BlockPos pos) {
-		if (pos.y >= 0 && pos.y < 256) {
-			int i = (pos.x >> 4) - this.chunkX;
-			int j = (pos.z >> 4) - this.chunkZ;
-			return this.chunkArray[i][j].getBlockState(pos);
-		} else {
-			return DEFAULT_STATE;
-		}
+		int i = (pos.x >> 4) - this.chunkX;
+		int j = (pos.z >> 4) - this.chunkZ;
+		return this.chunkArray[i][j].getBlockState(pos);
 	}
 
 	public Biome getBiome(BlockPos pos) {
@@ -150,13 +146,9 @@ public class ChunkCache implements IBlockAccess {
 	}
 
 	public int getLightFor(EnumSkyBlock p_175628_1_, BlockPos pos) {
-		if (pos.getY() >= 0 && pos.getY() < 256) {
-			int i = (pos.getX() >> 4) - this.chunkX;
-			int j = (pos.getZ() >> 4) - this.chunkZ;
-			return this.chunkArray[i][j].getLightFor(p_175628_1_, pos);
-		} else {
-			return p_175628_1_.defaultLightValue;
-		}
+		int i = (pos.getX() >> 4) - this.chunkX;
+		int j = (pos.getZ() >> 4) - this.chunkZ;
+		return this.chunkArray[i][j].getLightFor(p_175628_1_, pos);
 	}
 
 	public int getStrongPower(BlockPos pos, EnumFacing direction) {
