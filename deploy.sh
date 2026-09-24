@@ -5,9 +5,27 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source_dir="$script_dir/wasm_gc_teavm/javascript"
 deploy_dir=${1:-/home/tails1154/ecraft/gaming/ecraft}
 
+if [ ! -d "$deploy_dir" ]; then
+	printf '%s\n' "Deployment directory does not exist: $deploy_dir" >&2
+	exit 1
+fi
+
+# This project's Gradle build requires Java 21 on this host.
+if [ -d /usr/lib/jvm/java-21-openjdk ]; then
+	export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+	export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+printf '%s\n' "Building WASM GC and EPK..."
+(
+	cd "$script_dir/wasm_gc_teavm"
+	sh ./CompileWASM.sh
+	sh ./CompileEPK.sh
+)
+
 if [ ! -f "$source_dir/classes.wasm" ] || [ ! -f "$source_dir/assets.epk" ]; then
 	printf '%s\n' "Missing compiled classes.wasm or assets.epk in $source_dir" >&2
-	printf '%s\n' "Run the WASM and EPK compile scripts first." >&2
+	printf '%s\n' "Build did not produce the required artifacts." >&2
 	exit 1
 fi
 if [ ! -d "$deploy_dir" ]; then

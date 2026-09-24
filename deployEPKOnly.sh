@@ -5,9 +5,25 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source_epk="$script_dir/wasm_gc_teavm/javascript/assets.epk"
 deploy_dir=${1:-/home/tails1154/ecraft/gaming/ecraft}
 
+if [ ! -d "$deploy_dir" ]; then
+	printf '%s\n' "Deployment directory does not exist: $deploy_dir" >&2
+	exit 1
+fi
+
+if [ -d /usr/lib/jvm/java-21-openjdk ]; then
+	export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+	export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+printf '%s\n' "Building EPK..."
+(
+	cd "$script_dir/wasm_gc_teavm"
+	sh ./CompileEPK.sh
+)
+
 if [ ! -f "$source_epk" ]; then
 	printf '%s\n' "Missing compiled assets.epk: $source_epk" >&2
-	printf '%s\n' "Run CompileEPK.sh first." >&2
+	printf '%s\n' "Build did not produce the required artifact." >&2
 	exit 1
 fi
 if [ ! -d "$deploy_dir" ]; then
