@@ -95,9 +95,8 @@ public class GuiOptions extends GuiScreen {
 				I18n.format("options.chat.title")));
 		this.buttonList.add(new GuiButton(105, this.width / 2 - 155, this.height / 6 + 120 - 6, 150, 20,
 				I18n.format("options.resourcepack")));
-	/*	this.buttonList.add(new GuiButton(300, this.width / 2 + 5, this.height / 6 + 120 - 6, 150, 20,
-				I18n.format("options.misc"))); */
-		this.buttonList.add(new GuiButton(200, this.width / 2 - 100, this.height / 6 + 168, I18n.format("gui.done")));
+		this.buttonList.add(new GuiButton(301, this.width / 2 + 5, this.height / 6 + 120 - 6, 150, 20, "Mods"));
+		this.buttonList.add(new GuiButton(200, this.width / 2 - 100, this.height / 6 + 192, I18n.format("gui.done")));
 	}
 
 	public String getDifficultyText(EnumDifficulty p_175355_1_) {
@@ -203,6 +202,10 @@ public class GuiOptions extends GuiScreen {
 			if (button.id == 106) {
 				this.mc.gameSettings.saveOptions();
 				this.mc.displayGuiScreen(new GuiScreenOptionsSounds(this, this.settings));
+			}
+
+			if (button.id == 301) {
+				this.mc.displayGuiScreen(new GuiScreenTailsForgeMods(this));
 			}
 		}
 	}

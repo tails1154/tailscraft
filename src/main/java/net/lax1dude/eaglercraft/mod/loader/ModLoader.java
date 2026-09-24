@@ -2,6 +2,10 @@ package net.lax1dude.eaglercraft.mod.loader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import net.lax1dude.eaglercraft.EagRuntime;
 import net.lax1dude.eaglercraft.mod.api.Mod;
 import net.lax1dude.eaglercraft.internal.PlatformApplication;
 
@@ -64,6 +68,36 @@ public class ModLoader {
 
     public static void setModsEnabled(boolean enabled) {
         modsEnabled = enabled;
+    }
+
+    public static void installJavaScriptMod(String fileName, byte[] source) {
+        String safeKey = fileName.replaceAll("[^A-Za-z0-9._-]", "_");
+        try {
+            JSONArray index = new JSONArray();
+            byte[] oldIndex = EagRuntime.getStorage("tailsforge.mods");
+            if (oldIndex != null) index = new JSONArray(new String(oldIndex, StandardCharsets.UTF_8));
+            boolean found = false;
+            for (int i = 0; i < index.length(); ++i) {
+                JSONObject item = index.optJSONObject(i);
+                if (item != null && safeKey.equals(item.optString("key"))) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) index.put(new JSONObject().put("key", safeKey).put("name", fileName));
+            EagRuntime.setStorage("tailsforge.mod." + safeKey, source);
+            EagRuntime.setStorage("tailsforge.mods", index.toString().getBytes(StandardCharsets.UTF_8));
+            System.out.println("[ModLoader] Stored JavaScript mod: " + fileName);
+        } catch (Throwable ex) {
+            System.err.println("[ModLoader] Could not store JavaScript mod " + fileName + ": " + ex);
+        }
+    }
+
+    public static int getJavaScriptModCount() {
+        byte[] index = EagRuntime.getStorage("tailsforge.mods");
+        if (index == null) return 0;
+        try { return new JSONArray(new String(index, StandardCharsets.UTF_8)).length(); }
+        catch (Throwable ex) { return 0; }
     }
 
     public static void onGameStart() {

@@ -36,6 +36,7 @@ async function entryPoint() {
 			if(!await initializeContext()) {
 				return;
 			}
+			initializeTailsForge(eaglercraftXOpts);
 		}else {
 			setLoggerContextName("worker");
 			await initializeContextWorker();
@@ -78,6 +79,9 @@ async function entryPoint() {
 
 		handleMemoryResized(teavm.exports.memory);
 		deobfuscatorFunc = /** @type {function(Array<number>):Array<Object>|null} */ (teavm.exports["deobfuscator"]);
+		if(!isWorker && window["TailsForge"]) {
+			window["TailsForge"]._setWasm(teavm.exports);
+		}
 
 		eagInfo("Calling entry point with args: {}", JSON.stringify(args));
 
