@@ -29,6 +29,8 @@ public final class TailsConnectClient {
     private static String state = "Idle", roomCode, error, pending, selfId, hostId;
     private static boolean handshakeSent, welcomeReceived;
     private static boolean publicLobby;
+    private static org.json.JSONArray searchResults = new org.json.JSONArray();
+    public static org.json.JSONArray getSearchResults() { return searchResults; }
     private static boolean hosting;
     private static int maxPlayers = 4;
     private static long started, heartbeat, hostHeartbeat, hello;
@@ -71,6 +73,7 @@ public final class TailsConnectClient {
         begin("TC3 MATCHMAKE " + new JSONObject().put("game", GAME).put("players", maxPlayers), SingleplayerServerController.isWorldReady());
     }
     public static void searchWorlds() {
+        searchResults = new org.json.JSONArray();
         begin("TC3 SEARCH {\"game\":\"" + GAME + "\",\"limit\":20}", false);
     }
     public static void setPublicLobby(boolean value) { publicLobby = value; }
@@ -171,7 +174,10 @@ public final class TailsConnectClient {
         }
         if (message.startsWith("TC3 ADVERTISED ")) return;
         if (message.startsWith("TC3 SEARCH_RESULTS ")) {
-            try { state = "Found worlds: " + new org.json.JSONArray(message.substring("TC3 SEARCH_RESULTS ".length())).length(); }
+            try {
+                searchResults = new org.json.JSONArray(message.substring("TC3 SEARCH_RESULTS ".length()));
+                state = searchResults.length() == 0 ? "No public worlds found" : "Found worlds: " + searchResults.length();
+            }
             catch (Exception ignored) { state = "World search complete"; }
             return;
         }
