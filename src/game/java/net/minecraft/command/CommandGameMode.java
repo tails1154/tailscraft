@@ -12,6 +12,14 @@ import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
 
 public class CommandGameMode extends CommandBase {
+	@Override
+	public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+		// Only the world owner gets this exception, not guests or other commands.
+		return ("gamemode".equals(getCommandName()) && server.isSinglePlayer()
+				&& sender instanceof EntityPlayer && sender.getName().equals(server.getServerOwner()))
+				|| super.checkPermission(server, sender);
+	}
+
 	/**
 	 * Gets the name of the command
 	 */

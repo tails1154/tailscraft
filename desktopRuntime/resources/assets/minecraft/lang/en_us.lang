@@ -46,6 +46,12 @@ menu.generatingTerrain=Building terrain
 menu.convertingLevel=Converting world
 menu.respawning=Respawning
 menu.shareToLan=Open Realm
+menu.tailsConnect=TailsConnect
+menu.tailsConnect.join=Join Game
+menu.tailsConnect.matchmake=Find Match
+menu.tailsConnect.host=Host Game
+menu.tailsConnect.hostGame=Host Game
+menu.tailsConnect.back=Back
 
 selectWorld.title=Select World
 selectWorld.empty=empty

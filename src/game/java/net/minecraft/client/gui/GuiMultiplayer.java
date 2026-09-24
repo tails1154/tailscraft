@@ -88,7 +88,6 @@ public class GuiMultiplayer extends GuiScreen {
 				new GuiButton(8, this.width / 2 + 4, this.height - 28, 70, 20, I18n.format("selectServer.refresh")));
 		this.buttonList
 				.add(new GuiButton(0, this.width / 2 + 4 + 76, this.height - 28, 75, 20, I18n.format("gui.cancel")));
-	//	this.buttonList.add(new GuiButton(9, this.width / 2 - 50, this.height - 28, 100, 20, I18n.format("selectServer.realms")));
 		this.selectServer(this.serverListSelector.getSelected());
 	}
 

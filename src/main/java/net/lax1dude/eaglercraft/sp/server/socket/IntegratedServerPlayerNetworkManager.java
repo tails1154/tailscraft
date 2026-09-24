@@ -68,7 +68,7 @@ public class IntegratedServerPlayerNetworkManager {
 			temporaryBuffer = new PacketBuffer(Unpooled.buffer(0x1FFFF));
 		}
 		this.playerChannel = playerChannel;
-		this.enableSendCompression = !SingleplayerServerController.PLAYER_CHANNEL.equals(playerChannel);
+		this.enableSendCompression = !SingleplayerServerController.PLAYER_CHANNEL.equals(playerChannel) && !playerChannel.startsWith("tailsconnect-v2-");
 	}
 	
 	public void connect() {

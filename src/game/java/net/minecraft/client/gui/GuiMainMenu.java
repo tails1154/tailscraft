@@ -199,7 +199,7 @@ public class GuiMainMenu extends GuiScreen {
 		this.buttonList.add(
 				new GuiButton(2, this.width / 2 - 100, p_73969_1_ + p_73969_2_ * 1, I18n.format("menu.multiplayer")));
 		this.buttonList
-				.add(new GuiButton(14, this.width / 2 - 100, p_73969_1_ + p_73969_2_ * 2, I18n.format("selectServer.realms")));
+				.add(new GuiButton(14, this.width / 2 - 100, p_73969_1_ + p_73969_2_ * 2, I18n.format("menu.tailsConnect")));
 	}
 
 	/**
@@ -258,8 +258,7 @@ public class GuiMainMenu extends GuiScreen {
 		}
 
 		if (button.id == 14) {
-			ServerData selectedServer = new ServerData(I18n.format("selectServer.defaultName"), "ws://tails1154.com:25565", false);
-			this.mc.displayGuiScreen(new GuiConnecting(this, this.mc, selectedServer));
+			this.mc.displayGuiScreen(new GuiScreenTailsConnect(this, false));
 		}
 	}
 

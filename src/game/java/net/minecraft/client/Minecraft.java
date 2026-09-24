@@ -968,7 +968,7 @@ public class Minecraft implements IThreadListener {
 		this.checkGLError("Post render");
 		++this.fpsCounter;
 
-		boolean flag = this.isSingleplayer() && this.currentScreen != null && this.currentScreen.doesGuiPauseGame();
+		boolean flag = this.isSingleplayer() && !net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient.isHosting() && this.currentScreen != null && this.currentScreen.doesGuiPauseGame();
 		if (this.isGamePaused != flag) {
 			if (this.isGamePaused) {
 				this.field_193996_ah = this.timer.field_194147_b;

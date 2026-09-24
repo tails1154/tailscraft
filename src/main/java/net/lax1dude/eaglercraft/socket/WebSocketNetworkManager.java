@@ -33,6 +33,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 public class WebSocketNetworkManager extends NetworkManager {
 
 	protected final IWebSocketClient webSocketClient;
+	protected boolean preserveControlFrames = false;
 
 	public WebSocketNetworkManager(IWebSocketClient webSocketClient) {
 		super(webSocketClient.getCurrentURI());
@@ -56,7 +57,7 @@ public class WebSocketNetworkManager extends NetworkManager {
 
 	public void processReceivedPackets() throws IOException {
 		if(nethandler == null) return;
-		if(webSocketClient.availableStringFrames() > 0) {
+		if(!preserveControlFrames && webSocketClient.availableStringFrames() > 0) {
 			logger.warn("discarding {} string frames recieved on a binary connection", webSocketClient.availableStringFrames());
 			webSocketClient.clearStringFrames();
 		}

@@ -238,6 +238,7 @@ public class SingleplayerServerController {
 	}
 
 	public static void runTick() {
+		net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient.update();
 		List<IPCPacketData> pktList = ClientPlatformSingleplayer.recieveAllPacket();
 		if (pktList != null) {
 			IPCPacketData packetData;
@@ -259,6 +260,7 @@ public class SingleplayerServerController {
 								packetData.contents.length);
 					}
 				} else {
+					net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient.forward(packetData.channel, packetData.contents);
 					// logger.warn("Recieved packet on IPC channel '{}', forwarding to
 					// PlatformWebRTC even though the channel should be mapped",
 					// packetData.channel);
@@ -381,6 +383,7 @@ public class SingleplayerServerController {
 		}
 		case IPCPacket0CPlayerChannel.ID: {
 			IPCPacket0CPlayerChannel pkt = (IPCPacket0CPlayerChannel) ipc;
+			if (!pkt.open) net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient.channelClosed(pkt.channel);
 //			if(!pkt.open) {
 //				if(pkt.channel.equals(PLAYER_CHANNEL)) {
 //					LANServerController.closeLAN();
