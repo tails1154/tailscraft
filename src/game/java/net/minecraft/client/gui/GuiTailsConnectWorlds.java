@@ -1,6 +1,7 @@
 package net.minecraft.client.gui;
 
 import java.io.IOException;
+import java.util.Arrays;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient;
@@ -71,5 +72,16 @@ public class GuiTailsConnectWorlds extends GuiScreen {
             fontRendererObj.drawStringWithShadow(fontRendererObj.trimStringToWidth(world.optString("description", ""), 228), left + 6, y + 32, 0xAAAAAA);
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
+        for (GuiButton button : buttonList) {
+            if (!button.hovered) continue;
+            String tooltip = null;
+            if (button.id == 0) tooltip = "Return to the TailsConnect menu.";
+            else if (button.id == 1) tooltip = "Search again for currently public worlds.";
+            else if (button.id == 2) tooltip = "Show the previous page of worlds.";
+            else if (button.id == 3) tooltip = "Show the next page of worlds.";
+            else if (button.id >= 100) tooltip = "Join this public world.";
+            if (tooltip != null) drawHoveringText(Arrays.asList(tooltip), mouseX, mouseY);
+            break;
+        }
     }
 }
