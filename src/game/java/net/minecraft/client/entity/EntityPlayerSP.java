@@ -865,12 +865,11 @@ public class EntityPlayerSP extends AbstractClientPlayer {
 		boolean flag4 = (float) this.getFoodStats().getFoodLevel() > 6.0F || this.capabilities.allowFlying;
 
 		if (!this.isSprinting() && this.movementInput.field_192832_b >= 0.8F && flag4 && !this.isHandActive()
-				&& !this.isPotionActive(MobEffects.BLINDNESS) && this.mc.gameSettings.keyBindSprint.isKeyDown()) {
+				&& !this.isPotionActive(MobEffects.BLINDNESS)) {
 			this.setSprinting(true);
 		}
 
-		if (this.isSprinting() && (!this.mc.gameSettings.keyBindSprint.isKeyDown()
-				|| this.movementInput.field_192832_b < 0.8F || this.isCollidedHorizontally || !flag4)) {
+		if (this.isSprinting() && (this.movementInput.field_192832_b < 0.8F || this.isCollidedHorizontally || !flag4)) {
 			this.setSprinting(false);
 		}
 
