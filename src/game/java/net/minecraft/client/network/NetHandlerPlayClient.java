@@ -247,6 +247,7 @@ import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
+import java.util.Locale;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.village.MerchantRecipeList;
@@ -317,6 +318,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	public byte[] cachedServerInfoData = null;
 
 	private boolean isIntegratedServer = false;
+	private boolean authMeGuiOpened = false;
 
 	public NetHandlerPlayClient(Minecraft mcIn, GuiScreen p_i46300_2_, NetworkManager networkManagerIn,
 			GameProfile profileIn) {
@@ -920,6 +922,16 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * Prints a chatmessage in the chat GUI
 	 */
 	public void handleChat(SPacketChat packetIn) {
+		if (!isIntegratedServer && !authMeGuiOpened && packetIn.getChatComponent() != null) {
+			String chat = packetIn.getChatComponent().getUnformattedText().toLowerCase(Locale.ROOT);
+			if (chat.contains("register")) {
+				authMeGuiOpened = true;
+				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, true));
+			} else if (chat.contains("login")) {
+				authMeGuiOpened = true;
+				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, false));
+			}
+		}
 		this.gameController.ingameGUI.func_191742_a(packetIn.func_192590_c(), packetIn.getChatComponent());
 	}
 

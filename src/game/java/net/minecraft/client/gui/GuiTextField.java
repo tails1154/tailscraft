@@ -42,6 +42,7 @@ public class GuiTextField extends Gui {
 	 * If this value is true along with isFocused, keyTyped will process the keys.
 	 */
 	private boolean isEnabled = true;
+	private boolean passwordMode = false;
 
 	/**
 	 * The current character index that should be used as start of the rendered
@@ -432,6 +433,11 @@ public class GuiTextField extends Gui {
 
 			String s = this.fontRendererInstance.trimStringToWidth(this.text.substring(this.lineScrollOffset),
 					this.getWidth());
+			if (this.passwordMode) {
+				StringBuilder masked = new StringBuilder(s.length());
+				for (int n = 0; n < s.length(); ++n) masked.append('*');
+				s = masked.toString();
+			}
 			this.setCursorPosition(this.fontRendererInstance.trimStringToWidth(s, i).length() + this.lineScrollOffset);
 			return true;
 		} else {
@@ -549,6 +555,10 @@ public class GuiTextField extends Gui {
 		if (this.text.length() > length) {
 			this.text = this.text.substring(0, length);
 		}
+	}
+
+	public void setPasswordMode(boolean passwordModeIn) {
+		this.passwordMode = passwordModeIn;
 	}
 
 	/**
