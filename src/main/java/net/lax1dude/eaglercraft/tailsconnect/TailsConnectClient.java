@@ -23,7 +23,7 @@ public final class TailsConnectClient {
     public static final String SERVER = "wss://tails1154.com:9842";
     public static final String CHANNEL_PREFIX = "tailsconnect-v3-";
     private static final String GAME = "tailscraft-1.12.2-packets-v2";
-    private static final Map<String, Long> guests = new LinkedHashMap<>();
+    private static final Map<String, Boolean> guests = new LinkedHashMap<>();
     private static IWebSocketClient socket;
     private static TailsConnectNetworkManager network;
     private static String state = "Idle", roomCode, error, pending, selfId, hostId;
@@ -33,7 +33,7 @@ public final class TailsConnectClient {
     public static org.json.JSONArray getSearchResults() { return searchResults; }
     private static boolean hosting;
     private static int maxPlayers = 4;
-    private static long started, heartbeat, hostHeartbeat, hello;
+    private static long started;
 
     public static void reset() { shutdown("TailsConnect stopped", true); error = null; }
 
@@ -93,7 +93,7 @@ public final class TailsConnectClient {
     private static void begin(String command, boolean host) {
         reset(); hosting = host; pending = command; handshakeSent = false; welcomeReceived = false;
         selfId = EaglercraftUUID.randomUUID().toString().replace("-", "");
-        started = EagRuntime.steadyTimeMillis(); heartbeat = hello = 0;
+        started = EagRuntime.steadyTimeMillis();
         state = "Connecting";
         socket = PlatformNetworking.openWebSocket(SERVER);
         if (socket == null) { fail("Could not open TailsConnect"); return; }
@@ -156,10 +156,9 @@ public final class TailsConnectClient {
                 String id = data.optString("peerId", "");
                 if ("host".equals(data.optString("role"))) {
                     hostId = id;
-                    hostHeartbeat = now;
                     startGuestNetwork();
                 } else if (hosting && id.length() > 0 && !guests.containsKey(id)) {
-                    guests.put(id, now);
+                    guests.put(id, Boolean.TRUE);
                     SingleplayerServerController.sendIPCPacket(new IPCPacket0CPlayerChannel(CHANNEL_PREFIX + id, true));
                 }
             } catch (Exception ignored) { }
@@ -203,8 +202,8 @@ public final class TailsConnectClient {
             started = now;
             state = hosting ? "Sharing world (0/" + (maxPlayers - 1) + " guests)" : "Finding host";
             // The relay can transfer data before its room fills. HELLO establishes each peer
-            // independently; heartbeats start only after the READY exchange.
-            if (!hosting) { socket.send("TC2 HELLO " + selfId); hello = now; }
+            // independently; TC3 PEER_LEAVE and ROOM_CLOSED handle disconnects.
+            if (!hosting) socket.send("TC2 HELLO " + selfId);
             return;
         }
         String[] p = message.split(" ");
@@ -215,17 +214,17 @@ public final class TailsConnectClient {
             if (p[1].equals("HELLO")) {
                 if (!guests.containsKey(id)) {
                     if (guests.size() >= maxPlayers - 1) return;
-                    guests.put(id, now);
+                    guests.put(id, Boolean.TRUE);
                     SingleplayerServerController.sendIPCPacket(new IPCPacket0CPlayerChannel(CHANNEL_PREFIX + id, true));
                 }
                 socket.send("TC3 READY {\"to\":\"" + id + "\"}");
                 state = "Sharing world (" + guests.size() + "/" + (maxPlayers - 1) + " guests)";
-            } else if (p[1].equals("HEARTBEAT") && guests.containsKey(id)) guests.put(id, now);
+            }
             else if (p[1].equals("LEAVE")) closeGuest(id);
             else if (p[1].equals("READY")) { fail("Match has multiple hosts; only one player should open a world"); }
         } else {
             if (p[1].equals("READY") && p.length == 4 && p[3].equals(selfId) && network == null) {
-                hostId = id; hostHeartbeat = now;
+                hostId = id;
                 Minecraft mc = Minecraft.getMinecraft();
                 network = new TailsConnectNetworkManager();
                 network.setConnectionState(EnumConnectionState.LOGIN);
@@ -233,8 +232,7 @@ public final class TailsConnectClient {
                 network.sendPacket(new CPacketLoginStart(mc.getSession().getProfile(), EaglerProfile.getSkinPacket(3), EaglerProfile.getCapePacket(), ConnectionHandshake.getSPHandshakeProtocolData(), EaglercraftVersion.clientBrandUUID));
                 state = "Connected to host";
             } else if (id.equals(hostId)) {
-                if (p[1].equals("HEARTBEAT")) hostHeartbeat = now;
-                else if (p[1].equals("STOP")) fail("Host stopped sharing the world");
+                if (p[1].equals("STOP")) fail("Host stopped sharing the world");
                 else if (p[1].equals("KICK") && p.length == 4 && p[3].equals(selfId)) fail("Disconnected by host");
             }
         }
@@ -273,18 +271,7 @@ public final class TailsConnectClient {
         }
         if (socket == null) return;
         if (roomCode != null && !hosting && network == null) {
-            if (now - hello >= 3000 && hostId == null) { socket.send("TC3 PING"); hello = now; }
             if (now - started > 60000) { fail("No host with an open world was found"); return; }
-        }
-        if (!guests.isEmpty() || hostId != null) {
-            if (now - heartbeat >= 3000) { socket.send("TC3 PING"); heartbeat = now; }
-            for (String id : new ArrayList<>(guests.keySet())) {
-                if (now - guests.get(id) > 20000) {
-                    socket.send("TC3 KICK {\"to\":\"" + id + "\"}");
-                    closeGuest(id);
-                }
-            }
-            if (!hosting && now - hostHeartbeat > 20000) { fail("Host heartbeat timed out"); return; }
         }
         if (hosting && roomCode != null) state = "Sharing world (" + guests.size() + "/" + (maxPlayers - 1) + " guests)";
         if (network != null) {
