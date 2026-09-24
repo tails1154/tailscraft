@@ -60,13 +60,11 @@ public final class TailsConnectClient {
         if (!SingleplayerServerController.isWorldReady()) { error = "Open a singleplayer world first"; return; }
         maxPlayers = normalizePlayers(players);
         JSONObject data = new JSONObject().put("game", GAME).put("maxPlayers", maxPlayers);
-        String worldName = "Tailscraft World";
-        Minecraft mc = Minecraft.getMinecraft();
-        if (mc.world != null && mc.world.getWorldInfo() != null) {
-            String candidate = mc.world.getWorldInfo().getWorldName();
-            if (candidate != null && !candidate.trim().isEmpty()) {
-                worldName = candidate.trim();
-            }
+        String worldName = SingleplayerServerController.getCurrentWorldName();
+        if (worldName == null || worldName.trim().isEmpty()) {
+            worldName = "Tailscraft World";
+        } else {
+            worldName = worldName.trim();
         }
         if (worldName.length() > 64) {
             worldName = worldName.substring(0, 64);

@@ -48,6 +48,7 @@ public class SingleplayerServerController {
 	private static List<String> integratedServerTPS = new ArrayList<>();
 	private static long integratedServerLastTPSUpdate = 0;
 	private static String currentRealmCode = null;
+	private static String currentWorldName = null;
 
 	private SingleplayerServerController() {
 	}
@@ -154,6 +155,7 @@ public class SingleplayerServerController {
 			WorldSettings settings) {
 		ensureReady();
 		clearTPS();
+		currentWorldName = worldName;
 		int difficulty = Minecraft.getMinecraft().gameSettings.difficulty.getDifficultyId();
 
 		if (settings != null) {
@@ -191,6 +193,10 @@ public class SingleplayerServerController {
 
 	public static String getCurrentRealmCode() {
 		return currentRealmCode;
+	}
+
+	public static String getCurrentWorldName() {
+		return currentWorldName;
 	}
 
 	public static long getTPSAge() {
