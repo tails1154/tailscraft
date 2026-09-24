@@ -467,6 +467,11 @@ public class GuiTextField extends Gui {
 			int l = this.enableBackgroundDrawing ? this.xPosition + 4 : this.xPosition;
 			int i1 = this.enableBackgroundDrawing ? this.yPosition + (this.height - 8) / 2 : this.yPosition;
 			int j1 = l;
+			if (this.passwordMode) {
+				StringBuilder masked = new StringBuilder(s.length());
+				for (int n = 0; n < s.length(); ++n) masked.append('*');
+				s = masked.toString();
+			}
 
 			if (k > s.length()) {
 				k = s.length();
