@@ -864,21 +864,13 @@ public class EntityPlayerSP extends AbstractClientPlayer {
 				this.posZ + (double) this.width * 0.35D);
 		boolean flag4 = (float) this.getFoodStats().getFoodLevel() > 6.0F || this.capabilities.allowFlying;
 
-		if (this.onGround && !flag1 && !flag2 && this.movementInput.field_192832_b >= 0.8F && !this.isSprinting()
-				&& flag4 && !this.isHandActive() && !this.isPotionActive(MobEffects.BLINDNESS)) {
-			if (this.sprintToggleTimer <= 0 && !this.mc.gameSettings.keyBindSprint.isKeyDown()) {
-				this.sprintToggleTimer = 7;
-			} else {
-				this.setSprinting(true);
-			}
-		}
-
 		if (!this.isSprinting() && this.movementInput.field_192832_b >= 0.8F && flag4 && !this.isHandActive()
 				&& !this.isPotionActive(MobEffects.BLINDNESS) && this.mc.gameSettings.keyBindSprint.isKeyDown()) {
 			this.setSprinting(true);
 		}
 
-		if (this.isSprinting() && (this.movementInput.field_192832_b < 0.8F || this.isCollidedHorizontally || !flag4)) {
+		if (this.isSprinting() && (!this.mc.gameSettings.keyBindSprint.isKeyDown()
+				|| this.movementInput.field_192832_b < 0.8F || this.isCollidedHorizontally || !flag4)) {
 			this.setSprinting(false);
 		}
 
