@@ -49,6 +49,7 @@ public class SingleplayerServerController {
 	private static long integratedServerLastTPSUpdate = 0;
 	private static String currentRealmCode = null;
 	private static String currentWorldName = null;
+	private static String currentFolderName = null;
 
 	private SingleplayerServerController() {
 	}
@@ -156,6 +157,7 @@ public class SingleplayerServerController {
 		ensureReady();
 		clearTPS();
 		currentWorldName = worldName;
+		currentFolderName = folderName;
 		int difficulty = Minecraft.getMinecraft().gameSettings.difficulty.getDifficultyId();
 
 		if (settings != null) {
@@ -197,6 +199,26 @@ public class SingleplayerServerController {
 
 	public static String getCurrentWorldName() {
 		return currentWorldName;
+	}
+
+	public static void requestWorldExport() {
+		ensureWorldReady();
+		if (currentFolderName == null || currentFolderName.isEmpty()) {
+			throw new IllegalStateException("No singleplayer world is loaded");
+		}
+		exportResponse = null;
+		statusState = IntegratedServerState.WORLD_EXPORTING;
+		sendIPCPacket(new IPCPacket05RequestData(currentFolderName, IPCPacket05RequestData.REQUEST_LEVEL_EAG));
+	}
+
+	public static void importWorld(String worldName, byte[] worldData) {
+		ensureReady();
+		if (worldName == null || worldName.trim().isEmpty() || worldData == null || worldData.length == 0) {
+			throw new IllegalArgumentException("Invalid world transfer");
+		}
+		statusState = IntegratedServerState.WORLD_IMPORTING;
+		sendIPCPacket(new IPCPacket07ImportWorld(worldName.trim(), worldData,
+				IPCPacket07ImportWorld.WORLD_FORMAT_EAG, (byte) 0));
 	}
 
 	public static long getTPSAge() {

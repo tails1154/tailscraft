@@ -192,6 +192,20 @@ public class EaglerIntegratedServerWorker {
 				break;
 			}
 			case IPCPacket05RequestData.ID: {
+				IPCPacket05RequestData pkt = (IPCPacket05RequestData) ipc;
+				if (pkt.request != IPCPacket05RequestData.REQUEST_LEVEL_EAG) {
+					throw new IOException("Unsupported world export format");
+				}
+				if (currentProcess != null && !isServerStopped()) {
+					currentProcess.saveAllWorlds(false);
+				}
+				try {
+					sendIPCPacket(new IPCPacket09RequestResponse(WorldConverterEPK.exportWorld(pkt.worldName)));
+				} catch (Throwable ex) {
+					sendIPCPacket(new IPCPacket15Crashed("COULD NOT EXPORT WORLD \"" + pkt.worldName + "\"!!!\n\n"
+							+ EagRuntime.getStackTrace(ex)));
+					sendTaskFailed();
+				}
 				break;
 			}
 			case IPCPacket06RenameWorldNBT.ID: {

@@ -1,5 +1,6 @@
 package net.lax1dude.eaglercraft.tailsconnect;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,6 +35,17 @@ public final class TailsConnectClient {
     private static boolean hosting;
     private static int maxPlayers = 4;
     private static long started;
+    private static final int TRANSFER_CHUNK_SIZE = 900000;
+    private static final int MAX_TRANSFER_SIZE = 64 * 1024 * 1024;
+    private static boolean transferPreparing;
+    private static byte[] outgoingWorld;
+    private static int outgoingChunk;
+    private static String outgoingWorldName;
+    private static String incomingWorldName;
+    private static byte[][] incomingChunks;
+    private static int incomingChunkCount;
+    private static int incomingChunksReceived;
+    private static int incomingBytes;
 
     public static void reset() { shutdown("TailsConnect stopped", true); error = null; }
 
@@ -49,6 +61,13 @@ public final class TailsConnectClient {
         }
         for (String id : new ArrayList<>(guests.keySet())) closeGuest(id);
         guests.clear();
+        transferPreparing = false;
+        outgoingWorld = null;
+        outgoingChunk = 0;
+        outgoingWorldName = null;
+        incomingWorldName = null;
+        incomingChunks = null;
+        incomingChunkCount = incomingChunksReceived = incomingBytes = 0;
         hostId = pending = roomCode = null;
         state = "Idle";
         if (oldNetwork != null) oldNetwork.closeChannel(new TextComponentString(reason));
@@ -56,6 +75,19 @@ public final class TailsConnectClient {
 
     private static void fail(String message) { shutdown(message, true); error = message; state = "Disconnected"; }
     public static boolean isHosting() { return socket != null && hosting; }
+    public static void transferWorld() {
+        if (!isHosting()) { error = "Host a world before transferring it"; return; }
+        if (guests.isEmpty()) { error = "No connected players to receive the world"; return; }
+        if (transferPreparing || outgoingWorld != null) { error = "A world transfer is already running"; return; }
+        try {
+            transferPreparing = true;
+            state = "Preparing world transfer";
+            SingleplayerServerController.requestWorldExport();
+        } catch (Exception ex) {
+            transferPreparing = false;
+            error = "Could not prepare world: " + ex.getMessage();
+        }
+    }
     public static void host(String ignored, int players) {
         if (!SingleplayerServerController.isWorldReady()) { error = "Open a singleplayer world first"; return; }
         maxPlayers = normalizePlayers(players);
@@ -120,6 +152,92 @@ public final class TailsConnectClient {
         socket.send(TailsConnectFrame.encode(selfId, recipient, bytes));
     }
 
+    private static byte[] transferChunk(int index, int count, byte[] data, int offset, int length) {
+        byte[] packet = new byte[12 + length];
+        packet[0] = 'T'; packet[1] = 'C'; packet[2] = '3'; packet[3] = 'W';
+        packet[4] = (byte) (index >>> 24); packet[5] = (byte) (index >>> 16);
+        packet[6] = (byte) (index >>> 8); packet[7] = (byte) index;
+        packet[8] = (byte) (count >>> 24); packet[9] = (byte) (count >>> 16);
+        packet[10] = (byte) (count >>> 8); packet[11] = (byte) count;
+        System.arraycopy(data, offset, packet, 12, length);
+        return packet;
+    }
+
+    private static boolean isTransferChunk(byte[] packet) {
+        return packet != null && packet.length >= 12 && packet[0] == 'T' && packet[1] == 'C'
+                && packet[2] == '3' && packet[3] == 'W';
+    }
+
+    private static int readInt(byte[] data, int offset) {
+        return ((data[offset] & 255) << 24) | ((data[offset + 1] & 255) << 16)
+                | ((data[offset + 2] & 255) << 8) | (data[offset + 3] & 255);
+    }
+
+    private static void receiveTransferChunk(byte[] packet) {
+        if (incomingChunks == null || packet.length < 12) return;
+        int index = readInt(packet, 4);
+        int count = readInt(packet, 8);
+        if (count != incomingChunkCount || index < 0 || index >= count || incomingChunks[index] != null) return;
+        byte[] chunk = new byte[packet.length - 12];
+        System.arraycopy(packet, 12, chunk, 0, chunk.length);
+        incomingChunks[index] = chunk;
+        incomingChunksReceived++;
+        incomingBytes += chunk.length;
+        state = "Receiving world (" + incomingChunksReceived + "/" + incomingChunkCount + ")";
+        if (incomingChunksReceived != incomingChunkCount) return;
+        try {
+            ByteArrayOutputStream result = new ByteArrayOutputStream(incomingBytes);
+            for (byte[] part : incomingChunks) result.write(part);
+            SingleplayerServerController.importWorld(incomingWorldName, result.toByteArray());
+            state = "World received: " + incomingWorldName;
+        } catch (Exception ex) {
+            error = "Could not import world: " + ex.getMessage();
+        } finally {
+            incomingWorldName = null;
+            incomingChunks = null;
+            incomingChunkCount = incomingChunksReceived = incomingBytes = 0;
+        }
+    }
+
+    private static void updateWorldTransfer() {
+        if (hosting && transferPreparing) {
+            byte[] result = SingleplayerServerController.getExportResponse();
+            if (result != null) {
+                if (result.length == 0 || result.length > MAX_TRANSFER_SIZE) {
+                    transferPreparing = false;
+                    error = "World is too large to transfer (maximum 64 MB)";
+                } else {
+                    outgoingWorld = result;
+                    outgoingWorldName = SingleplayerServerController.getCurrentWorldName();
+                    if (outgoingWorldName == null || outgoingWorldName.trim().isEmpty()) outgoingWorldName = "Shared World";
+                    outgoingWorldName = outgoingWorldName.trim();
+                    outgoingChunk = 0;
+                    transferPreparing = false;
+                }
+            }
+        }
+        if (hosting && outgoingWorld != null && socket != null && socket.isOpen() && !guests.isEmpty()) {
+            int count = (outgoingWorld.length + TRANSFER_CHUNK_SIZE - 1) / TRANSFER_CHUNK_SIZE;
+            if (outgoingChunk == 0) {
+                socket.send("TC3 WORLD_OFFER " + new JSONObject().put("name", outgoingWorldName)
+                        .put("size", outgoingWorld.length).put("chunks", count));
+                state = "Sending world (0/" + count + ")";
+            }
+            int offset = outgoingChunk * TRANSFER_CHUNK_SIZE;
+            int length = Math.min(TRANSFER_CHUNK_SIZE, outgoingWorld.length - offset);
+            byte[] packet = transferChunk(outgoingChunk, count, outgoingWorld, offset, length);
+            for (String id : new ArrayList<>(guests.keySet())) send(id, packet);
+            outgoingChunk++;
+            state = "Sending world (" + outgoingChunk + "/" + count + ")";
+            if (outgoingChunk >= count) {
+                outgoingWorld = null;
+                outgoingWorldName = null;
+                outgoingChunk = 0;
+                state = "World transfer complete";
+            }
+        }
+    }
+
     private static void startGuestNetwork() {
         if (network != null || hostId == null) return;
         Minecraft mc = Minecraft.getMinecraft();
@@ -160,6 +278,25 @@ public final class TailsConnectClient {
                     SingleplayerServerController.sendIPCPacket(new IPCPacket0CPlayerChannel(CHANNEL_PREFIX + id, true));
                 }
             } catch (Exception ignored) { }
+            return;
+        }
+        if (message.startsWith("TC3 WORLD_OFFER ")) {
+            if (hosting) return;
+            try {
+                JSONObject data = new JSONObject(message.substring(16));
+                int size = data.optInt("size", 0);
+                int chunks = data.optInt("chunks", 0);
+                if (size <= 0 || size > MAX_TRANSFER_SIZE || chunks <= 0
+                        || chunks > (MAX_TRANSFER_SIZE + TRANSFER_CHUNK_SIZE - 1) / TRANSFER_CHUNK_SIZE) {
+                    error = "The offered world is too large or invalid";
+                    return;
+                }
+                incomingWorldName = data.optString("name", "Shared World");
+                incomingChunkCount = chunks;
+                incomingChunks = new byte[chunks][];
+                incomingChunksReceived = incomingBytes = 0;
+                state = "Receiving world (0/" + chunks + ")";
+            } catch (Exception ex) { error = "Invalid world transfer offer"; }
             return;
         }
         if (message.startsWith("TC3 PEER_LEAVE ")) {
@@ -262,7 +399,9 @@ public final class TailsConnectClient {
             else {
                 TailsConnectFrame packet = TailsConnectFrame.decode(frame.getByteArray());
                 if (packet == null || !packet.recipient.equals(selfId)) continue;
-                if (hosting && guests.containsKey(packet.sender))
+                if (!hosting && packet.sender.equals(hostId) && isTransferChunk(packet.payload))
+                    receiveTransferChunk(packet.payload);
+                else if (hosting && guests.containsKey(packet.sender))
                     ClientPlatformSingleplayer.sendPacket(new IPCPacketData(CHANNEL_PREFIX + packet.sender, packet.payload));
                 else if (!hosting && network != null && packet.sender.equals(hostId)) network.addRecievedPacket(packet.payload);
             }
@@ -272,6 +411,7 @@ public final class TailsConnectClient {
             if (now - started > 60000) { fail("No host with an open world was found"); return; }
         }
         if (hosting && roomCode != null) state = "Sharing world (" + guests.size() + "/" + (maxPlayers - 1) + " guests)";
+        updateWorldTransfer();
         if (network != null) {
             try { network.processReceivedPackets(); if (network != null) network.checkDisconnected(); }
             catch (Exception ex) { fail("Game connection failed: " + ex.getMessage()); }
