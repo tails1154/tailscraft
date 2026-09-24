@@ -27,6 +27,7 @@ import net.lax1dude.eaglercraft.IOUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockModelShapes;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.multipart.Multipart;
 import net.minecraft.client.renderer.block.model.multipart.Selector;
 import net.minecraft.client.renderer.block.statemap.BlockStateMapper;
@@ -105,13 +106,21 @@ public class ModelBakery {
 	}
 
 	public IRegistry<ModelResourceLocation, IBakedModel> setupModelRegistry() {
+		Minecraft.getMinecraft().renderModelLoadingProgress(0);
 		this.loadBlocks();
+		Minecraft.getMinecraft().renderModelLoadingProgress(15);
 		this.loadVariantItemModels();
+		Minecraft.getMinecraft().renderModelLoadingProgress(30);
 		this.loadModelsCheck();
+		Minecraft.getMinecraft().renderModelLoadingProgress(50);
 		this.loadSprites();
+		Minecraft.getMinecraft().renderModelLoadingProgress(65);
 		this.makeItemModels();
+		Minecraft.getMinecraft().renderModelLoadingProgress(75);
 		this.bakeBlockModels();
+		Minecraft.getMinecraft().renderModelLoadingProgress(90);
 		this.bakeItemModels();
+		Minecraft.getMinecraft().renderModelLoadingProgress(100);
 		return this.bakedRegistry;
 	}
 

@@ -18,7 +18,7 @@ public class GuiVideoSettings extends GuiScreen {
 			GameSettings.Options.GUI_SCALE, GameSettings.Options.ATTACK_INDICATOR, GameSettings.Options.GAMMA,
 			GameSettings.Options.RENDER_CLOUDS, GameSettings.Options.PARTICLES, GameSettings.Options.USE_FULLSCREEN,
 			GameSettings.Options.ENABLE_VSYNC, GameSettings.Options.MIPMAP_LEVELS,
-			GameSettings.Options.ENTITY_SHADOWS, GameSettings.Options.FOG, GameSettings.Options.FNAW_SKINS,
+			GameSettings.Options.ENTITY_SHADOWS, GameSettings.Options.FOG, GameSettings.Options.RAIN_SNOW, GameSettings.Options.FNAW_SKINS,
 			GameSettings.Options.HUD_FPS, GameSettings.Options.HUD_COORDS, GameSettings.Options.CHUNK_UPDATES, GameSettings.Options.CHUNK_FIX,
 			GameSettings.Options.OF_CUSTOM_ITEMS };
 

@@ -188,6 +188,7 @@ public class GuiMainMenu extends GuiScreen {
 		this.buttonList.add(new GuiButton(0, this.width / 2 - 100, j + 72 + 12, 98, 20, I18n.format("menu.options")));
 		this.buttonList.add(new GuiButton(4, this.width / 2 + 2, j + 72 + 12, 98, 20, I18n.format("Edit Profile")));
 		this.buttonList.add(new GuiButtonLanguage(5, this.width / 2 - 124, j + 72 + 12));
+		this.buttonList.add(new GuiButton(15, this.width / 2 - 100, j + 108, 200, 20, "GitHub"));
 	}
 
 	/**
@@ -259,6 +260,10 @@ public class GuiMainMenu extends GuiScreen {
 
 		if (button.id == 14) {
 			this.mc.displayGuiScreen(new GuiScreenTailsConnect(this, false));
+		}
+
+		if (button.id == 15) {
+			EagRuntime.openLink("https://github.com/tails1154/tailscraft");
 		}
 	}
 

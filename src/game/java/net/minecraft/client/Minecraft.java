@@ -331,6 +331,7 @@ public class Minecraft implements IThreadListener {
 	private SoundHandler mcSoundHandler;
 	private MusicTicker mcMusicTicker;
 	private ResourceLocation mojangLogo;
+	private int modelLoadingProgress = -1;
 	private final List<FutureTask<?>> scheduledTasks = new LinkedList();
 	private ModelManager modelManager;
 
@@ -521,6 +522,7 @@ public class Minecraft implements IThreadListener {
 		this.modelManager = new ModelManager(this.textureMapBlocks);
 		this.renderSplashScreen(42, "Registering Model Manager reload listener...");
 		this.mcResourceManager.registerReloadListener(this.modelManager);
+		this.modelLoadingProgress = -1;
 		this.renderSplashScreen(44, "Initializing Block colors...");
 		this.blockColors = BlockColors.init();
 		this.renderSplashScreen(46, "Initializing Item colors...");
@@ -575,7 +577,7 @@ public class Minecraft implements IThreadListener {
 		EaglerProfile.read();
 		this.renderSplashScreen(98, "Loading cookie data store...");
 		ServerCookieDataStore.load();
-		this.renderSplashScreen(100, "Ready!");
+		this.renderSplashScreen(100, "Loading GUI");
 		
 		if (this.serverName != null) {
 			this.displayGuiScreen(new GuiConnecting(new GuiScreenEditProfile(new GuiMainMenu()), this, this.serverName,
@@ -789,13 +791,26 @@ public class Minecraft implements IThreadListener {
 			bufferbuilder.pos((double) (k1 + progress), (double) l1, 0.0D).color(128, 255, 128, 255)
 					.endVertex();
 			tessellator.draw();
+			if (this.modelLoadingProgress >= 0) {
+				int subY = l1 + 8;
+				bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+				bufferbuilder.pos((double) k1, (double) subY, 0.0D).color(128, 128, 128, 255).endVertex();
+				bufferbuilder.pos((double) k1, (double) (subY + 2), 0.0D).color(128, 128, 128, 255).endVertex();
+				bufferbuilder.pos((double) (k1 + 100), (double) (subY + 2), 0.0D).color(128, 128, 128, 255).endVertex();
+				bufferbuilder.pos((double) (k1 + 100), (double) subY, 0.0D).color(128, 128, 128, 255).endVertex();
+				bufferbuilder.pos((double) k1, (double) subY, 0.0D).color(96, 160, 255, 255).endVertex();
+				bufferbuilder.pos((double) k1, (double) (subY + 2), 0.0D).color(96, 160, 255, 255).endVertex();
+				bufferbuilder.pos((double) (k1 + this.modelLoadingProgress), (double) (subY + 2), 0.0D).color(96, 160, 255, 255).endVertex();
+				bufferbuilder.pos((double) (k1 + this.modelLoadingProgress), (double) subY, 0.0D).color(96, 160, 255, 255).endVertex();
+				tessellator.draw();
+			}
 			GlStateManager.enableTexture2D();
 			
 			if (this.fontRendererObj != null && status != null && !status.isEmpty()) {
 				int width = this.fontRendererObj.getStringWidth(status);
 				int x = (k - width) / 2;
-				int y = l1 + 6;
-				this.fontRendererObj.drawStringWithShadow(status, x, y, 16777215);
+				int y = l1 + (this.modelLoadingProgress >= 0 ? 14 : 6);
+				this.fontRendererObj.drawString(status, x, y, 0);
 			}
 		}
 		GlStateManager.disableLighting();
@@ -803,6 +818,13 @@ public class Minecraft implements IThreadListener {
 		GlStateManager.enableAlpha();
 		GlStateManager.alphaFunc(516, 0.1F);
 		this.updateDisplay();
+	}
+
+	public void renderModelLoadingProgress(int progress) {
+		if (this.mojangLogo != null) {
+			this.modelLoadingProgress = Math.max(0, Math.min(100, progress));
+			this.renderSplashScreen(42, "Loading models...");
+		}
 	}
 
 	/**

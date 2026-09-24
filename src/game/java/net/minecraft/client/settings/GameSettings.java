@@ -70,7 +70,7 @@ public class GameSettings {
 	public int limitFramerate = 260;
 
 	/** Clouds flag */
-	public int clouds = 1;
+	public int clouds = 0;
 	public boolean fancyGraphics = false;
 
 	/** Smooth Lighting */
@@ -106,11 +106,11 @@ public class GameSettings {
 	public int mipmapLevels = 0;
 	private final Map<SoundCategory, Float> soundLevels = Maps.newEnumMap(SoundCategory.class);
 	public boolean useNativeTransport = true;
-	public boolean entityShadows = true;
+	public boolean entityShadows = false;
 	public int attackIndicator = 1;
 	public boolean enableWeakAttacks;
 	public boolean showSubtitles;
-	public boolean autoJump = true;
+	public boolean autoJump = false;
 	public TutorialSteps field_193631_S = TutorialSteps.MOVEMENT;
 	public KeyBinding keyBindForward = new KeyBinding("key.forward", 17, "key.categories.movement");
 	public KeyBinding keyBindLeft = new KeyBinding("key.left", 30, "key.categories.movement");
@@ -164,14 +164,14 @@ public class GameSettings {
 	public boolean smoothCamera;
 	public boolean debugCamEnable;
 	public float fovSetting;
-	public float gammaSetting;
+	public float gammaSetting = 1.0F;
 	public float saturation;
 
 	/** GUI scale */
 	public int guiScale;
 
 	/** Determines amount of particles. 0 = All, 1 = Decreased, 2 = Minimal */
-	public int particleSetting;
+	public int particleSetting = 2;
 	// public int field_192571_R;
 
 	/** Game settings language */
@@ -180,7 +180,7 @@ public class GameSettings {
 
 	public boolean hasSeenFirstLoad;
 	public boolean hasWorldListBeenConverted;
-	public boolean enableFNAWSkins = true;
+	public boolean enableFNAWSkins = false;
 	public boolean hasHiddenPhishWarning = false;
 	public boolean hideDefaultUsernameWarning = false;
 	public int ofChunkUpdates = 1;
@@ -188,7 +188,8 @@ public class GameSettings {
 	
 	public boolean hudFps = true;
 	public boolean hudCoords = true;
-	public boolean fog = true;
+	public boolean fog = false;
+	public boolean rainSnow = false;
 	
 	public boolean customItemsOF = true;
 
@@ -482,6 +483,10 @@ public class GameSettings {
 		if (settingsOption == GameSettings.Options.FOG) {
 			this.fog = !this.fog;
 		}
+
+		if (settingsOption == GameSettings.Options.RAIN_SNOW) {
+			this.rainSnow = !this.rainSnow;
+		}
 		
 		if (settingsOption == GameSettings.Options.OF_CUSTOM_ITEMS) {
 			this.customItemsOF = !this.customItemsOF;
@@ -563,6 +568,8 @@ public class GameSettings {
 			return this.hudFps;
 		case FOG:
 			return this.fog;
+		case RAIN_SNOW:
+			return this.rainSnow;
 		case OF_CUSTOM_ITEMS:
 			return this.customItemsOF;
 		default:
@@ -974,6 +981,10 @@ public class GameSettings {
 					if ("fog".equals(s1)) {
 						this.fog = "true".equals(s2);
 					}
+
+					if ("rainSnow".equals(s1)) {
+						this.rainSnow = "true".equals(s2);
+					}
 					
 					if ("customItemsOF".equals(s1)) {
 						this.customItemsOF = "true".equals(s2);
@@ -1125,6 +1136,7 @@ public class GameSettings {
 			printwriter.println("hudFps:" + this.hudFps);
 			printwriter.println("hudCoords:" + this.hudCoords);
 			printwriter.println("fog:" + this.fog);
+			printwriter.println("rainSnow:" + this.rainSnow);
 			printwriter.println("customItemsOF:" + this.customItemsOF);
 
 			for (KeyBinding keybinding : this.keyBindings) {
@@ -1251,6 +1263,7 @@ public class GameSettings {
 		HUD_FPS("options.hud.fps", false, true),
 		HUD_COORDS("options.hud.coords", false, true),
 		FOG("options.fog", false, true),
+		RAIN_SNOW("options.enableRain", false, true),
 		OF_CUSTOM_ITEMS("options.customItemsOF", false, true);
 
 		// NARRATOR("options.narrator", false, false),
