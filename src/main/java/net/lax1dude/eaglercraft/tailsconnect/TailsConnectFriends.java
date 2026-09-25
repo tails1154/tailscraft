@@ -189,12 +189,6 @@ public final class TailsConnectFriends {
 
     private static boolean showJoinRequestDialog() {
         if (pendingJoinCode == null) return false;
-        if (!TailsConnectClient.isHosting() || TailsConnectClient.getRoomCode() == null) {
-            error = "Host a TailsConnect world before accepting";
-            pendingJoinCode = null;
-            pendingJoinName = null;
-            return true;
-        }
         final String requestCode = pendingJoinCode;
         final String requestName = pendingJoinName == null ? "this player" : pendingJoinName;
         final GuiScreen previous = Minecraft.getMinecraft().currentScreen;
@@ -203,9 +197,14 @@ public final class TailsConnectFriends {
         Minecraft.getMinecraft().displayGuiScreen(new GuiYesNo(new GuiYesNoCallback() {
             public void confirmClicked(boolean result, int id) {
                 if (result) {
-                    send("JOIN_APPROVE", new JSONObject().put("code", requestCode)
-                            .put("room", TailsConnectClient.getRoomCode()).put("game", TailsConnectClient.GAME_ID));
-                    state = "Join request accepted";
+                    String room = TailsConnectClient.getRoomCode();
+                    if (room == null) {
+                        error = "You are not in a TailsConnect world";
+                    } else {
+                        send("JOIN_APPROVE", new JSONObject().put("code", requestCode)
+                                .put("room", room).put("game", TailsConnectClient.GAME_ID));
+                        state = "Join request accepted";
+                    }
                 } else {
                     send("JOIN_DENY", new JSONObject().put("code", requestCode));
                     state = "Join request declined";
