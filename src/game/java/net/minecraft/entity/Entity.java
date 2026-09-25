@@ -2559,6 +2559,9 @@ public abstract class Entity implements ICommandSender {
 
 	@Nullable
 	public Entity changeDimension(int dimensionIn) {
+		if (this.world == null || this.world.isRemote || this.isDead) {
+			return null;
+		}
 		if (!this.world.isRemote && !this.isDead) {
 			MinecraftServer minecraftserver = this.getServer();
 			// Browser integrated-server worlds can briefly detach their server while
@@ -2983,6 +2986,9 @@ public abstract class Entity implements ICommandSender {
 	 */
 	public float getRotatedYaw(Rotation transformRotation) {
 		float f = MathHelper.wrapDegrees(this.rotationYaw);
+		if (transformRotation == null) {
+			return f;
+		}
 
 		switch (transformRotation) {
 		case CLOCKWISE_180:
