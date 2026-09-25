@@ -69,6 +69,7 @@ public class GuiTailsConnectWorldSelection extends GuiScreen {
 			WorldSummary world = worlds.get(selected);
 			if (mc.getSaveLoader().canLoadWorld(world.getFileName())) {
 				TailsConnectClient.hostSelectedWorld(world.getFileName(), world.getDisplayName(), players);
+				mc.displayGuiScreen(parent);
 			}
 		} else if (button.id == 2 && page > 0) {
 			page--;
