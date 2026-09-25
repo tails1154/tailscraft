@@ -31,7 +31,11 @@ public class GuiScreenTailsConnectFriends extends GuiScreen {
 			if (showingRequests) buttonList.add(new GuiButton(100 + index, left + 216, 112 + row * 60, 84, 20, "Accept"));
 			else {
 				JSONObject friend = entries.optJSONObject(index);
-				if (friend != null && friend.optBoolean("online", false) && !friend.optString("room", "").isEmpty()) buttonList.add(new GuiButton(200 + index, left + 126, 112 + row * 60, 84, 20, "Join game"));
+                boolean playing = friend != null && friend.optBoolean("online", false)
+                        && ("Playing".equalsIgnoreCase(friend.optString("activity", ""))
+                                || friend.optBoolean("joinable", false)
+                                || !friend.optString("room", "").isEmpty());
+                if (playing) buttonList.add(new GuiButton(200 + index, left + 126, 112 + row * 60, 84, 20, "Join game"));
 				buttonList.add(new GuiButton(400 + index, left + 216, 112 + row * 60, 84, 20, "Remove"));
 			}
 		}
