@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import net.lax1dude.eaglercraft.internal.IPCPacketData;
 import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
@@ -48,6 +50,8 @@ public final class TC5WorldServerMain {
     private static volatile boolean running = true;
     private static volatile boolean startSent;
     private static boolean reuseWorld;
+    private static boolean serverStarted;
+    private static final Set<String> pendingChannels = new HashSet<>();
     private static String hostedWorldName;
     private static String hostedFolderName;
 
@@ -195,6 +199,17 @@ public final class TC5WorldServerMain {
                 }
             }
             if (packet instanceof IPCPacketFFProcessKeepAlive
+                    && ((IPCPacketFFProcessKeepAlive) packet).ack == IPCPacket00StartServer.ID) {
+                serverStarted = true;
+                for (String channel : new HashSet<>(pendingChannels)) {
+                    try {
+                        enqueue(new net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel(channel, true));
+                    } catch (IOException ex) {
+                        running = false;
+                    }
+                }
+            }
+            if (packet instanceof IPCPacketFFProcessKeepAlive
                     && ((IPCPacketFFProcessKeepAlive) packet).ack == 0xFF
                     && !startSent && hostedWorldName != null && reuseWorld) {
                 startSent = true;
@@ -214,9 +229,15 @@ public final class TC5WorldServerMain {
         DataInputStream input = new DataInputStream(bytes);
         String channel = input.readUTF();
         if (open) {
-            enqueue(new net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel(channel, true));
+            pendingChannels.add(channel);
+            if (serverStarted) {
+                enqueue(new net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel(channel, true));
+            }
         } else {
-            enqueue(new net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel(channel, false));
+            pendingChannels.remove(channel);
+            if (serverStarted) {
+                enqueue(new net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel(channel, false));
+            }
         }
     }
 

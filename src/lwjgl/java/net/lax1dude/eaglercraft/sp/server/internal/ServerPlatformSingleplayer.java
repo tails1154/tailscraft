@@ -9,6 +9,7 @@ import net.lax1dude.eaglercraft.internal.IClientConfigAdapter;
 import net.lax1dude.eaglercraft.internal.IEaglerFilesystem;
 import net.lax1dude.eaglercraft.internal.IPCPacketData;
 import net.lax1dude.eaglercraft.internal.lwjgl.DesktopClientConfigAdapter;
+import net.lax1dude.eaglercraft.internal.vfs2.VFile2;
 import net.lax1dude.eaglercraft.sp.server.IWASMCrashCallback;
 import net.lax1dude.eaglercraft.sp.server.internal.lwjgl.MemoryConnection;
 
@@ -35,6 +36,10 @@ public class ServerPlatformSingleplayer {
 	public static void initializeContext() {
 		if (filesystem == null) {
 			filesystem = Filesystem.getHandleFor(getClientConfigAdapter().getWorldsDB());
+			// The desktop client normally sets this from PlatformRuntime.create().
+			// A headless TC5 daemon has no client runtime, so establish the VFS
+			// primary filesystem explicitly before importing or loading a world.
+			VFile2.setPrimaryFilesystem(filesystem);
 		}
 	}
 
