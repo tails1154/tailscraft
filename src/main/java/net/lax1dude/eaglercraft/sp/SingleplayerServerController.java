@@ -267,6 +267,7 @@ public class SingleplayerServerController {
 
 	public static void runTick() {
 		net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient.update();
+		net.lax1dude.eaglercraft.tailsconnect.TailsConnectFriends.update();
 		List<IPCPacketData> pktList = ClientPlatformSingleplayer.recieveAllPacket();
 		if (pktList != null) {
 			IPCPacketData packetData;

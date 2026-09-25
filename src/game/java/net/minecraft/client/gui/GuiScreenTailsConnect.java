@@ -36,7 +36,8 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		buttonList.add(new GuiButton(8, left + 154, top + 104, 146, 20, publicLabel()));
 		buttonList.add(new GuiButton(4, left, top + 128, 300, 20, "Host World"));
 		buttonList.add(new GuiButton(3, left, top + 152, 300, 20, "Find Match"));
-		buttonList.add(new GuiButton(9, left, top + 176, 300, 20, "World Transfer"));
+		buttonList.add(new GuiButton(9, left, top + 176, 146, 20, "World Transfer"));
+		buttonList.add(new GuiButton(10, left + 154, top + 176, 146, 20, "Friends"));
 		buttonList.add(new GuiButton(0, left, top + 206, 146, 20, I18n.format("menu.tailsConnect.back")));
 		buttonList.add(new GuiButton(5, left + 154, top + 206, 146, 20, "Stop / Cancel"));
 	}
@@ -54,6 +55,10 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		mc.displayGuiScreen(new GuiScreenTailsConnectTransfer(this));
 	}
 
+	private void openFriends() {
+		mc.displayGuiScreen(new GuiScreenTailsConnectFriends(this));
+	}
+
 	protected void actionPerformed(GuiButton b) throws IOException {
 		if (b.id == 0) mc.displayGuiScreen(parent);
 		else if (b.id == 5) TailsConnectClient.reset();
@@ -64,6 +69,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		else if (b.id == 6) { players = players == 4 ? 2 : players + 1; b.displayString = playerLabel(); }
 		else if (b.id == 8) { TailsConnectClient.setPublicLobby(!TailsConnectClient.isPublicLobby()); b.displayString = publicLabel(); }
 		else if (b.id == 9) openWorldTransfer();
+		else if (b.id == 10) openFriends();
 	}
 
 	private String tooltipFor(GuiButton button) {
@@ -76,6 +82,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		case 3: return "Wait in the background until players are matched.";
 		case 5: return "Cancel matchmaking or disconnect from the current world.";
 		case 9: return "Send the host's saved world to connected players as a new local world.";
+		case 10: return "Manage your TC4 friends and friend requests.";
 		case 0: return "Return to the previous menu.";
 		default: return null;
 		}
