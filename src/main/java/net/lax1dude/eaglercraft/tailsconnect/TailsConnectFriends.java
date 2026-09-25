@@ -110,8 +110,8 @@ public final class TailsConnectFriends {
                 state = "Join request from " + pendingJoinName;
                 SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
                         SystemToast.Type.TAILSCONNECT_JOIN,
-                        new TextComponentString("Someone wants to join your world"),
-                        new TextComponentString("Press J for options"));
+                        new TextComponentString("Join request"),
+                        new TextComponentString("Press J"));
             } catch (Exception ex) { error = "Could not read join request"; }
         } else if (message.startsWith("TC4 FRIEND_STATUS ")) {
             requestListRefresh();
@@ -125,6 +125,8 @@ public final class TailsConnectFriends {
             } catch (Exception ex) { error = "Could not join friend world"; }
         } else if (message.startsWith("TC4 JOIN_STATUS ")) {
             state = "Join request sent";
+        } else if (message.startsWith("TC4 JOIN_DENIED ")) {
+            error = "Join request declined";
         } else if (message.startsWith("TC4 ERROR ")) {
             try { error = new JSONObject(message.substring(10)).optString("message", "TC4 error"); }
             catch (Exception ex) { error = "TC4 error"; }
@@ -194,6 +196,7 @@ public final class TailsConnectFriends {
                             .put("room", TailsConnectClient.getRoomCode()).put("game", TailsConnectClient.GAME_ID));
                     state = "Join request accepted";
                 } else {
+                    send("JOIN_DENY", new JSONObject().put("code", requestCode));
                     state = "Join request declined";
                 }
                 Minecraft.getMinecraft().displayGuiScreen(previous);

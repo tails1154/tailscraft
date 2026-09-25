@@ -382,7 +382,9 @@ public final class TailsConnectClient {
         if (pending != null) {
             if (socket.isOpen()) {
                 if (!handshakeSent) {
-                    socket.send("TC3 HELLO {\"version\":3,\"features\":[\"rooms\",\"presence\",\"search\",\"disconnects\",\"relay\"]}");
+                    socket.send("TC3 HELLO " + new JSONObject().put("version", 3)
+                            .put("features", new org.json.JSONArray(new String[] { "rooms", "presence", "search", "disconnects", "relay" }))
+                            .put("friendCode", TailsConnectFriends.getFriendCode()));
                     handshakeSent = true;
                 } else if (welcomeReceived) {
                     socket.send(pending);

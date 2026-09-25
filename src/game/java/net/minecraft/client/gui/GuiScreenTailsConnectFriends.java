@@ -36,7 +36,6 @@ public class GuiScreenTailsConnectFriends extends GuiScreen {
 			JSONObject friend = friends.getJSONObject(i);
 			if (friend.optBoolean("online", false)) {
 				GuiButton join = new GuiButton(200 + i, left + 142, 196 + i * 24, 70, 20, "Join game");
-				join.enabled = friend.optBoolean("joinable", false);
 				buttonList.add(join);
 			}
 			buttonList.add(new GuiButton(400 + i, left + 216, 196 + i * 24, 84, 20, "Remove"));
