@@ -10,6 +10,7 @@ import net.lax1dude.eaglercraft.profile.EaglerProfile;
 import net.lax1dude.eaglercraft.crypto.SHA256Digest;
 import net.lax1dude.eaglercraft.socket.ConnectionHandshake;
 import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
+import net.lax1dude.eaglercraft.sp.IntegratedServerState;
 import net.lax1dude.eaglercraft.sp.internal.ClientPlatformSingleplayer;
 import net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel;
 import net.lax1dude.eaglercraft.sp.socket.NetHandlerSingleplayerLogin;
@@ -56,6 +57,7 @@ public final class TailsConnectClient {
     private static String hostedWorldId;
     private static String hostedUploadHash;
     private static int pendingHostedPlayers = -1;
+    private static String pendingHostedRoom;
 
     public static void reset() { shutdown("TailsConnect stopped", true); error = null; }
 
@@ -83,6 +85,7 @@ public final class TailsConnectClient {
         hostedWorldId = null;
         hostedUploadHash = null;
         pendingHostedPlayers = -1;
+        pendingHostedRoom = null;
         hostId = pending = roomCode = null;
         state = "Idle";
         if (oldNetwork != null) oldNetwork.closeChannel(new TextComponentString(reason));
@@ -369,17 +372,17 @@ public final class TailsConnectClient {
                     return;
                 }
                 // The browser is no longer the world host. Stop its local worker,
-                // leave the temporary upload room, and rejoin through the TC5 daemon.
+                // then rejoin through the TC5 daemon after the worker confirms it
+                // has reached WORLD_NONE. Joining before that acknowledgement can
+                // leave the browser visibly playing the old local world.
                 SingleplayerServerController.shutdownEaglercraftServer();
                 hosting = false;
                 hostedMode = false;
                 hostedExportRequested = false;
                 hostedUploadReady = false;
                 outgoingWorld = null;
-                socket.send("TC3 LEAVE");
-                socket.send("TC3 JOIN " + new JSONObject().put("game", GAME).put("room", hostedRoom));
-                roomCode = hostedRoom;
-                state = "Connecting to hosted world";
+                pendingHostedRoom = hostedRoom;
+                state = "Stopping local world";
             } catch (Exception ex) {
                 error = "Could not join hosted world: " + ex.getMessage();
             }
@@ -510,6 +513,18 @@ public final class TailsConnectClient {
         long now = EagRuntime.steadyTimeMillis();
         if (hosting && !SingleplayerServerController.isWorldRunning()) { fail("Host world closed"); return; }
         if (socket.isClosed() || socket.getState() == EnumEaglerConnectionState.FAILED) { fail("Relay disconnected"); return; }
+        if (pendingHostedRoom != null) {
+            if (SingleplayerServerController.getStatusState() == IntegratedServerState.WORLD_NONE) {
+                String hostedRoom = pendingHostedRoom;
+                pendingHostedRoom = null;
+                Minecraft.getMinecraft().loadWorld((net.minecraft.client.multiplayer.WorldClient) null);
+                socket.send("TC3 LEAVE");
+                socket.send("TC3 JOIN " + new JSONObject().put("game", GAME).put("room", hostedRoom));
+                roomCode = hostedRoom;
+                state = "Connecting to hosted world";
+            }
+            return;
+        }
         if (pending != null) {
             if (socket.isOpen()) {
                 if (!handshakeSent) {
@@ -576,8 +591,10 @@ public final class TailsConnectClient {
         int length = Math.min(TRANSFER_CHUNK_SIZE, outgoingWorld.length - offset);
         socket.send(transferChunk(outgoingChunk, count, outgoingWorld, offset, length));
         outgoingChunk++;
-        state = "Uploading hosted world (" + outgoingChunk + "/" + count + ")";
+        int percent = Math.min(100, (outgoingChunk * 100) / count);
+        state = "Uploading hosted world (" + percent + "%)";
         if (outgoingChunk >= count) {
+            state = "Uploading hosted world (100%)";
             outgoingWorld = null;
             outgoingChunk = 0;
             hostedUploadReady = false;

@@ -13,7 +13,9 @@ import net.minecraft.world.storage.WorldSummary;
 public class GuiTailsConnectWorldSelection extends GuiScreen {
 	private static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
 	private static final int CARD_HEIGHT = 58;
-	private static final int CARDS_PER_PAGE = 5;
+	// Three cards fit comfortably above the bottom controls at the smallest
+	// supported game window size.
+	private static final int CARDS_PER_PAGE = 3;
 	private final GuiScreen parent;
 	private final int players;
 	private List<WorldSummary> worlds;
