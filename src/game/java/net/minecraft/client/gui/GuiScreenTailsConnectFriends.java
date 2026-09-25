@@ -21,7 +21,7 @@ public class GuiScreenTailsConnectFriends extends GuiScreen {
 	public void initGui() {
 		TailsConnectFriends.open(); page = Math.min(page, maxPage()); buttonList.clear();
 		int left = width / 2 - 150;
-		friendName = new GuiTextField(0, fontRendererObj, left, 72, 210, 20); friendName.setMaxStringLength(24);
+		friendName = new GuiTextField(0, fontRendererObj, left + 112, 72, 96, 20); friendName.setMaxStringLength(24);
 		buttonList.add(new GuiButton(10, left, 48, 146, 20, "Requests"));
 		buttonList.add(new GuiButton(11, left + 154, 48, 146, 20, "Friends"));
 		buttonList.add(new GuiButton(1, left + 216, 72, 84, 20, "Add Friend"));
@@ -61,7 +61,7 @@ public class GuiScreenTailsConnectFriends extends GuiScreen {
 		drawDefaultBackground(); int left = width / 2 - 150;
 		drawCenteredString(fontRendererObj, "TailsCraft Friends (TC4)", width / 2, 10, 0xFFFFFF);
 		drawCenteredString(fontRendererObj, "Your code: " + TailsConnectFriends.getFriendCode(), width / 2, 27, 0xAAAAAA);
-		drawString(fontRendererObj, "Friend name or code:", left, 62, 0xFFFFFF); friendName.drawTextBox();
+		drawString(fontRendererObj, "Friend name or code:", left, 78, 0xFFFFFF); friendName.drawTextBox();
 		JSONArray entries = displayed();
 		for (int row = 0; row < pageSize(); row++) {
 			int index = page * pageSize() + row; if (index >= entries.length()) break;
