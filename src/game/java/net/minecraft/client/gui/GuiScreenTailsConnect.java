@@ -41,7 +41,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		buttonList.add(new GuiButton(5, left + 154, top + 206, 146, 20, "Stop / Cancel"));
 	}
 
-	private String playerLabel() { return "Players: " + players; }
+	private String playerLabel() { return "Players: " + (players == 0 ? "Infinite" : players); }
 	private String publicLabel() { return "Public: " + (TailsConnectClient.isPublicLobby() ? "ON" : "OFF"); }
 	public boolean doesGuiPauseGame() { return false; }
 
@@ -61,7 +61,10 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		else if (b.id == 7) openWorldSearch();
 		else if (b.id == 3) TailsConnectClient.matchmaking("ecraft", players);
 		else if (b.id == 4) TailsConnectClient.host("ecraft", players);
-		else if (b.id == 6) { players = players == 4 ? 2 : players + 1; b.displayString = playerLabel(); }
+		else if (b.id == 6) {
+			players = players == 2 ? 3 : players == 3 ? 4 : players == 4 ? 0 : 2;
+			b.displayString = playerLabel();
+		}
 		else if (b.id == 8) { TailsConnectClient.setPublicLobby(!TailsConnectClient.isPublicLobby()); b.displayString = publicLabel(); }
 		else if (b.id == 10) openFriends();
 	}
@@ -70,7 +73,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		switch (button.id) {
 		case 1: return "Join using the 6-character code in the box above.";
 		case 7: return "Browse public worlds that are currently online.";
-		case 6: return "Click to choose 2, 3, or 4 players.";
+		case 6: return "Click to choose 2, 3, 4, or unlimited players when hosting.";
 		case 8: return "Public worlds appear in search; private worlds use a code only.";
 		case 4: return "Start your singleplayer world and let others join it.";
 		case 3: return "Wait in the background until players are matched.";

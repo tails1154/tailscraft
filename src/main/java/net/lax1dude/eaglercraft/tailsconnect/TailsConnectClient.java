@@ -112,6 +112,7 @@ public final class TailsConnectClient {
     }
     public static void matchmaking(String ignored, int players) {
         maxPlayers = normalizePlayers(players);
+        if (maxPlayers == 0) { error = "Matchmaking needs a fixed player count"; return; }
         begin("TC3 MATCHMAKE " + new JSONObject().put("game", GAME).put("players", maxPlayers), SingleplayerServerController.isWorldReady());
     }
     public static void searchWorlds() {
@@ -120,7 +121,8 @@ public final class TailsConnectClient {
     }
     public static void setPublicLobby(boolean value) { publicLobby = value; }
     public static boolean isPublicLobby() { return publicLobby; }
-    private static int normalizePlayers(int players) { return Math.max(2, Math.min(4, players)); }
+    private static int normalizePlayers(int players) { return players == 0 ? 0 : Math.max(2, Math.min(4, players)); }
+    private static String guestLimitText() { return maxPlayers == 0 ? "unlimited" : Integer.toString(maxPlayers - 1); }
     private static void begin(String command, boolean host) {
         reset(); hosting = host; pending = command; handshakeSent = false; welcomeReceived = false;
         selfId = EaglercraftUUID.randomUUID().toString().replace("-", "");
@@ -336,7 +338,7 @@ public final class TailsConnectClient {
         if (message.startsWith("ROOM ") || message.startsWith("JOINED ")) {
             roomCode = message.substring(message.indexOf(' ') + 1);
             started = now;
-            state = hosting ? "Sharing world (0/" + (maxPlayers - 1) + " guests)" : "Finding host";
+            state = hosting ? "Sharing world (0/" + guestLimitText() + " guests)" : "Finding host";
             // The relay can transfer data before its room fills. HELLO establishes each peer
             // independently; TC3 PEER_LEAVE and ROOM_CLOSED handle disconnects.
             if (!hosting) socket.send("TC2 HELLO " + selfId);
@@ -349,12 +351,12 @@ public final class TailsConnectClient {
         if (hosting) {
             if (p[1].equals("HELLO")) {
                 if (!guests.containsKey(id)) {
-                    if (guests.size() >= maxPlayers - 1) return;
+                    if (maxPlayers > 0 && guests.size() >= maxPlayers - 1) return;
                     guests.put(id, Boolean.TRUE);
                     SingleplayerServerController.sendIPCPacket(new IPCPacket0CPlayerChannel(CHANNEL_PREFIX + id, true));
                 }
                 socket.send("TC3 READY {\"to\":\"" + id + "\"}");
-                state = "Sharing world (" + guests.size() + "/" + (maxPlayers - 1) + " guests)";
+                    state = "Sharing world (" + guests.size() + "/" + guestLimitText() + " guests)";
             }
             else if (p[1].equals("LEAVE")) closeGuest(id);
             else if (p[1].equals("READY")) { fail("Match has multiple hosts; only one player should open a world"); }
@@ -413,7 +415,7 @@ public final class TailsConnectClient {
         if (roomCode != null && !hosting && network == null) {
             if (now - started > 60000) { fail("No host with an open world was found"); return; }
         }
-        if (hosting && roomCode != null) state = "Sharing world (" + guests.size() + "/" + (maxPlayers - 1) + " guests)";
+        if (hosting && roomCode != null) state = "Sharing world (" + guests.size() + "/" + guestLimitText() + " guests)";
         updateWorldTransfer();
         if (network != null) {
             try { network.processReceivedPackets(); if (network != null) network.checkDisconnected(); }

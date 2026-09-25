@@ -180,7 +180,10 @@ public final class TailsConnectFriends {
     }
 
     public static boolean handleKey(int keyCode) {
-        if (keyCode != net.lax1dude.eaglercraft.KeyboardConstants.KEY_J || pendingJoinCode == null) return false;
+        // Eagler's legacy table uses 0x24, while browser/GLFW events can arrive
+        // as the native J key value (74).
+        if ((keyCode != net.lax1dude.eaglercraft.KeyboardConstants.KEY_J && keyCode != 74)
+                || pendingJoinCode == null) return false;
         if (!TailsConnectClient.isHosting() || TailsConnectClient.getRoomCode() == null) {
             error = "Host a TailsConnect world before accepting";
             pendingJoinCode = null;
