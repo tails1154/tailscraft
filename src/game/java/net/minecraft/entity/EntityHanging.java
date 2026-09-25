@@ -279,6 +279,12 @@ public abstract class EntityHanging extends Entity {
 	 * This does not have a side-effect.
 	 */
 	public float getRotatedYaw(Rotation transformRotation) {
+		// Some client bootstrap/model-registration paths call the transform
+		// helpers before a rotation has been assigned. Treat that as identity;
+		// the base Entity implementation already follows the same contract.
+		if (transformRotation == null) {
+			return MathHelper.wrapDegrees(this.rotationYaw);
+		}
 		if (this.facingDirection != null && this.facingDirection.getAxis() != EnumFacing.Axis.Y) {
 			switch (transformRotation) {
 			case CLOCKWISE_180:
@@ -316,6 +322,9 @@ public abstract class EntityHanging extends Entity {
 	 * This does not have a side-effect.
 	 */
 	public float getMirroredYaw(Mirror transformMirror) {
+		if (transformMirror == null) {
+			return MathHelper.wrapDegrees(this.rotationYaw);
+		}
 		return this.getRotatedYaw(transformMirror.toRotation(this.facingDirection));
 	}
 

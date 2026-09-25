@@ -3011,6 +3011,9 @@ public abstract class Entity implements ICommandSender {
 	 */
 	public float getMirroredYaw(Mirror transformMirror) {
 		float f = MathHelper.wrapDegrees(this.rotationYaw);
+		if (transformMirror == null) {
+			return f;
+		}
 
 		switch (transformMirror) {
 		case LEFT_RIGHT:
