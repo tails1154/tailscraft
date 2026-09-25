@@ -71,7 +71,8 @@ public final class TailsConnectFriends {
             socket.send("TC4 HELLO " + new JSONObject().put("version", 4)
                     .put("friendCode", getOrCreateCode()).put("name", EaglerProfile.getName())
                     .put("game", TailsConnectClient.GAME_ID).put("room", TailsConnectClient.getRoomCode())
-                    .put("joinable", TailsConnectClient.isHosting()));
+                    .put("joinable", TailsConnectClient.isHosting())
+                    .put("activity", TailsConnectClient.getRoomCode() == null ? "Menu" : "Playing"));
             helloSent = true;
             state = "Loading friends";
         }
@@ -125,6 +126,8 @@ public final class TailsConnectFriends {
             requestListRefresh();
         } else if (message.startsWith("TC4 PRESENCE ")) {
             requestListRefresh();
+        } else if (message.startsWith("TC4 RPC ")) {
+            requestListRefresh();
         } else if (message.startsWith("TC4 JOIN_APPROVED ")) {
             try {
                 JSONObject data = new JSONObject(message.substring(18));
@@ -156,12 +159,13 @@ public final class TailsConnectFriends {
         String room = TailsConnectClient.getRoomCode();
         if (room == null) room = "";
         boolean joinable = TailsConnectClient.isHosting();
-        String signature = TailsConnectClient.GAME_ID + "|" + room + "|" + joinable;
+        String activity = room.isEmpty() ? "Menu" : "Playing";
+        String signature = TailsConnectClient.GAME_ID + "|" + room + "|" + joinable + "|" + activity;
         if (signature.equals(lastPresenceSignature) && now - lastPresence < 2000L) return;
         lastPresenceSignature = signature;
         lastPresence = now;
-        socket.send("TC4 PRESENCE_UPDATE " + new JSONObject().put("game", TailsConnectClient.GAME_ID)
-                .put("room", room).put("joinable", joinable));
+        socket.send("TC4 RPC " + new JSONObject().put("game", TailsConnectClient.GAME_ID)
+                .put("room", room).put("joinable", joinable).put("activity", activity));
     }
 
     public static void addFriend(String code) {
