@@ -334,6 +334,32 @@ public final class TailsConnectClient {
             } catch (Exception ignored) { state = "Hosted world ready"; }
             return;
         }
+        if (message.startsWith("TC5 HOSTED ")) {
+            if (!hostedMode || socket == null || !socket.isOpen()) return;
+            try {
+                JSONObject data = new JSONObject(message.substring("TC5 HOSTED ".length()));
+                String hostedRoom = data.optString("room", "");
+                if (hostedRoom.length() != 6) {
+                    error = "Hosted world did not receive a room code";
+                    return;
+                }
+                // The browser is no longer the world host. Stop its local worker,
+                // leave the temporary upload room, and rejoin through the TC5 daemon.
+                SingleplayerServerController.shutdownEaglercraftServer();
+                hosting = false;
+                hostedMode = false;
+                hostedExportRequested = false;
+                hostedUploadReady = false;
+                outgoingWorld = null;
+                socket.send("TC3 LEAVE");
+                socket.send("TC3 JOIN " + new JSONObject().put("game", GAME).put("room", hostedRoom));
+                roomCode = hostedRoom;
+                state = "Connecting to hosted world";
+            } catch (Exception ex) {
+                error = "Could not join hosted world: " + ex.getMessage();
+            }
+            return;
+        }
         if (message.startsWith("TC5 ERROR ")) {
             try { error = new JSONObject(message.substring(10)).optString("message", "Hosted-world error"); }
             catch (Exception ignored) { error = "Hosted-world error"; }
@@ -522,7 +548,10 @@ public final class TailsConnectClient {
                     outgoingWorldName = outgoingWorldName.trim();
                     hostedUploadHash = sha256(result);
                     socket.send("TC5 HOST_WORLD " + new JSONObject().put("game", GAME)
-                            .put("name", outgoingWorldName).put("size", result.length).put("sha256", hostedUploadHash));
+                            .put("name", outgoingWorldName).put("size", result.length).put("sha256", hostedUploadHash)
+                            .put("maxPlayers", maxPlayers)
+                            .put("advertisement", new JSONObject().put("public", publicLobby)
+                                    .put("name", outgoingWorldName)));
                     state = "Requesting hosted-world storage";
                 } catch (Exception ex) { error = "Could not prepare hosted world: " + ex.getMessage(); }
             }
