@@ -62,7 +62,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		else if (b.id == 7) openWorldSearch();
 		else if (b.id == 3) TailsConnectClient.matchmaking("ecraft", players);
 		else if (b.id == 4) TailsConnectClient.host("ecraft", players);
-		else if (b.id == 11) TailsConnectClient.hostHosted(players);
+		else if (b.id == 11) mc.displayGuiScreen(new GuiTailsConnectWorldSelection(this, players));
 		else if (b.id == 6) {
 			players = players == 2 ? 3 : players == 3 ? 4 : players == 4 ? 0 : 2;
 			b.displayString = playerLabel();

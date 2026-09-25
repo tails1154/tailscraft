@@ -19,6 +19,7 @@ import net.minecraft.world.storage.ISaveFormat;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
 import net.minecraft.world.storage.WorldSummary;
+import net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
@@ -223,6 +224,14 @@ public class GuiListWorldSelectionEntry implements GuiListExtended.IGuiListEntry
 		if (this.client.getSaveLoader().canLoadWorld(this.worldSummary.getFileName())) {
 			this.client.launchIntegratedServer(this.worldSummary.getFileName(), this.worldSummary.getDisplayName(),
 					(WorldSettings) null);
+		}
+	}
+
+	public void hostWorldOnTailsConnect(int players) {
+		if (this.client.getSaveLoader().canLoadWorld(this.worldSummary.getFileName())) {
+			this.client.launchIntegratedServer(this.worldSummary.getFileName(), this.worldSummary.getDisplayName(),
+					(WorldSettings) null);
+			TailsConnectClient.queueHosted(players);
 		}
 	}
 

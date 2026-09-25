@@ -53,6 +53,7 @@ public final class TailsConnectClient {
     private static boolean hostedUploadReady;
     private static String hostedWorldId;
     private static String hostedUploadHash;
+    private static int pendingHostedPlayers = -1;
 
     public static void reset() { shutdown("TailsConnect stopped", true); error = null; }
 
@@ -79,6 +80,7 @@ public final class TailsConnectClient {
         hostedExportRequested = hostedUploadReady = false;
         hostedWorldId = null;
         hostedUploadHash = null;
+        pendingHostedPlayers = -1;
         hostId = pending = roomCode = null;
         state = "Idle";
         if (oldNetwork != null) oldNetwork.closeChannel(new TextComponentString(reason));
@@ -108,6 +110,10 @@ public final class TailsConnectClient {
     public static void hostHosted(int players) {
         hostInternal(players, publicLobby);
         hostedMode = true;
+    }
+    public static void queueHosted(int players) {
+        pendingHostedPlayers = normalizePlayers(players);
+        state = "Starting selected world for TC5";
     }
     private static void hostInternal(int players, boolean advertisePublicly) {
         if (!SingleplayerServerController.isWorldReady()) { error = "Open a singleplayer world first"; return; }
@@ -442,7 +448,14 @@ public final class TailsConnectClient {
     }
 
     public static void update() {
-        if (socket == null) return;
+        if (socket == null) {
+            if (pendingHostedPlayers >= 0 && SingleplayerServerController.isWorldReady()) {
+                int players = pendingHostedPlayers;
+                pendingHostedPlayers = -1;
+                hostHosted(players);
+            }
+            return;
+        }
         long now = EagRuntime.steadyTimeMillis();
         if (hosting && !SingleplayerServerController.isWorldRunning()) { fail("Host world closed"); return; }
         if (socket.isClosed() || socket.getState() == EnumEaglerConnectionState.FAILED) { fail("Relay disconnected"); return; }

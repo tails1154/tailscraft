@@ -25,7 +25,7 @@ public class GuiWorldSelection extends GuiScreen {
 	private GuiButton selectButton;
 	private GuiButton renameButton;
 	private GuiButton copyButton;
-	private GuiListWorldSelection selectionList;
+	protected GuiListWorldSelection selectionList;
 
 	public GuiWorldSelection(GuiScreen screenIn) {
 		this.prevScreen = screenIn;
@@ -83,7 +83,7 @@ public class GuiWorldSelection extends GuiScreen {
 				}
 			} else if (button.id == 1) {
 				if (guilistworldselectionentry != null) {
-					guilistworldselectionentry.joinWorld();
+					this.selectWorldEntry(guilistworldselectionentry);
 				}
 			} else if (button.id == 3) {
 				this.mc.displayGuiScreen(new GuiScreenCreateWorldSelection(this));
@@ -97,6 +97,10 @@ public class GuiWorldSelection extends GuiScreen {
 				guilistworldselectionentry.recreateWorld();
 			}
 		}
+	}
+
+	protected void selectWorldEntry(GuiListWorldSelectionEntry entry) {
+		entry.joinWorld();
 	}
 
 	/**
