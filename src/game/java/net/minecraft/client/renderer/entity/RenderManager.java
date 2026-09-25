@@ -425,9 +425,10 @@ public class RenderManager {
 	}
 
 	private void renderPlayerEsp(Entity entityIn, double x, double y, double z) {
-		AxisAlignedBB box = entityIn.getEntityBoundingBox();
-		GlStateManager.depthMask(false);
-		GlStateManager.disableTexture2D();
+        AxisAlignedBB box = entityIn.getEntityBoundingBox();
+        GlStateManager.depthMask(false);
+        GlStateManager.disableDepth();
+        GlStateManager.disableTexture2D();
 		GlStateManager.disableLighting();
 		GlStateManager.disableCull();
 		GlStateManager.enableBlend();
@@ -440,8 +441,9 @@ public class RenderManager {
 		GlStateManager.disableBlend();
 		GlStateManager.enableCull();
 		GlStateManager.enableLighting();
-		GlStateManager.enableTexture2D();
-		GlStateManager.depthMask(true);
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableDepth();
+        GlStateManager.depthMask(true);
 	}
 
 	public void renderMultipass(Entity p_188389_1_, float p_188389_2_) {
