@@ -543,7 +543,12 @@ public final class TailsConnectClient {
             return;
         }
         long now = EagRuntime.steadyTimeMillis();
-        if (hosting && !SingleplayerServerController.isWorldRunning()) { fail("Host world closed"); return; }
+        // A selected-world TC5 host intentionally has no local integrated
+        // server running; the daemon becomes the authoritative host after upload.
+        if (hosting && !hostedMode && !SingleplayerServerController.isWorldRunning()) {
+            fail("Host world closed");
+            return;
+        }
         if (socket.isClosed() || socket.getState() == EnumEaglerConnectionState.FAILED) { fail("Relay disconnected"); return; }
         if (pendingHostedRoom != null) {
             if (SingleplayerServerController.getStatusState() == IntegratedServerState.WORLD_NONE) {
