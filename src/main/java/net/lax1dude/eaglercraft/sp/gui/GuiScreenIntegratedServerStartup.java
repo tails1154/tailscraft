@@ -69,7 +69,8 @@ public class GuiScreenIntegratedServerStartup extends GuiScreen {
 			if(crashReport != null) {
 				mc.displayGuiScreen(GuiScreenIntegratedServerBusy.createException(new GuiMainMenu(), "singleplayer.failed.notStarted", crashReport));
 			}else if(SingleplayerServerController.isIntegratedServerWorkerStarted()) {
-				GuiScreen cont = new GuiWorldSelection(backScreen);
+				GuiScreen cont = backScreen instanceof net.minecraft.client.gui.GuiTailsConnectWorldSelection
+						? backScreen : new GuiWorldSelection(backScreen);
 				if(SingleplayerServerController.isRunningSingleThreadMode()) {
 					cont = new GuiScreenIntegratedServerFailed("singleplayer.failed.singleThreadWarning.1", "singleplayer.failed.singleThreadWarning.2", cont);
 				} else if (!EagRuntime.getConfiguration().isRamdiskMode()
