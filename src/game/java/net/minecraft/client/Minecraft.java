@@ -576,6 +576,9 @@ public class Minecraft implements IThreadListener {
 		ServerList.initServerList(this);
 		this.renderSplashScreen(95, "Reading profile data...");
 		EaglerProfile.read();
+		// Start the social session as soon as the client is ready; the socket remains
+		// independent from world loading and is serviced asynchronously each tick.
+		TailsConnectFriends.open();
 		this.renderSplashScreen(98, "Loading cookie data store...");
 		ServerCookieDataStore.load();
 		this.renderSplashScreen(100, "Loading GUI");
@@ -1300,6 +1303,7 @@ public class Minecraft implements IThreadListener {
 	 * Runs the current tick.
 	 */
 	public void runTick() throws IOException {
+		TailsConnectFriends.update();
 		if (this.rightClickDelayTimer > 0) {
 			--this.rightClickDelayTimer;
 		}
