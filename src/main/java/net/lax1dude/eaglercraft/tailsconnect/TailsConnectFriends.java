@@ -10,6 +10,9 @@ import net.lax1dude.eaglercraft.internal.IWebSocketFrame;
 import net.lax1dude.eaglercraft.internal.PlatformNetworking;
 import net.lax1dude.eaglercraft.profile.EaglerProfile;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiYesNo;
+import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraft.client.gui.toasts.SystemToast;
 import net.minecraft.util.text.TextComponentString;
 import org.json.JSONArray;
@@ -93,13 +96,22 @@ public final class TailsConnectFriends {
         } else if (message.startsWith("TC4 FRIEND_REQUEST ")) {
             try {
                 JSONObject data = new JSONObject(message.substring(19));
+                requestListRefresh();
+                SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
+                        SystemToast.Type.TAILSCONNECT_FRIEND,
+                        new TextComponentString("New friend request"),
+                        new TextComponentString("Open Friends to accept"));
+            } catch (Exception ex) { error = "Could not read friend request"; }
+        } else if (message.startsWith("TC4 JOIN_REQUEST ")) {
+            try {
+                JSONObject data = new JSONObject(message.substring(17));
                 pendingJoinCode = data.optString("code", "");
                 pendingJoinName = data.optString("name", "A friend");
                 state = "Join request from " + pendingJoinName;
                 SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
                         SystemToast.Type.TAILSCONNECT_JOIN,
-                        new TextComponentString("A friend of " + pendingJoinName + " wants to join the world!"),
-                        new TextComponentString("Press J to let them."));
+                        new TextComponentString("Someone wants to join your world"),
+                        new TextComponentString("Press J for options"));
             } catch (Exception ex) { error = "Could not read join request"; }
         } else if (message.startsWith("TC4 FRIEND_STATUS ")) {
             requestListRefresh();
@@ -172,9 +184,21 @@ public final class TailsConnectFriends {
             pendingJoinCode = null;
             return true;
         }
-        send("JOIN_APPROVE", new JSONObject().put("code", pendingJoinCode)
-                .put("room", TailsConnectClient.getRoomCode()).put("game", TailsConnectClient.GAME_ID));
-        state = "Join request accepted";
+        final String requestCode = pendingJoinCode;
+        final String requestName = pendingJoinName == null ? "this player" : pendingJoinName;
+        final GuiScreen previous = Minecraft.getMinecraft().currentScreen;
+        Minecraft.getMinecraft().displayGuiScreen(new GuiYesNo(new GuiYesNoCallback() {
+            public void confirmClicked(boolean result, int id) {
+                if (result) {
+                    send("JOIN_APPROVE", new JSONObject().put("code", requestCode)
+                            .put("room", TailsConnectClient.getRoomCode()).put("game", TailsConnectClient.GAME_ID));
+                    state = "Join request accepted";
+                } else {
+                    state = "Join request declined";
+                }
+                Minecraft.getMinecraft().displayGuiScreen(previous);
+            }
+        }, "Join request", "Would you like to allow " + requestName + " to join?", "Allow", "Deny", 0));
         pendingJoinCode = null;
         pendingJoinName = null;
         return true;

@@ -36,7 +36,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		buttonList.add(new GuiButton(8, left + 154, top + 104, 146, 20, publicLabel()));
 		buttonList.add(new GuiButton(4, left, top + 128, 300, 20, "Host World"));
 		buttonList.add(new GuiButton(3, left, top + 152, 300, 20, "Find Match"));
-		buttonList.add(new GuiButton(10, left, top + 176, 146, 20, "Friends"));
+		buttonList.add(new GuiButton(10, left, top + 176, 300, 20, "Friends"));
 		buttonList.add(new GuiButton(0, left, top + 206, 146, 20, I18n.format("menu.tailsConnect.back")));
 		buttonList.add(new GuiButton(5, left + 154, top + 206, 146, 20, "Stop / Cancel"));
 	}

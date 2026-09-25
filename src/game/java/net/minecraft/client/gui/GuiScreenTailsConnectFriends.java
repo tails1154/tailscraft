@@ -34,8 +34,10 @@ public class GuiScreenTailsConnectFriends extends GuiScreen {
 		JSONArray friends = TailsConnectFriends.getFriends();
 		for (int i = 0; i < friends.length(); i++) {
 			JSONObject friend = friends.getJSONObject(i);
-			if (friend.optBoolean("online", false) && friend.optBoolean("joinable", false)) {
-				buttonList.add(new GuiButton(200 + i, left + 142, 196 + i * 24, 70, 20, "Join game"));
+			if (friend.optBoolean("online", false)) {
+				GuiButton join = new GuiButton(200 + i, left + 142, 196 + i * 24, 70, 20, "Join game");
+				join.enabled = friend.optBoolean("joinable", false);
+				buttonList.add(join);
 			}
 			buttonList.add(new GuiButton(400 + i, left + 216, 196 + i * 24, 84, 20, "Remove"));
 		}
@@ -108,7 +110,7 @@ public class GuiScreenTailsConnectFriends extends GuiScreen {
 			drawHoveringText(Arrays.asList(button.id == 1 ? "Send a friend request using their 8-character code."
 					: button.id >= 200 && button.id < 400 ? "Ask this friend to let you join their world."
 					: button.id >= 400 ? "Remove this friend."
-								: "Manage this friend or return to TailsConnect."), mouseX, mouseY);
+					: "Manage this friend or return to TailsConnect."), mouseX, mouseY);
 			break;
 		}
 	}

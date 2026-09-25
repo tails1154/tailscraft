@@ -60,6 +60,6 @@ public class SystemToast implements IToast {
 	}
 
 	public static enum Type {
-		TUTORIAL_HINT, NARRATOR_TOGGLE, TAILSCONNECT_JOIN;
+		TUTORIAL_HINT, NARRATOR_TOGGLE, TAILSCONNECT_JOIN, TAILSCONNECT_FRIEND;
 	}
 }
