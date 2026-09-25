@@ -5,6 +5,8 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import net.lax1dude.eaglercraft.opengl.WorldRenderer;
+import net.lax1dude.eaglercraft.CheatMenuState;
+import net.lax1dude.eaglercraft.opengl.EaglercraftGPU;
 import net.lax1dude.eaglercraft.profile.RenderHighPoly;
 import net.lax1dude.eaglercraft.EagRuntime;
 import net.lax1dude.eaglercraft.opengl.GlStateManager;
@@ -78,6 +80,7 @@ import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.monster.EntityZombieVillager;
 import net.minecraft.entity.passive.EntityBat;
 import net.minecraft.entity.passive.EntityChicken;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.entity.passive.EntityDonkey;
 import net.minecraft.entity.passive.EntityHorse;
@@ -403,6 +406,10 @@ public class RenderManager {
 								CrashReport.makeCrashReport(throwable, "Rendering entity hitbox in world"));
 					}
 				}
+				if (CheatMenuState.isPlayerEsp() && entityIn instanceof EntityPlayer
+						&& entityIn != Minecraft.getMinecraft().getRenderViewEntity()) {
+					renderPlayerEsp(entityIn, x, y, z);
+				}
 			}
 		} catch (Throwable throwable3) {
 			CrashReport crashreport = CrashReport.makeCrashReport(throwable3, "Rendering entity in world");
@@ -415,6 +422,26 @@ public class RenderManager {
 			crashreportcategory1.addCrashSection("Delta", Float.valueOf(partialTicks));
 			throw new ReportedException(crashreport);
 		}
+	}
+
+	private void renderPlayerEsp(Entity entityIn, double x, double y, double z) {
+		AxisAlignedBB box = entityIn.getEntityBoundingBox();
+		GlStateManager.depthMask(false);
+		GlStateManager.disableTexture2D();
+		GlStateManager.disableLighting();
+		GlStateManager.disableCull();
+		GlStateManager.enableBlend();
+		EaglercraftGPU.glLineWidth(2.0F);
+		RenderGlobal.drawBoundingBox(box.minX - entityIn.posX + x, box.minY - entityIn.posY + y,
+				box.minZ - entityIn.posZ + z, box.maxX - entityIn.posX + x,
+				box.maxY - entityIn.posY + y, box.maxZ - entityIn.posZ + z,
+				0.2F, 1.0F, 0.2F, 1.0F);
+		EaglercraftGPU.glLineWidth(1.0F);
+		GlStateManager.disableBlend();
+		GlStateManager.enableCull();
+		GlStateManager.enableLighting();
+		GlStateManager.enableTexture2D();
+		GlStateManager.depthMask(true);
 	}
 
 	public void renderMultipass(Entity p_188389_1_, float p_188389_2_) {
