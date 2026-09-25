@@ -23,7 +23,8 @@ import org.json.JSONObject;
 public final class TailsConnectClient {
     public static final String SERVER = "wss://tails1154.com:9842";
     public static final String CHANNEL_PREFIX = "tailsconnect-v3-";
-    private static final String GAME = "tailscraft-1.12.2-packets-v2";
+    public static final String GAME_ID = "tailscraft-1.12.2-packets-v2";
+    private static final String GAME = GAME_ID;
     private static final Map<String, Boolean> guests = new LinkedHashMap<>();
     private static IWebSocketClient socket;
     private static TailsConnectNetworkManager network;

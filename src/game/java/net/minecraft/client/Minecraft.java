@@ -154,6 +154,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.FrameTimer;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.MinecraftError;
+import net.lax1dude.eaglercraft.tailsconnect.TailsConnectFriends;
 import net.minecraft.util.MouseHelper;
 import net.minecraft.util.MovementInputFromOptions;
 import net.minecraft.util.NonNullList;
@@ -2297,6 +2298,7 @@ public class Minecraft implements IThreadListener {
 			if (!(this.currentScreen instanceof GuiControls)
 					|| ((GuiControls) this.currentScreen).time <= getSystemTime() - 20L) {
 				if (Keyboard.getEventKeyState()) {
+					if (TailsConnectFriends.handleKey(i)) return;
 					if (i == this.gameSettings.keyBindScreenshot.getKeyCode()) {
 						this.ingameGUI.getChatGUI().printChatMessage(ScreenShotHelper.saveScreenshot());
 					} else if (i == 48 && GuiScreen.isCtrlKeyDown() && (this.currentScreen == null
