@@ -18,7 +18,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 	}
 
 	private int panelTop() {
-		return Math.max(24, Math.min(82, (height - 248) / 2));
+		return Math.max(18, Math.min(70, (height - 272) / 2));
 	}
 
 	public void initGui() {
@@ -35,10 +35,11 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		buttonList.add(new GuiButton(6, left, top + 104, 146, 20, playerLabel()));
 		buttonList.add(new GuiButton(8, left + 154, top + 104, 146, 20, publicLabel()));
 		buttonList.add(new GuiButton(4, left, top + 128, 300, 20, "Host World"));
-		buttonList.add(new GuiButton(3, left, top + 152, 300, 20, "Find Match"));
-		buttonList.add(new GuiButton(10, left, top + 176, 300, 20, "Friends"));
-		buttonList.add(new GuiButton(0, left, top + 206, 146, 20, I18n.format("menu.tailsConnect.back")));
-		buttonList.add(new GuiButton(5, left + 154, top + 206, 146, 20, "Stop / Cancel"));
+		buttonList.add(new GuiButton(11, left, top + 152, 300, 20, "Host as TC5 Cloud World"));
+		buttonList.add(new GuiButton(3, left, top + 176, 300, 20, "Find Match"));
+		buttonList.add(new GuiButton(10, left, top + 200, 300, 20, "Friends"));
+		buttonList.add(new GuiButton(0, left, top + 230, 146, 20, I18n.format("menu.tailsConnect.back")));
+		buttonList.add(new GuiButton(5, left + 154, top + 230, 146, 20, "Stop / Cancel"));
 	}
 
 	private String playerLabel() { return "Players: " + (players == 0 ? "Infinite" : players); }
@@ -61,6 +62,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		else if (b.id == 7) openWorldSearch();
 		else if (b.id == 3) TailsConnectClient.matchmaking("ecraft", players);
 		else if (b.id == 4) TailsConnectClient.host("ecraft", players);
+		else if (b.id == 11) TailsConnectClient.hostHosted(players);
 		else if (b.id == 6) {
 			players = players == 2 ? 3 : players == 3 ? 4 : players == 4 ? 0 : 2;
 			b.displayString = playerLabel();
@@ -76,6 +78,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		case 6: return "Click to choose 2, 3, 4, or unlimited players when hosting.";
 		case 8: return "Public worlds appear in search; private worlds use a code only.";
 		case 4: return "Start your singleplayer world and let others join it.";
+		case 11: return "Upload one verified copy to TC5 storage, then share it through TailsConnect.";
 		case 3: return "Wait in the background until players are matched.";
 		case 5: return "Cancel matchmaking or disconnect from the current world.";
 		case 10: return "Manage your TC4 friends and friend requests.";

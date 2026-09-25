@@ -7,6 +7,7 @@ import java.util.Map;
 import net.lax1dude.eaglercraft.*;
 import net.lax1dude.eaglercraft.internal.*;
 import net.lax1dude.eaglercraft.profile.EaglerProfile;
+import net.lax1dude.eaglercraft.crypto.SHA256Digest;
 import net.lax1dude.eaglercraft.socket.ConnectionHandshake;
 import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
 import net.lax1dude.eaglercraft.sp.internal.ClientPlatformSingleplayer;
@@ -47,6 +48,11 @@ public final class TailsConnectClient {
     private static int incomingChunkCount;
     private static int incomingChunksReceived;
     private static int incomingBytes;
+    private static boolean hostedMode;
+    private static boolean hostedExportRequested;
+    private static boolean hostedUploadReady;
+    private static String hostedWorldId;
+    private static String hostedUploadHash;
 
     public static void reset() { shutdown("TailsConnect stopped", true); error = null; }
 
@@ -69,6 +75,10 @@ public final class TailsConnectClient {
         incomingWorldName = null;
         incomingChunks = null;
         incomingChunkCount = incomingChunksReceived = incomingBytes = 0;
+        hostedMode = false;
+        hostedExportRequested = hostedUploadReady = false;
+        hostedWorldId = null;
+        hostedUploadHash = null;
         hostId = pending = roomCode = null;
         state = "Idle";
         if (oldNetwork != null) oldNetwork.closeChannel(new TextComponentString(reason));
@@ -94,6 +104,10 @@ public final class TailsConnectClient {
     }
     public static void hostPrivate(int players) {
         hostInternal(players, false);
+    }
+    public static void hostHosted(int players) {
+        hostInternal(players, publicLobby);
+        hostedMode = true;
     }
     private static void hostInternal(int players, boolean advertisePublicly) {
         if (!SingleplayerServerController.isWorldReady()) { error = "Open a singleplayer world first"; return; }
@@ -159,6 +173,20 @@ public final class TailsConnectClient {
     }
     private static void send(String recipient, byte[] bytes) {
         socket.send(TailsConnectFrame.encode(selfId, recipient, bytes));
+    }
+
+    private static String sha256(byte[] data) throws Exception {
+        SHA256Digest sha = new SHA256Digest();
+        sha.update(data, 0, data.length);
+        byte[] digest = new byte[32];
+        sha.doFinal(digest, 0);
+        StringBuilder result = new StringBuilder(digest.length * 2);
+        for (byte value : digest) {
+            int unsigned = value & 255;
+            if (unsigned < 16) result.append('0');
+            result.append(Integer.toHexString(unsigned));
+        }
+        return result.toString();
     }
 
     private static byte[] transferChunk(int index, int count, byte[] data, int offset, int length) {
@@ -272,7 +300,38 @@ public final class TailsConnectClient {
                 roomCode = data.optString("room", roomCode);
                 maxPlayers = data.optInt("maxPlayers", maxPlayers);
                 if ("host".equals(data.optString("role"))) hosting = true;
+                if (hostedMode && hosting && !hostedExportRequested) {
+                    hostedExportRequested = true;
+                    SingleplayerServerController.requestWorldExport();
+                    state = "Preparing hosted world";
+                }
             } catch (Exception ignored) { }
+            return;
+        }
+        if (message.startsWith("TC5 UPLOAD_READY ")) {
+            if (!hostedMode || !hosting) return;
+            try {
+                JSONObject data = new JSONObject(message.substring(17));
+                hostedWorldId = data.optString("world", null);
+                hostedUploadReady = hostedWorldId != null && outgoingWorld != null;
+                outgoingChunk = 0;
+                state = "Uploading hosted world (0/" + ((outgoingWorld.length + TRANSFER_CHUNK_SIZE - 1) / TRANSFER_CHUNK_SIZE) + ")";
+            } catch (Exception ex) { error = "Invalid hosted-world upload response"; }
+            return;
+        }
+        if (message.startsWith("TC5 STORED ")) {
+            if (!hostedMode) return;
+            try {
+                JSONObject data = new JSONObject(message.substring(12));
+                hostedWorldId = data.optString("world", hostedWorldId);
+                state = "Hosted world ready: " + hostedWorldId;
+            } catch (Exception ignored) { state = "Hosted world ready"; }
+            return;
+        }
+        if (message.startsWith("TC5 ERROR ")) {
+            try { error = new JSONObject(message.substring(10)).optString("message", "Hosted-world error"); }
+            catch (Exception ignored) { error = "Hosted-world error"; }
+            hostedUploadReady = false;
             return;
         }
         if (message.startsWith("TC3 PEER_JOIN ")) {
@@ -422,7 +481,8 @@ public final class TailsConnectClient {
             if (now - started > 60000) { fail("No host with an open world was found"); return; }
         }
         if (hosting && roomCode != null) state = "Sharing world (" + guests.size() + "/" + guestLimitText() + " guests)";
-        updateWorldTransfer();
+        if (hostedMode) updateHostedWorld();
+        else updateWorldTransfer();
         if (network != null) {
             try { network.processReceivedPackets(); if (network != null) network.checkDisconnected(); }
             catch (Exception ex) { fail("Game connection failed: " + ex.getMessage()); }
@@ -431,4 +491,41 @@ public final class TailsConnectClient {
     public static String getState() { return state; }
     public static String getRoomCode() { return roomCode; }
     public static String getError() { return error; }
+
+    private static void updateHostedWorld() {
+        if (!hosting || !hostedExportRequested || socket == null || !socket.isOpen()) return;
+        if (!hostedUploadReady && outgoingWorld == null) {
+            byte[] result = SingleplayerServerController.getExportResponse();
+            if (result != null) {
+                if (result.length == 0 || result.length > MAX_TRANSFER_SIZE) {
+                    error = "World is too large to host (maximum 64 MiB)";
+                    hostedExportRequested = false;
+                    return;
+                }
+                try {
+                    outgoingWorld = result;
+                    outgoingWorldName = SingleplayerServerController.getCurrentWorldName();
+                    if (outgoingWorldName == null || outgoingWorldName.trim().isEmpty()) outgoingWorldName = "Hosted World";
+                    outgoingWorldName = outgoingWorldName.trim();
+                    hostedUploadHash = sha256(result);
+                    socket.send("TC5 HOST_WORLD " + new JSONObject().put("game", GAME)
+                            .put("name", outgoingWorldName).put("size", result.length).put("sha256", hostedUploadHash));
+                    state = "Requesting hosted-world storage";
+                } catch (Exception ex) { error = "Could not prepare hosted world: " + ex.getMessage(); }
+            }
+            return;
+        }
+        if (!hostedUploadReady || outgoingWorld == null) return;
+        int count = (outgoingWorld.length + TRANSFER_CHUNK_SIZE - 1) / TRANSFER_CHUNK_SIZE;
+        int offset = outgoingChunk * TRANSFER_CHUNK_SIZE;
+        int length = Math.min(TRANSFER_CHUNK_SIZE, outgoingWorld.length - offset);
+        socket.send(transferChunk(outgoingChunk, count, outgoingWorld, offset, length));
+        outgoingChunk++;
+        state = "Uploading hosted world (" + outgoingChunk + "/" + count + ")";
+        if (outgoingChunk >= count) {
+            outgoingWorld = null;
+            outgoingChunk = 0;
+            hostedUploadReady = false;
+        }
+    }
 }
