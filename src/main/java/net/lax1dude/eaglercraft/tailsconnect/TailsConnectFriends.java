@@ -104,6 +104,10 @@ public final class TailsConnectFriends {
                 && TailsConnectClient.getRoomCode() != null) {
             send("JOIN_APPROVE", new JSONObject().put("code", pendingApprovalCode)
                     .put("room", TailsConnectClient.getRoomCode()).put("game", TailsConnectClient.GAME_ID));
+            SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
+                    SystemToast.Type.TAILSCONNECT_JOIN,
+                    new TextComponentString("Private world ready"),
+                    new TextComponentString("Join code sent"));
             pendingApprovalCode = null;
             state = "Private world shared; join code sent";
         }
@@ -174,7 +178,11 @@ public final class TailsConnectFriends {
                 }
             } catch (Exception ex) { error = "Could not join friend world"; }
         } else if (message.startsWith("TC4 JOIN_STATUS ")) {
-            state = "Join request sent";
+            try {
+                JSONObject data = new JSONObject(message.substring(16));
+                state = "approved".equals(data.optString("status", ""))
+                        ? "Join request approved" : "Join request sent";
+            } catch (Exception ex) { state = "Join request sent"; }
         } else if (message.startsWith("TC4 JOIN_DENIED ")) {
             error = "Join request declined";
         } else if (message.startsWith("TC4 ERROR ")) {
@@ -245,12 +253,21 @@ public final class TailsConnectFriends {
                     String room = requestRoom;
                     if (room == null || room.isEmpty()) room = TailsConnectClient.getRoomCode();
                     if (room == null || room.isEmpty()) {
-                        if (SingleplayerServerController.isWorldReady()) {
+                        if (SingleplayerServerController.isWorldReady()
+                                || Minecraft.getMinecraft().world != null) {
                             pendingApprovalCode = requestCode;
                             TailsConnectClient.hostPrivate(0);
+                            SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
+                                    SystemToast.Type.TAILSCONNECT_JOIN,
+                                    new TextComponentString("Starting private sharing"),
+                                    new TextComponentString("Preparing a room for your friend"));
                             state = "Starting private world sharing";
                         } else {
                             error = "Open a world before accepting this request";
+                            SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
+                                    SystemToast.Type.TAILSCONNECT_JOIN,
+                                    new TextComponentString("Cannot accept join request"),
+                                    new TextComponentString("Open a world first"));
                         }
                     } else {
                         send("JOIN_APPROVE", new JSONObject().put("code", requestCode)
