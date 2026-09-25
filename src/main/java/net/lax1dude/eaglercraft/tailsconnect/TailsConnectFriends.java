@@ -33,6 +33,7 @@ public final class TailsConnectFriends {
     private static String lastPresenceSignature;
     private static String pendingJoinCode;
     private static String pendingJoinName;
+    private static boolean openJoinDialogNextTick;
 
     private TailsConnectFriends() { }
 
@@ -74,6 +75,10 @@ public final class TailsConnectFriends {
             helloSent = true;
             state = "Loading friends";
         }
+        if (openJoinDialogNextTick) {
+            openJoinDialogNextTick = false;
+            showJoinRequestDialog();
+        }
         updatePresence();
         for (int i = 0; i < 64 && socket.availableFrames() > 0; i++) {
             IWebSocketFrame frame = socket.getNextFrame();
@@ -112,7 +117,9 @@ public final class TailsConnectFriends {
                         SystemToast.Type.TAILSCONNECT_JOIN,
                         new TextComponentString("Join request"),
                         new TextComponentString("Press J"));
-                showJoinRequestDialog();
+                // Defer the screen transition until the next client tick so a
+                // menu/world screen cannot overwrite it in the same frame.
+                openJoinDialogNextTick = true;
             } catch (Exception ex) { error = "Could not read join request"; }
         } else if (message.startsWith("TC4 FRIEND_STATUS ")) {
             requestListRefresh();
