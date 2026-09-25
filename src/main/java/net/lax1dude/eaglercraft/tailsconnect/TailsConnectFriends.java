@@ -188,6 +188,9 @@ public final class TailsConnectFriends {
         } else if (message.startsWith("TC4 ERROR ")) {
             try { error = new JSONObject(message.substring(10)).optString("message", "TC4 error"); }
             catch (Exception ex) { error = "TC4 error"; }
+            SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
+                    SystemToast.Type.TAILSCONNECT_JOIN,
+                    new TextComponentString("TailsConnect error"), new TextComponentString(error));
         }
     }
 
