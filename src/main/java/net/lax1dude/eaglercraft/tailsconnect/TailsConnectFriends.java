@@ -33,6 +33,7 @@ public final class TailsConnectFriends {
     private static String lastPresenceSignature;
     private static String pendingJoinCode;
     private static String pendingJoinName;
+    private static String pendingJoinRoom;
     private static boolean openJoinDialogNextTick;
 
     private TailsConnectFriends() { }
@@ -113,6 +114,7 @@ public final class TailsConnectFriends {
                 JSONObject data = new JSONObject(message.substring(17));
                 pendingJoinCode = data.optString("code", "");
                 pendingJoinName = data.optString("name", "A friend");
+                pendingJoinRoom = data.optString("room", "").toUpperCase();
                 state = "Join request from " + pendingJoinName;
                 SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
                         SystemToast.Type.TAILSCONNECT_JOIN,
@@ -195,13 +197,16 @@ public final class TailsConnectFriends {
         if (pendingJoinCode == null) return false;
         final String requestCode = pendingJoinCode;
         final String requestName = pendingJoinName == null ? "this player" : pendingJoinName;
+        final String requestRoom = pendingJoinRoom;
         final GuiScreen previous = Minecraft.getMinecraft().currentScreen;
         pendingJoinCode = null;
         pendingJoinName = null;
+        pendingJoinRoom = null;
         Minecraft.getMinecraft().displayGuiScreen(new GuiYesNo(new GuiYesNoCallback() {
             public void confirmClicked(boolean result, int id) {
                 if (result) {
-                    String room = TailsConnectClient.getRoomCode();
+                    String room = requestRoom;
+                    if (room == null || room.isEmpty()) room = TailsConnectClient.getRoomCode();
                     if (room == null) {
                         error = "You are not in a TailsConnect world";
                     } else {
