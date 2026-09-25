@@ -112,6 +112,7 @@ public final class TailsConnectFriends {
                         SystemToast.Type.TAILSCONNECT_JOIN,
                         new TextComponentString("Join request"),
                         new TextComponentString("Press J"));
+                showJoinRequestDialog();
             } catch (Exception ex) { error = "Could not read join request"; }
         } else if (message.startsWith("TC4 FRIEND_STATUS ")) {
             requestListRefresh();
@@ -179,19 +180,19 @@ public final class TailsConnectFriends {
         state = "Join request sent";
     }
 
-    public static boolean handleKey(int keyCode) {
-        // Eagler's legacy table uses 0x24, while browser/GLFW events can arrive
-        // as the native J key value (74).
-        if ((keyCode != net.lax1dude.eaglercraft.KeyboardConstants.KEY_J && keyCode != 74)
-                || pendingJoinCode == null) return false;
+    private static boolean showJoinRequestDialog() {
+        if (pendingJoinCode == null) return false;
         if (!TailsConnectClient.isHosting() || TailsConnectClient.getRoomCode() == null) {
             error = "Host a TailsConnect world before accepting";
             pendingJoinCode = null;
+            pendingJoinName = null;
             return true;
         }
         final String requestCode = pendingJoinCode;
         final String requestName = pendingJoinName == null ? "this player" : pendingJoinName;
         final GuiScreen previous = Minecraft.getMinecraft().currentScreen;
+        pendingJoinCode = null;
+        pendingJoinName = null;
         Minecraft.getMinecraft().displayGuiScreen(new GuiYesNo(new GuiYesNoCallback() {
             public void confirmClicked(boolean result, int id) {
                 if (result) {
@@ -205,9 +206,15 @@ public final class TailsConnectFriends {
                 Minecraft.getMinecraft().displayGuiScreen(previous);
             }
         }, "Join request", "Would you like to allow " + requestName + " to join?", "Allow", "Deny", 0));
-        pendingJoinCode = null;
-        pendingJoinName = null;
         return true;
+    }
+
+    public static boolean handleKey(int keyCode) {
+        // Eagler's legacy table uses 0x24, while browser/GLFW events can arrive
+        // as the native J key value (74).
+        if ((keyCode != net.lax1dude.eaglercraft.KeyboardConstants.KEY_J && keyCode != 74)
+                || pendingJoinCode == null) return false;
+        return showJoinRequestDialog();
     }
 
     public static String getFriendCode() { return getOrCreateCode(); }
