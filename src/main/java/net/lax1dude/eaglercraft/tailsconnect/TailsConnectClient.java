@@ -58,6 +58,8 @@ public final class TailsConnectClient {
     private static String hostedUploadHash;
     private static int pendingHostedPlayers = -1;
     private static String pendingHostedRoom;
+    private static String hostedSourceFolder;
+    private static String hostedSourceName;
 
     public static void reset() { shutdown("TailsConnect stopped", true); error = null; }
 
@@ -86,6 +88,8 @@ public final class TailsConnectClient {
         hostedUploadHash = null;
         pendingHostedPlayers = -1;
         pendingHostedRoom = null;
+        hostedSourceFolder = null;
+        hostedSourceName = null;
         hostId = pending = roomCode = null;
         state = "Idle";
         if (oldNetwork != null) oldNetwork.closeChannel(new TextComponentString(reason));
@@ -115,6 +119,32 @@ public final class TailsConnectClient {
     public static void hostHosted(int players) {
         hostInternal(players, publicLobby);
         hostedMode = true;
+    }
+    /** Hosts a selected save directly, without opening it as a local world. */
+    public static void hostSelectedWorld(String folderName, String displayName, int players) {
+        if (folderName == null || folderName.trim().isEmpty()) {
+            error = "Invalid world selection";
+            return;
+        }
+        reset();
+        maxPlayers = normalizePlayers(players);
+        hostedSourceFolder = folderName.trim();
+        hostedSourceName = displayName == null ? hostedSourceFolder : displayName.trim();
+        if (hostedSourceName.isEmpty()) hostedSourceName = hostedSourceFolder;
+        if (hostedSourceName.length() > 64) hostedSourceName = hostedSourceName.substring(0, 64);
+        JSONObject data = new JSONObject().put("game", GAME).put("maxPlayers", maxPlayers)
+                .put("advertisement", new JSONObject().put("public", publicLobby).put("name", hostedSourceName));
+        hosting = true;
+        hostedMode = true;
+        pending = "TC3 HOST " + data;
+        handshakeSent = false;
+        welcomeReceived = false;
+        selfId = EaglercraftUUID.randomUUID().toString().replace("-", "");
+        started = EagRuntime.steadyTimeMillis();
+        state = "Connecting to TailsConnect";
+        socket = PlatformNetworking.openWebSocket(SERVER);
+        if (socket == null) { fail("Could not open TailsConnect"); return; }
+        socket.setEnableStringFrames(true); socket.setEnableBinaryFrames(true);
     }
     public static void queueHosted(int players) {
         pendingHostedPlayers = normalizePlayers(players);
@@ -317,9 +347,11 @@ public final class TailsConnectClient {
                         // TC5 publishes the already-selected save directly. The
                         // old worker IPC exporter could race server shutdown and
                         // enter client rendering/bootstrap code while exporting.
-                        outgoingWorld = WorldConverterEPK.exportWorldDirect(
-                                SingleplayerServerController.getCurrentFolderName());
-                        outgoingWorldName = SingleplayerServerController.getCurrentWorldName();
+                        String sourceFolder = hostedSourceFolder != null ? hostedSourceFolder
+                                : SingleplayerServerController.getCurrentFolderName();
+                        outgoingWorld = WorldConverterEPK.exportWorldDirect(sourceFolder);
+                        outgoingWorldName = hostedSourceName != null ? hostedSourceName
+                                : SingleplayerServerController.getCurrentWorldName();
                         if (outgoingWorldName == null || outgoingWorldName.trim().isEmpty()) {
                             outgoingWorldName = "Hosted World";
                         }
