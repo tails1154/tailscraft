@@ -201,6 +201,11 @@ public class SingleplayerServerController {
 		return currentWorldName;
 	}
 
+	/** The on-disk save folder for the currently loaded singleplayer world. */
+	public static String getCurrentFolderName() {
+		return currentFolderName;
+	}
+
 	public static void requestWorldExport() {
 		ensureWorldReady();
 		if (currentFolderName == null || currentFolderName.isEmpty()) {

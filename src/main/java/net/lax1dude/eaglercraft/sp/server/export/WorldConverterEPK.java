@@ -121,6 +121,28 @@ public class WorldConverterEPK {
 			realWorldName = worldName.substring(0, j);
 		}
 		VFile2 worldDir = EaglerIntegratedServerWorker.anvilConverter.getSaveLoader(realWorldName, false).getWorldDirectory();
+		return exportWorldDirectory(realWorldName, worldOwner, worldDir);
+	}
+
+	/**
+	 * Exports a saved world directly from the VFS. This deliberately does not
+	 * touch the integrated-server worker, Minecraft bootstrap, or any renderer.
+	 * TC5 uses this path because a browser client can be in the middle of a
+	 * worker transition while it is publishing a saved world.
+	 */
+	public static byte[] exportWorldDirect(String worldName) {
+		String realWorldName = worldName;
+		String worldOwner = "UNKNOWN";
+		int j = worldName.lastIndexOf(new String(new char[] { (char)253, (char)233, (char)233 }));
+		if (j != -1) {
+			worldOwner = worldName.substring(j + 3);
+			realWorldName = worldName.substring(0, j);
+		}
+		VFile2 worldDir = new VFile2(FileUtils.dataDir, "worlds", realWorldName);
+		return exportWorldDirectory(realWorldName, worldOwner, worldDir);
+	}
+
+	private static byte[] exportWorldDirectory(String realWorldName, String worldOwner, VFile2 worldDir) {
 		logger.info("Exporting world directory \"{}\" as EPK", worldDir.getPath());
 		final int[] bytesWritten = new int[1];
 		final int[] filesWritten = new int[1];

@@ -13,6 +13,7 @@ import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
 import net.lax1dude.eaglercraft.sp.internal.ClientPlatformSingleplayer;
 import net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel;
 import net.lax1dude.eaglercraft.sp.socket.NetHandlerSingleplayerLogin;
+import net.lax1dude.eaglercraft.sp.server.export.WorldConverterEPK;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.network.EnumConnectionState;
@@ -51,6 +52,7 @@ public final class TailsConnectClient {
     private static boolean hostedMode;
     private static boolean hostedExportRequested;
     private static boolean hostedUploadReady;
+    private static boolean hostedRequestSent;
     private static String hostedWorldId;
     private static String hostedUploadHash;
     private static int pendingHostedPlayers = -1;
@@ -77,7 +79,7 @@ public final class TailsConnectClient {
         incomingChunks = null;
         incomingChunkCount = incomingChunksReceived = incomingBytes = 0;
         hostedMode = false;
-        hostedExportRequested = hostedUploadReady = false;
+        hostedExportRequested = hostedUploadReady = hostedRequestSent = false;
         hostedWorldId = null;
         hostedUploadHash = null;
         pendingHostedPlayers = -1;
@@ -308,8 +310,31 @@ public final class TailsConnectClient {
                 if ("host".equals(data.optString("role"))) hosting = true;
                 if (hostedMode && hosting && !hostedExportRequested) {
                     hostedExportRequested = true;
-                    SingleplayerServerController.requestWorldExport();
-                    state = "Preparing hosted world";
+                    try {
+                        // TC5 publishes the already-selected save directly. The
+                        // old worker IPC exporter could race server shutdown and
+                        // enter client rendering/bootstrap code while exporting.
+                        outgoingWorld = WorldConverterEPK.exportWorldDirect(
+                                SingleplayerServerController.getCurrentFolderName());
+                        outgoingWorldName = SingleplayerServerController.getCurrentWorldName();
+                        if (outgoingWorldName == null || outgoingWorldName.trim().isEmpty()) {
+                            outgoingWorldName = "Hosted World";
+                        }
+                        outgoingWorldName = outgoingWorldName.trim();
+                        if (outgoingWorldName.length() > 64) outgoingWorldName = outgoingWorldName.substring(0, 64);
+                        if (outgoingWorld.length == 0 || outgoingWorld.length > MAX_TRANSFER_SIZE) {
+                            error = "World is too large to host (maximum 64 MiB)";
+                            outgoingWorld = null;
+                            hostedExportRequested = false;
+                        } else {
+                            hostedUploadHash = sha256(outgoingWorld);
+                            state = "Preparing hosted world";
+                        }
+                    } catch (Throwable ex) {
+                        outgoingWorld = null;
+                        hostedExportRequested = false;
+                        error = "Could not export world: " + ex.getMessage();
+                    }
                 }
             } catch (Exception ignored) { }
             return;
@@ -533,28 +558,16 @@ public final class TailsConnectClient {
 
     private static void updateHostedWorld() {
         if (!hosting || !hostedExportRequested || socket == null || !socket.isOpen()) return;
-        if (!hostedUploadReady && outgoingWorld == null) {
-            byte[] result = SingleplayerServerController.getExportResponse();
-            if (result != null) {
-                if (result.length == 0 || result.length > MAX_TRANSFER_SIZE) {
-                    error = "World is too large to host (maximum 64 MiB)";
-                    hostedExportRequested = false;
-                    return;
-                }
-                try {
-                    outgoingWorld = result;
-                    outgoingWorldName = SingleplayerServerController.getCurrentWorldName();
-                    if (outgoingWorldName == null || outgoingWorldName.trim().isEmpty()) outgoingWorldName = "Hosted World";
-                    outgoingWorldName = outgoingWorldName.trim();
-                    hostedUploadHash = sha256(result);
-                    socket.send("TC5 HOST_WORLD " + new JSONObject().put("game", GAME)
-                            .put("name", outgoingWorldName).put("size", result.length).put("sha256", hostedUploadHash)
-                            .put("maxPlayers", maxPlayers)
-                            .put("advertisement", new JSONObject().put("public", publicLobby)
-                                    .put("name", outgoingWorldName)));
-                    state = "Requesting hosted-world storage";
-                } catch (Exception ex) { error = "Could not prepare hosted world: " + ex.getMessage(); }
-            }
+        if (!hostedUploadReady && !hostedRequestSent && outgoingWorld != null && hostedWorldId == null) {
+            try {
+                socket.send("TC5 HOST_WORLD " + new JSONObject().put("game", GAME)
+                        .put("name", outgoingWorldName).put("size", outgoingWorld.length).put("sha256", hostedUploadHash)
+                        .put("maxPlayers", maxPlayers)
+                        .put("advertisement", new JSONObject().put("public", publicLobby)
+                                .put("name", outgoingWorldName)));
+                state = "Requesting hosted-world storage";
+                hostedRequestSent = true;
+            } catch (Exception ex) { error = "Could not prepare hosted world: " + ex.getMessage(); }
             return;
         }
         if (!hostedUploadReady || outgoingWorld == null) return;
