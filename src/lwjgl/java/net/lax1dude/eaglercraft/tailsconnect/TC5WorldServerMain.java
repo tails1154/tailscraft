@@ -21,6 +21,7 @@ import net.lax1dude.eaglercraft.sp.ipc.IPCPacketManager;
 import net.lax1dude.eaglercraft.sp.server.EaglerIntegratedServerWorker;
 import net.lax1dude.eaglercraft.sp.server.internal.ServerPlatformSingleplayer;
 import net.lax1dude.eaglercraft.sp.server.internal.lwjgl.MemoryConnection;
+import net.minecraft.init.Bootstrap;
 
 /**
  * Headless TC5 host for the existing Eagler integrated-server implementation.
@@ -46,6 +47,7 @@ public final class TC5WorldServerMain {
     private static final IPCPacketManager PACKETS = new IPCPacketManager();
     private static volatile boolean running = true;
     private static volatile boolean startSent;
+    private static boolean reuseWorld;
     private static String hostedWorldName;
     private static String hostedFolderName;
 
@@ -56,6 +58,7 @@ public final class TC5WorldServerMain {
         String epkPath = option(args, "--epk");
         String worldName = option(args, "--world-name");
         String folderName = option(args, "--folder-name");
+        reuseWorld = "true".equalsIgnoreCase(option(args, "--reuse-world"));
         int port = Integer.parseInt(option(args, "--control-port"));
         if (epkPath == null || worldName == null || folderName == null) {
             throw new IllegalArgumentException("--epk, --world-name, --folder-name, and --control-port are required");
@@ -64,6 +67,10 @@ public final class TC5WorldServerMain {
         hostedFolderName = folderName;
 
         ServerPlatformSingleplayer.initializeContext();
+        // The browser normally performs this during Minecraft.startGame().
+        // A headless daemon has no client bootstrap, but world import creates
+        // DataFixes before EaglerMinecraftServer can register the game tables.
+        Bootstrap.register();
         Thread worker = new Thread(EaglerIntegratedServerWorker::serverMain, "TC5-EaglerServer");
         // The controller owns the process lifetime. If the bridge disconnects,
         // the worker must not keep an orphaned Minecraft server JVM alive.
@@ -81,8 +88,10 @@ public final class TC5WorldServerMain {
                 outbound.setDaemon(true);
                 outbound.start();
 
-                enqueue(new IPCPacket07ImportWorld(worldName,
-                        Files.readAllBytes(Paths.get(epkPath)), IPCPacket07ImportWorld.WORLD_FORMAT_EAG, (byte) 0));
+                if (!reuseWorld) {
+                    enqueue(new IPCPacket07ImportWorld(worldName,
+                            Files.readAllBytes(Paths.get(epkPath)), IPCPacket07ImportWorld.WORLD_FORMAT_EAG, (byte) 0));
+                }
                 while (running) {
                     int length;
                     try {
@@ -110,6 +119,8 @@ public final class TC5WorldServerMain {
                 }
                 running = false;
                 try {
+                    enqueue(new net.lax1dude.eaglercraft.sp.ipc.IPCPacket19Autosave());
+                    Thread.sleep(500L);
                     enqueue(new net.lax1dude.eaglercraft.sp.ipc.IPCPacket01StopServer());
                 } catch (Throwable ignored) {
                 }
@@ -181,6 +192,17 @@ public final class TC5WorldServerMain {
                     } catch (IOException ex) {
                         running = false;
                     }
+                }
+            }
+            if (packet instanceof IPCPacketFFProcessKeepAlive
+                    && ((IPCPacketFFProcessKeepAlive) packet).ack == 0xFF
+                    && !startSent && hostedWorldName != null && reuseWorld) {
+                startSent = true;
+                try {
+                    enqueue(new IPCPacket00StartServer("eaglercraft", hostedFolderName, hostedWorldName,
+                            "TC5", 0, 8, false));
+                } catch (IOException ex) {
+                    running = false;
                 }
             }
         } catch (IOException ignored) {
