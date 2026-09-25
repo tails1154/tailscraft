@@ -90,6 +90,12 @@ public final class TailsConnectClient {
         }
     }
     public static void host(String ignored, int players) {
+        hostInternal(players, publicLobby);
+    }
+    public static void hostPrivate(int players) {
+        hostInternal(players, false);
+    }
+    private static void hostInternal(int players, boolean advertisePublicly) {
         if (!SingleplayerServerController.isWorldReady()) { error = "Open a singleplayer world first"; return; }
         maxPlayers = normalizePlayers(players);
         JSONObject data = new JSONObject().put("game", GAME).put("maxPlayers", maxPlayers);
@@ -102,7 +108,7 @@ public final class TailsConnectClient {
         if (worldName.length() > 64) {
             worldName = worldName.substring(0, 64);
         }
-        data.put("advertisement", new JSONObject().put("public", publicLobby).put("name", worldName));
+        data.put("advertisement", new JSONObject().put("public", advertisePublicly).put("name", worldName));
         begin("TC3 HOST " + data, true);
     }
     public static void join(String ignored, String code) {

@@ -38,6 +38,7 @@ public final class TailsConnectFriends {
     private static String pendingJoinRoom;
     private static String pendingApprovedRoom;
     private static boolean approvedWorldShutdownRequested;
+    private static String pendingApprovalCode;
     private static boolean openJoinDialogNextTick;
 
     private TailsConnectFriends() { }
@@ -98,6 +99,13 @@ public final class TailsConnectFriends {
                 if (mc.isIntegratedServerRunning()) mc.shutdownIntegratedServer(new GuiMainMenu());
                 else mc.loadWorld(null);
             }
+        }
+        if (pendingApprovalCode != null && TailsConnectClient.isHosting()
+                && TailsConnectClient.getRoomCode() != null) {
+            send("JOIN_APPROVE", new JSONObject().put("code", pendingApprovalCode)
+                    .put("room", TailsConnectClient.getRoomCode()).put("game", TailsConnectClient.GAME_ID));
+            pendingApprovalCode = null;
+            state = "Private world shared; join code sent";
         }
         updatePresence();
         for (int i = 0; i < 64 && socket.availableFrames() > 0; i++) {
@@ -236,8 +244,14 @@ public final class TailsConnectFriends {
                 if (result) {
                     String room = requestRoom;
                     if (room == null || room.isEmpty()) room = TailsConnectClient.getRoomCode();
-                    if (room == null) {
-                        error = "You are not in a TailsConnect world";
+                    if (room == null || room.isEmpty()) {
+                        if (SingleplayerServerController.isWorldReady()) {
+                            pendingApprovalCode = requestCode;
+                            TailsConnectClient.hostPrivate(0);
+                            state = "Starting private world sharing";
+                        } else {
+                            error = "Open a world before accepting this request";
+                        }
                     } else {
                         send("JOIN_APPROVE", new JSONObject().put("code", requestCode)
                                 .put("room", room).put("game", TailsConnectClient.GAME_ID));
