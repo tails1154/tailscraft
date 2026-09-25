@@ -2561,6 +2561,13 @@ public abstract class Entity implements ICommandSender {
 	public Entity changeDimension(int dimensionIn) {
 		if (!this.world.isRemote && !this.isDead) {
 			MinecraftServer minecraftserver = this.getServer();
+			// Browser integrated-server worlds can briefly detach their server while
+			// saving/exporting. A portal tick must not crash the whole client then.
+			if (minecraftserver == null) {
+				this.inPortal = false;
+				this.portalCounter = 0;
+				return null;
+			}
 			int i = this.dimension;
 			WorldServer worldserver = minecraftserver.worldServerForDimension(i);
 			WorldServer worldserver1 = minecraftserver.worldServerForDimension(dimensionIn);
