@@ -9,7 +9,9 @@ import net.lax1dude.eaglercraft.internal.IWebSocketClient;
 import net.lax1dude.eaglercraft.internal.IWebSocketFrame;
 import net.lax1dude.eaglercraft.internal.PlatformNetworking;
 import net.lax1dude.eaglercraft.profile.EaglerProfile;
+import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
@@ -34,6 +36,8 @@ public final class TailsConnectFriends {
     private static String pendingJoinCode;
     private static String pendingJoinName;
     private static String pendingJoinRoom;
+    private static String pendingApprovedRoom;
+    private static boolean approvedWorldShutdownRequested;
     private static boolean openJoinDialogNextTick;
 
     private TailsConnectFriends() { }
@@ -80,6 +84,20 @@ public final class TailsConnectFriends {
         if (openJoinDialogNextTick) {
             openJoinDialogNextTick = false;
             showJoinRequestDialog();
+        }
+        if (pendingApprovedRoom != null) {
+            Minecraft mc = Minecraft.getMinecraft();
+            if (mc.world == null) {
+                String room = pendingApprovedRoom;
+                pendingApprovedRoom = null;
+                approvedWorldShutdownRequested = false;
+                TailsConnectClient.join("", room);
+            } else if (!approvedWorldShutdownRequested) {
+                approvedWorldShutdownRequested = true;
+                state = "Leaving current world";
+                if (mc.isIntegratedServerRunning()) mc.shutdownIntegratedServer(new GuiMainMenu());
+                else mc.loadWorld(null);
+            }
         }
         updatePresence();
         for (int i = 0; i < 64 && socket.availableFrames() > 0; i++) {
@@ -134,7 +152,18 @@ public final class TailsConnectFriends {
             try {
                 JSONObject data = new JSONObject(message.substring(18));
                 String room = data.optString("room", "").toUpperCase();
-                if (room.matches("[A-F0-9]{6}")) TailsConnectClient.join("", room);
+                if (room.matches("[A-F0-9]{6}")) {
+                    pendingApprovedRoom = room;
+                    approvedWorldShutdownRequested = false;
+                    error = null;
+                    state = "Join approved - connecting";
+                    SystemToast.func_193657_a(Minecraft.getMinecraft().func_193033_an(),
+                            SystemToast.Type.TAILSCONNECT_JOIN,
+                            new TextComponentString("Join approved"),
+                            new TextComponentString("Connecting to friend world"));
+                } else {
+                    error = "Friend approval did not include a valid room";
+                }
             } catch (Exception ex) { error = "Could not join friend world"; }
         } else if (message.startsWith("TC4 JOIN_STATUS ")) {
             state = "Join request sent";
