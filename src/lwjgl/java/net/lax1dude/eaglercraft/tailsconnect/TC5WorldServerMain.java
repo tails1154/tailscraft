@@ -8,7 +8,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.List;
 
 import net.lax1dude.eaglercraft.internal.IPCPacketData;
@@ -29,7 +28,7 @@ import net.lax1dude.eaglercraft.sp.server.internal.lwjgl.MemoryConnection;
  * The controller protocol is deliberately small and private to the local
  * TailsConnect daemon:
  *   frame = uint32 length, byte type, body
- *   type 1: OPEN/CLOSE, body uint16 channel length + UTF-8 channel
+ *   type 1: OPEN, type 4: CLOSE, body uint16 channel length + UTF-8 channel
  *   type 2: DATA, body uint16 channel length + channel + packet bytes
  *   type 3: IPC, body serialized IPC packet
  *
@@ -66,7 +65,9 @@ public final class TC5WorldServerMain {
 
         ServerPlatformSingleplayer.initializeContext();
         Thread worker = new Thread(EaglerIntegratedServerWorker::serverMain, "TC5-EaglerServer");
-        worker.setDaemon(false);
+        // The controller owns the process lifetime. If the bridge disconnects,
+        // the worker must not keep an orphaned Minecraft server JVM alive.
+        worker.setDaemon(true);
         worker.start();
 
         try (ServerSocket listener = new ServerSocket(port, 1, java.net.InetAddress.getLoopbackAddress())) {
@@ -133,11 +134,6 @@ public final class TC5WorldServerMain {
         synchronized (MemoryConnection.clientToServerQueue) {
             MemoryConnection.clientToServerQueue.add(packet);
         }
-    }
-
-    private static boolean importCompleted() {
-        // The outbound pump consumes packets, so this flag is set there.
-        return importAck;
     }
 
     private static volatile boolean importAck;
