@@ -17,3 +17,4 @@ desktopRuntime/crash-reports/*
 desktopRuntime/downloads/*
 desktopRuntime/screenshots/*
 tailsconnect-runtime/
+__pycache__/
