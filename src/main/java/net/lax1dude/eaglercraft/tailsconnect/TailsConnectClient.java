@@ -231,8 +231,16 @@ public final class TailsConnectClient {
     }
 
     private static byte[] transferChunk(int index, int count, byte[] data, int offset, int length) {
+        return makeChunk((byte) '3', index, count, data, offset, length);
+    }
+
+    private static byte[] hostedUploadChunk(int index, int count, byte[] data, int offset, int length) {
+        return makeChunk((byte) '5', index, count, data, offset, length);
+    }
+
+    private static byte[] makeChunk(byte protocolVersion, int index, int count, byte[] data, int offset, int length) {
         byte[] packet = new byte[12 + length];
-        packet[0] = 'T'; packet[1] = 'C'; packet[2] = '3'; packet[3] = 'W';
+        packet[0] = 'T'; packet[1] = 'C'; packet[2] = protocolVersion; packet[3] = 'W';
         packet[4] = (byte) (index >>> 24); packet[5] = (byte) (index >>> 16);
         packet[6] = (byte) (index >>> 8); packet[7] = (byte) index;
         packet[8] = (byte) (count >>> 24); packet[9] = (byte) (count >>> 16);
@@ -626,7 +634,7 @@ public final class TailsConnectClient {
         int count = (outgoingWorld.length + TRANSFER_CHUNK_SIZE - 1) / TRANSFER_CHUNK_SIZE;
         int offset = outgoingChunk * TRANSFER_CHUNK_SIZE;
         int length = Math.min(TRANSFER_CHUNK_SIZE, outgoingWorld.length - offset);
-        socket.send(transferChunk(outgoingChunk, count, outgoingWorld, offset, length));
+        socket.send(hostedUploadChunk(outgoingChunk, count, outgoingWorld, offset, length));
         outgoingChunk++;
         int percent = Math.min(100, (outgoingChunk * 100) / count);
         state = "Uploading hosted world (" + percent + "%)";

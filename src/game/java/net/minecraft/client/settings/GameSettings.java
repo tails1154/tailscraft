@@ -63,7 +63,7 @@ public class GameSettings {
 	// "options.narrator.system"};
 	public float mouseSensitivity = 0.5F;
 	public boolean invertMouse;
-	public int renderDistanceChunks = -1;
+	public int renderDistanceChunks = 8;
 	public boolean viewBobbing = true;
 	public boolean anaglyph;
 	public boolean fboEnable = true;
@@ -208,8 +208,12 @@ public class GameSettings {
 		this.language = "en_us";
 		this.mc = mcIn;
 		GameSettings.Options.RENDER_DISTANCE.setValueMax(16.0F);
-		this.renderDistanceChunks = 4;
+		this.renderDistanceChunks = 8;
 		this.loadOptions();
+		// TailsCraft always starts at the stable 8-chunk default, even when an
+		// older saved options file contains a different render distance.
+		this.renderDistanceChunks = 8;
+		this.saveOptions();
 		Config.initGameSettings(this);
 	}
 
