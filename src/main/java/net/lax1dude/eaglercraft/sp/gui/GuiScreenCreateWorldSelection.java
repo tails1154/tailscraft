@@ -77,7 +77,7 @@ public class GuiScreenCreateWorldSelection extends GuiScreen {
 			this.mc.displayGuiScreen(new GuiCreateWorld(mainmenu));
 		}else if(par1GuiButton.id == 2) {
 			isImportingEPK = true;
-			EagRuntime.displayFileChooser(null, "epk");
+			EagRuntime.displayFileChooser(null, "epk,.epw");
 		}else if(par1GuiButton.id == 3) {
 			isImportingMCA = true;
 			EagRuntime.displayFileChooser(null, "zip");

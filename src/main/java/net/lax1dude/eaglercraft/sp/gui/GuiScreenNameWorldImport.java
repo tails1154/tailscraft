@@ -47,7 +47,7 @@ public class GuiScreenNameWorldImport extends GuiScreen {
 		this.importFormat = format;
 		this.world = world;
 		this.name = world.fileName;
-		if(name.length() > 4 && (name.endsWith(".epk") || name.endsWith(".zip"))) {
+		if(name.length() > 4 && (name.endsWith(".epk") || name.endsWith(".epw") || name.endsWith(".zip"))) {
 			name = name.substring(0, name.length() - 4);
 		}
 	}

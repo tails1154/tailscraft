@@ -5,8 +5,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import net.lax1dude.eaglercraft.internal.vfs2.VFile2;
+import net.lax1dude.eaglercraft.EagRuntime;
 import net.lax1dude.eaglercraft.opengl.GlStateManager;
 import net.lax1dude.eaglercraft.opengl.ImageData;
+import net.lax1dude.eaglercraft.sp.server.export.WorldConverterEPK;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -214,6 +216,25 @@ public class GuiListWorldSelectionEntry implements GuiListExtended.IGuiListEntry
 		if (worldinfo != null) {
 			guicreateworld.recreateFromExistingWorld(worldinfo);
 			this.client.displayGuiScreen(guicreateworld);
+		}
+	}
+
+	/** Export this save without starting or stopping the integrated server. */
+	public void exportWorldAsEPW() {
+		try {
+			String worldName = this.worldSummary.getDisplayName();
+			if (StringUtils.isEmpty(worldName)) {
+				worldName = this.worldSummary.getFileName();
+			}
+			String downloadName = worldName.replaceAll("[^A-Za-z0-9._-]+", "_");
+			if (StringUtils.isEmpty(downloadName)) {
+				downloadName = "world";
+			}
+			byte[] epw = WorldConverterEPK.exportWorldDirect(this.worldSummary.getFileName());
+			EagRuntime.downloadFileWithName(downloadName + ".epw", epw);
+		} catch (Throwable ex) {
+			LOGGER.error("Could not export world {} as EPW", this.worldSummary.getFileName(), ex);
+			EagRuntime.showPopup("Could not export world as EPW: " + ex.getMessage());
 		}
 	}
 

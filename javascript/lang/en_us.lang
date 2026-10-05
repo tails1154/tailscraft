@@ -62,6 +62,7 @@ selectWorld.recreate=Re-Create
 selectWorld.createDemo=Play New Demo World
 selectWorld.delete=Delete
 selectWorld.edit=Edit
+selectWorld.exportEPW=Export EPW
 selectWorld.edit.title=Edit World
 selectWorld.edit.resetIcon=Reset Icon
 selectWorld.edit.openFolder=Open Folder

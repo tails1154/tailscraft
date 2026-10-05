@@ -62,6 +62,7 @@ selectWorld.recreate=remake
 selectWorld.createDemo=Play New Demo World
 selectWorld.delete=nuke
 selectWorld.edit=modify
+selectWorld.exportEPW=export EPW
 selectWorld.edit.title=Edit World
 selectWorld.edit.resetIcon=Reset Icon
 selectWorld.edit.openFolder=Open Folder

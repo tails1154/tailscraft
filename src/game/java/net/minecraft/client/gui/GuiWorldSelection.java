@@ -25,6 +25,7 @@ public class GuiWorldSelection extends GuiScreen {
 	private GuiButton selectButton;
 	private GuiButton renameButton;
 	private GuiButton copyButton;
+	private GuiButton exportButton;
 	protected GuiListWorldSelection selectionList;
 
 	public GuiWorldSelection(GuiScreen screenIn) {
@@ -56,17 +57,21 @@ public class GuiWorldSelection extends GuiScreen {
 				new GuiButton(1, this.width / 2 - 154, this.height - 52, 150, 20, I18n.format("selectWorld.select")));
 		this.addButton(
 				new GuiButton(3, this.width / 2 + 4, this.height - 52, 150, 20, I18n.format("selectWorld.create")));
+		int actionX = this.width / 2 - 188;
 		this.renameButton = this.addButton(
-				new GuiButton(4, this.width / 2 - 154, this.height - 28, 72, 20, I18n.format("selectWorld.edit")));
+				new GuiButton(4, actionX, this.height - 28, 72, 20, I18n.format("selectWorld.edit")));
 		this.deleteButton = this.addButton(
-				new GuiButton(2, this.width / 2 - 76, this.height - 28, 72, 20, I18n.format("selectWorld.delete")));
+				new GuiButton(2, actionX + 78, this.height - 28, 72, 20, I18n.format("selectWorld.delete")));
 		this.copyButton = this.addButton(
-				new GuiButton(5, this.width / 2 + 4, this.height - 28, 72, 20, I18n.format("selectWorld.recreate")));
-		this.addButton(new GuiButton(0, this.width / 2 + 82, this.height - 28, 72, 20, I18n.format("gui.cancel")));
+				new GuiButton(5, actionX + 156, this.height - 28, 72, 20, I18n.format("selectWorld.recreate")));
+		this.exportButton = this.addButton(
+				new GuiButton(6, actionX + 234, this.height - 28, 72, 20, I18n.format("selectWorld.exportEPW")));
+		this.addButton(new GuiButton(0, actionX + 312, this.height - 28, 72, 20, I18n.format("gui.cancel")));
 		this.selectButton.enabled = false;
 		this.deleteButton.enabled = false;
 		this.renameButton.enabled = false;
 		this.copyButton.enabled = false;
+		this.exportButton.enabled = false;
 	}
 
 	/**
@@ -95,6 +100,8 @@ public class GuiWorldSelection extends GuiScreen {
 				this.mc.displayGuiScreen(this.prevScreen);
 			} else if (button.id == 5 && guilistworldselectionentry != null) {
 				guilistworldselectionentry.recreateWorld();
+			} else if (button.id == 6 && guilistworldselectionentry != null) {
+				guilistworldselectionentry.exportWorldAsEPW();
 			}
 		}
 	}
@@ -146,5 +153,6 @@ public class GuiWorldSelection extends GuiScreen {
 		this.deleteButton.enabled = flag;
 		this.renameButton.enabled = flag;
 		this.copyButton.enabled = flag;
+		this.exportButton.enabled = flag;
 	}
 }
