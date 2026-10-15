@@ -20,6 +20,7 @@ public final class SecurityCameraClient {
     private static Entity cameraEntity;
     private static boolean viewing;
     private static int revision;
+    private static boolean loaded;
 
     public static final class Camera {
         public final int id; public final String name; public final String world;
@@ -33,8 +34,9 @@ public final class SecurityCameraClient {
     public static List<Camera> getCameras() { return Collections.unmodifiableList(cameras); }
     public static boolean isViewing() { return viewing; }
     public static int getRevision() { return revision; }
+    public static boolean isLoaded() { return loaded; }
 
-    public static void open() { request(REQUEST_LIST); }
+    public static void open() { loaded = false; request(REQUEST_LIST); }
     public static void view(int id) { requestInt(REQUEST_VIEW, id); }
     public static void stop() {
         Minecraft mc = Minecraft.getMinecraft();
@@ -71,6 +73,7 @@ public final class SecurityCameraClient {
             int count = in.readUnsignedShort(); if (count > 256) throw new IOException("Too many cameras");
             cameras.clear(); for (int i = 0; i < count; ++i) cameras.add(readCamera(in));
             ++revision;
+            loaded = true;
         } else if (type == VIEW) {
             Camera camera = readCamera(in); show(camera);
         } else if (type == NOTICE) {

@@ -39,7 +39,7 @@ public class GuiScreenSecurityCameras extends GuiScreen {
         drawCenteredString(fontRendererObj, "Select a fixed camera viewpoint", width / 2, 20, 0xAAAAAA);
         drawString(fontRendererObj, "New camera name:", width / 2 - 120, 25, 0xFFFFFF); cameraName.drawTextBox();
         List<Camera> cameras = SecurityCameraClient.getCameras();
-        if (cameras.isEmpty()) drawCenteredString(fontRendererObj, "No cameras are available on this server.", width / 2, 90, 0xCCCCCC);
+        if (cameras.isEmpty()) drawCenteredString(fontRendererObj, SecurityCameraClient.isLoaded() ? "No cameras are available on this server." : "Loading cameras...", width / 2, 90, 0xCCCCCC);
         else for (int i = 0; i < 3 && page * 3 + i < cameras.size(); ++i) { Camera camera = cameras.get(page * 3 + i); drawString(fontRendererObj, "#" + camera.id + "  " + camera.world + "  (" + (int) camera.x + ", " + (int) camera.y + ", " + (int) camera.z + ")", width / 2 - 112, 101 + i * 46, 0x777777); }
         drawCenteredString(fontRendererObj, cameras.isEmpty() ? "" : "Page " + (page + 1) + " / " + (maxPage() + 1), width / 2, height - 42, 0xAAAAAA);
         super.drawScreen(mouseX, mouseY, partialTicks);
