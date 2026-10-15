@@ -86,7 +86,7 @@ public final class SecurityCameraClient {
         return new Camera(id, name, world, in.readDouble(), in.readDouble(), in.readDouble(), in.readFloat(), in.readFloat());
     }
     private static String readText(PacketBuffer in) throws IOException {
-        int length = in.readUnsignedShort(); if (length > 128 || length > in.readableBytes()) throw new IOException("Invalid camera text");
+        int length = in.readUnsignedShort(); if (length > 128) throw new IOException("Invalid camera text");
         byte[] bytes = new byte[length]; in.readBytes(bytes); return new String(bytes, StandardCharsets.UTF_8);
     }
     private static void show(Camera camera) {
