@@ -45,6 +45,7 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemElytra;
+import net.minecraft.item.ItemSpear;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemWritableBook;
 import net.minecraft.item.ItemWrittenBook;
@@ -91,6 +92,7 @@ import net.minecraft.network.play.server.SPacketKeepAlive;
 import net.minecraft.network.play.server.SPacketMoveVehicle;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
 import net.minecraft.network.play.server.SPacketRespawn;
+import net.minecraft.network.play.server.SPacketCustomPayload;
 import net.minecraft.network.play.server.SPacketSetSlot;
 import net.minecraft.network.play.server.SPacketTabComplete;
 import net.minecraft.server.MinecraftServer;
@@ -121,6 +123,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.GameType;
 import net.minecraft.world.WorldServer;
+import net.tailscraft.voice.IntegratedVoiceRelay;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -211,6 +214,7 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable {
 	 * Like the old updateEntity(), except more generic.
 	 */
 	public void update() {
+		IntegratedVoiceRelay.tick(this.serverController);
 		this.captureCurrentPosition();
 		this.playerEntity.onUpdateEntity();
 		this.playerEntity.setPositionAndRotation(this.firstGoodX, this.firstGoodY, this.firstGoodZ,
@@ -816,6 +820,7 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable {
 	 * reason for termination
 	 */
 	public void onDisconnect(ITextComponent reason) {
+		IntegratedVoiceRelay.leave(this.serverController, this.playerEntity);
 		LOGGER.info("{} lost connection: {}", this.playerEntity.getName(), reason.getUnformattedText());
 		TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("multiplayer.player.left",
 				new Object[] { this.playerEntity.getDisplayName() });
@@ -1312,7 +1317,12 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable {
 	public void processCustomPayload(CPacketCustomPayload packetIn) {
 		String s = packetIn.getChannelName();
 
-		if ("MC|BEdit".equals(s)) {
+		if ("TC|Voice".equals(s)) {
+			try {
+				IntegratedVoiceRelay.handle(this.serverController, this.playerEntity, packetIn.getBufferData());
+			} catch (Exception ignored) {
+			}
+		} else if ("MC|BEdit".equals(s)) {
 			PacketBuffer packetbuffer = packetIn.getBufferData();
 
 			try {
@@ -1648,6 +1658,12 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable {
 						.sendPacket(new SPacketHeldItemChange(this.playerEntity.inventory.currentItem));
 			} catch (Exception exception) {
 				LOGGER.error("Couldn't pick item", (Throwable) exception);
+			}
+		} else if ("TC|Grapple".equals(s)) {
+			try {
+				ItemSpear.handleGrapplePacket(this.playerEntity, packetIn.getBufferData());
+			} catch (Exception exception) {
+				LOGGER.warn("Couldn't handle TailsCraft grapple packet", exception);
 			}
 		} else if ("EAG|MyUpdCert-1.8".equals(s)) {
 			//do nothing

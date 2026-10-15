@@ -64,6 +64,7 @@ import net.minecraft.client.renderer.debug.DebugRendererNeighborsUpdate;
 import net.minecraft.client.renderer.debug.DebugRendererPathfinding;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.GameSettings;
+import net.minecraft.client.cameras.SecurityCameraClient;
 import net.minecraft.client.util.RecipeBookClient;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -319,6 +320,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 
 	private boolean isIntegratedServer = false;
 	private boolean authMeGuiOpened = false;
+	private boolean authMeLoginPending = false;
 
 	public NetHandlerPlayClient(Minecraft mcIn, GuiScreen p_i46300_2_, NetworkManager networkManagerIn,
 			GameProfile profileIn) {
@@ -398,6 +400,8 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * WorldClient and sets the player initial dimension
 	 */
 	public void handleJoinGame(SPacketJoinGame packetIn) {
+		if (!(this.netManager instanceof SingleplayerNetworkManager)) {
+		}
 		this.gameController.playerController = new PlayerControllerMP(this.gameController, this);
 		this.clientWorldController = new WorldClient(this, new WorldSettings(0L, packetIn.getGameType(), false,
 				packetIn.isHardcoreMode(), packetIn.getWorldType()), packetIn.getDimension(), packetIn.getDifficulty());
@@ -871,6 +875,8 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * reason for termination
 	 */
 	public void onDisconnect(ITextComponent reason) {
+		SecurityCameraClient.stop();
+		authMeLoginPending = false;
 		Minecraft.getMinecraft().getRenderManager().setEnableFNAWSkins(this.gameController.gameSettings.enableFNAWSkins);
 		if (this.gameController.world != null) {
 			this.gameController.loadWorld((WorldClient) null);
@@ -922,17 +928,21 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * Prints a chatmessage in the chat GUI
 	 */
 	public void handleChat(SPacketChat packetIn) {
-		if (!isIntegratedServer && !authMeGuiOpened && packetIn.getChatComponent() != null) {
+		if (!isIntegratedServer && packetIn.getChatComponent() != null) {
 			String chat = packetIn.getChatComponent().getUnformattedText().toLowerCase(Locale.ROOT);
-			if (chat.contains("register")) {
+			if (!authMeGuiOpened && chat.contains("register")) {
 				authMeGuiOpened = true;
 				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, true));
-			} else if (chat.contains("login")) {
+			} else if (!authMeGuiOpened && chat.contains("login")) {
 				authMeGuiOpened = true;
 				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, false));
 			}
 		}
 		this.gameController.ingameGUI.func_191742_a(packetIn.func_192590_c(), packetIn.getChatComponent());
+	}
+
+	public void markAuthMeLoginPending() {
+		authMeLoginPending = true;
 	}
 
 	/**
@@ -1773,7 +1783,9 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * the identifier of the default server resourcepack for the client to load.
 	 */
 	public void handleCustomPayload(SPacketCustomPayload packetIn) {
-		if (EXTENDED_CHUNK_CHANNEL.equals(packetIn.getChannelName())) {
+		if ("TC|Cameras".equals(packetIn.getChannelName())) {
+			try { SecurityCameraClient.handlePacket(packetIn.getBufferData()); } catch (IOException ignored) { }
+		} else if (EXTENDED_CHUNK_CHANNEL.equals(packetIn.getChannelName())) {
 			handleExtendedChunk(packetIn.getBufferData());
 		} else if ("MC|TrList".equals(packetIn.getChannelName())) {
 			PacketBuffer packetbuffer = packetIn.getBufferData();

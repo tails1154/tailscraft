@@ -1,0 +1,13 @@
+name: TailsCraftSpear
+version: 1.0.0
+main: com.tailscraft.spear.TailsCraftSpearPlugin
+api-version: 1.12
+commands:
+  spear:
+    description: Give yourself a TailsCraft spear
+    usage: /spear [wooden|stone|copper|iron|golden|diamond|netherite]
+    permission: tailscraft.spear
+permissions:
+  tailscraft.spear:
+    default: op
+    description: Use the /spear command

@@ -1,0 +1,13 @@
+name: TailsCraftCameras
+version: 1.0.0
+main: com.tailscraft.cameras.TailsCraftCamerasPlugin
+api-version: 1.12
+commands:
+  camera:
+    description: Manage TailsCraft security cameras
+    usage: /camera <create|remove|list> [name|id]
+    permission: tailscraft.cameras.manage
+permissions:
+  tailscraft.cameras.manage:
+    default: op
+    description: Manage TailsCraft security cameras

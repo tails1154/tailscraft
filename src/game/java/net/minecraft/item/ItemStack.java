@@ -166,7 +166,33 @@ public final class ItemStack {
 	 * Returns the object corresponding to the stack.
 	 */
 	public Item getItem() {
-		return this.field_190928_g ? Item.getItemFromBlock(Blocks.AIR) : this.item;
+		if (this.field_190928_g) {
+			return Item.getItemFromBlock(Blocks.AIR);
+		}
+		if (this.item instanceof ItemSword && isTailsCraftSpear()) {
+			return Items.getSpearForMaterial(this.stackTagCompound != null
+					? this.stackTagCompound.getInteger("TailsCraftSpearMaterial") : spearMaterialFromName());
+		}
+		return this.item;
+	}
+
+	private boolean isTailsCraftSpear() {
+		if (this.stackTagCompound != null && this.stackTagCompound.getBoolean("TailsCraftSpear")) {
+			return true;
+		}
+		return this.hasDisplayName() && (this.getDisplayName().toLowerCase().contains(" spear")
+				|| this.getDisplayName().toLowerCase().contains(" grappling hook"));
+	}
+
+	private int spearMaterialFromName() {
+		String name = this.getDisplayName().toLowerCase();
+		if (name.contains("wooden") || name.contains("wood spear")) return 0;
+		if (name.contains("stone")) return 1;
+		if (name.contains("copper")) return 2;
+		if (name.contains("gold")) return 4;
+		if (name.contains("diamond")) return 5;
+		if (name.contains("netherite")) return 6;
+		return 3;
 	}
 
 	/**

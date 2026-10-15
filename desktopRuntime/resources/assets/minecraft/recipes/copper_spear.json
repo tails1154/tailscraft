@@ -1,0 +1,6 @@
+{
+  "type": "crafting_shaped",
+  "pattern": ["X", "X", "#"],
+  "key": {"#": {"item": "minecraft:stick"}, "X": {"item": "minecraft:iron_ingot"}},
+  "result": {"item": "tailscraft:copper_spear"}
+}

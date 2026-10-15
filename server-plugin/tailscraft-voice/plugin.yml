@@ -1,0 +1,5 @@
+name: TailsCraftVoice
+version: 1.0.0
+main: com.tailscraft.voice.TailsCraftVoicePlugin
+api-version: 1.12
+description: TailsCraft Voice Protocol 1 signaling relay for browser WebRTC voice chat

@@ -9,6 +9,7 @@ import net.minecraft.client.model.ModelZombie;
 import net.minecraft.client.renderer.entity.layers.LayerArrow;
 import net.minecraft.client.renderer.entity.layers.LayerBipedArmor;
 import net.minecraft.client.renderer.entity.layers.LayerCape;
+import net.minecraft.client.voice.TailsCraftVoiceClient;
 import net.minecraft.client.renderer.entity.layers.LayerCustomHead;
 import net.minecraft.client.renderer.entity.layers.LayerDeadmau5Head;
 import net.minecraft.client.renderer.entity.layers.LayerElytra;
@@ -156,6 +157,12 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer> {
 
 	protected void renderEntityName(AbstractClientPlayer entityIn, double x, double y, double z, String name,
 			double distanceSq) {
+		if (TailsCraftVoiceClient.hasVoicePeer(entityIn.getUniqueID())
+				|| TailsCraftVoiceClient.hasVoicePeer(entityIn.getName())) {
+			// Use a vanilla-font glyph so the indicator works without a texture
+			// pack or an emoji font. Green means the player opted into TCV1.
+			name = name + " §a●";
+		}
 		if (distanceSq < 100.0D) {
 			Scoreboard scoreboard = entityIn.getWorldScoreboard();
 			ScoreObjective scoreobjective = scoreboard.getObjectiveInDisplaySlot(2);

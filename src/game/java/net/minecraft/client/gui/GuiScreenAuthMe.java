@@ -2,6 +2,7 @@ package net.minecraft.client.gui;
 
 import java.io.IOException;
 
+
 /** AuthMe register/login prompt opened from server chat instructions. */
 public class GuiScreenAuthMe extends GuiScreen {
 	private final GuiScreen parent;
@@ -51,6 +52,7 @@ public class GuiScreenAuthMe extends GuiScreen {
 			return;
 		}
 		mc.player.sendChatMessage(register ? "/register " + value + " " + confirmation.getText() : "/login " + value);
+		if (!register && mc.getConnection() != null) mc.getConnection().markAuthMeLoginPending();
 		mc.displayGuiScreen(parent);
 	}
 

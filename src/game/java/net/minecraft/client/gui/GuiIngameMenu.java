@@ -63,6 +63,7 @@ public class GuiIngameMenu extends GuiScreen {
 				I18n.format("gui.advancements"), PauseMenuCustomizeState.icon_achievements_L,
 				PauseMenuCustomizeState.icon_achievements_L_aspect, PauseMenuCustomizeState.icon_achievements_R,
 				PauseMenuCustomizeState.icon_achievements_R_aspect));
+		this.buttonList.add(new GuiButton(12, this.width / 2 - 100, this.height / 4 + 72 - 16, 200, 20, "Security Cameras"));
 		
 		this.buttonList.add(
 				new GuiButtonWithStupidIcons(6, this.width / 2 + 2, this.height / 4 + 48 + -16, 98, 20, I18n.format("gui.stats"), PauseMenuCustomizeState.icon_statistics_L,
@@ -168,6 +169,9 @@ public class GuiIngameMenu extends GuiScreen {
 			break;
 		case 11:
 			this.mc.displayGuiScreen(new GuiScreenNotifications(this));
+			break;
+		case 12:
+			this.mc.displayGuiScreen(new GuiScreenSecurityCameras(this));
 			break;
 		}
 	}

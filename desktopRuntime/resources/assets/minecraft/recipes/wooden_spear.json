@@ -1,0 +1,6 @@
+{
+  "type": "crafting_shaped",
+  "pattern": ["X", "X", "#"],
+  "key": {"#": {"item": "minecraft:stick"}, "X": {"item": "minecraft:planks"}},
+  "result": {"item": "tailscraft:wooden_spear"}
+}
