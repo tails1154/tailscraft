@@ -19,6 +19,7 @@ public final class SecurityCameraClient {
     private static final List<Camera> cameras = new ArrayList<Camera>();
     private static Entity cameraEntity;
     private static boolean viewing;
+    private static int revision;
 
     public static final class Camera {
         public final int id; public final String name; public final String world;
@@ -31,6 +32,7 @@ public final class SecurityCameraClient {
     private SecurityCameraClient() { }
     public static List<Camera> getCameras() { return Collections.unmodifiableList(cameras); }
     public static boolean isViewing() { return viewing; }
+    public static int getRevision() { return revision; }
 
     public static void open() { request(REQUEST_LIST); }
     public static void view(int id) { requestInt(REQUEST_VIEW, id); }
@@ -68,6 +70,7 @@ public final class SecurityCameraClient {
         if (type == LIST) {
             int count = in.readUnsignedShort(); if (count > 256) throw new IOException("Too many cameras");
             cameras.clear(); for (int i = 0; i < count; ++i) cameras.add(readCamera(in));
+            ++revision;
         } else if (type == VIEW) {
             Camera camera = readCamera(in); show(camera);
         } else if (type == NOTICE) {

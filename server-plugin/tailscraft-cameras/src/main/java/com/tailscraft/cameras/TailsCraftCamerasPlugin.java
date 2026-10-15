@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -27,20 +29,22 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
     private int nextId = 1;
 
     private static final class Camera {
-        final int id; final String name; final String world; final double x, y, z; final float yaw, pitch;
-        Camera(int id, String name, Location location) {
-            this.id = id; this.name = name; this.world = location.getWorld().getName();
+        final int id; final UUID owner; final String name; final String world; final double x, y, z; final float yaw, pitch;
+        Camera(int id, UUID owner, String name, Location location) {
+            this.id = id; this.owner = owner; this.name = name; this.world = location.getWorld().getName();
             this.x = location.getX(); this.y = location.getY(); this.z = location.getZ();
             this.yaw = location.getYaw(); this.pitch = location.getPitch();
         }
     }
 
     @Override public void onEnable() {
+        loadCameras();
         getServer().getMessenger().registerIncomingPluginChannel(this, CHANNEL, this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, CHANNEL);
     }
 
     @Override public void onDisable() {
+        saveCameras();
         getServer().getMessenger().unregisterIncomingPluginChannel(this, CHANNEL, this);
         getServer().getMessenger().unregisterOutgoingPluginChannel(this, CHANNEL);
         cameras.clear();
@@ -59,12 +63,12 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
         if (args[0].equalsIgnoreCase("create")) {
             if (args.length < 2) { player.sendMessage(ChatColor.RED + "Usage: /camera create <name>"); return true; }
             String name = join(args, 1);
-            Camera camera = new Camera(nextId++, name, player.getLocation()); cameras.put(camera.id, camera);
+            Camera camera = new Camera(nextId++, player.getUniqueId(), name, player.getLocation()); cameras.put(camera.id, camera); saveCameras();
             player.sendMessage(ChatColor.GREEN + "Created camera #" + camera.id + " " + camera.name);
             return true;
         }
         if (args[0].equalsIgnoreCase("remove") && args.length >= 2) {
-            try { int id = Integer.parseInt(args[1]); if (cameras.remove(id) != null) player.sendMessage(ChatColor.GREEN + "Removed camera #" + id); else player.sendMessage(ChatColor.RED + "Camera not found."); }
+            try { int id = Integer.parseInt(args[1]); Camera camera = cameras.get(id); if (camera != null && camera.owner.equals(player.getUniqueId())) { cameras.remove(id); saveCameras(); player.sendMessage(ChatColor.GREEN + "Removed camera #" + id); } else player.sendMessage(ChatColor.RED + "Camera not found."); }
             catch (NumberFormatException exception) { player.sendMessage(ChatColor.RED + "Camera ID must be a number."); }
             return true;
         }
@@ -76,22 +80,23 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
         try {
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
             int type = in.readUnsignedByte();
-            if (type == REQUEST_LIST) sendList(player);
+        if (type == REQUEST_LIST) sendList(player);
             else if (type == REQUEST_VIEW) sendView(player, in.readInt());
             else if (type == REQUEST_STOP) { }
             else if (type == REQUEST_CREATE && player.hasPermission("tailscraft.cameras.manage")) createFromClient(player, readText(in));
-            else if (type == REQUEST_REMOVE && player.hasPermission("tailscraft.cameras.manage")) removeFromClient(player, in.readInt());
+            else if (type == REQUEST_REMOVE) removeFromClient(player, in.readInt());
         } catch (IOException | RuntimeException exception) { getLogger().warning("Invalid camera packet from " + player.getName()); }
     }
 
     private void createFromClient(Player player, String name) throws IOException {
         if (name == null || name.trim().isEmpty()) return;
-        Camera camera = new Camera(nextId++, name.trim(), player.getLocation()); cameras.put(camera.id, camera);
+        Camera camera = new Camera(nextId++, player.getUniqueId(), name.trim(), player.getLocation()); cameras.put(camera.id, camera); saveCameras();
         sendNotice(player, "Created camera #" + camera.id + " " + camera.name); sendList(player);
     }
 
     private void removeFromClient(Player player, int id) throws IOException {
-        if (cameras.remove(id) != null) { sendNotice(player, "Removed camera #" + id); sendList(player); }
+        Camera camera = cameras.get(id);
+        if (camera != null && camera.owner.equals(player.getUniqueId())) { cameras.remove(id); saveCameras(); sendNotice(player, "Removed camera #" + id); sendList(player); }
     }
 
     private void sendNotice(Player player, String message) throws IOException {
@@ -101,13 +106,15 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
 
     private void sendList(Player player) throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(512); DataOutputStream out = new DataOutputStream(bytes);
-        out.writeByte(LIST); out.writeShort(cameras.size());
-        for (Camera camera : cameras.values()) writeCamera(out, camera);
+        List<Camera> owned = new ArrayList<Camera>();
+        for (Camera camera : cameras.values()) if (camera.owner.equals(player.getUniqueId())) owned.add(camera);
+        out.writeByte(LIST); out.writeShort(owned.size());
+        for (Camera camera : owned) writeCamera(out, camera);
         out.flush(); player.sendPluginMessage(this, CHANNEL, bytes.toByteArray());
     }
 
     private void sendView(Player player, int id) throws IOException {
-        Camera camera = cameras.get(id); if (camera == null) return;
+        Camera camera = cameras.get(id); if (camera == null || !camera.owner.equals(player.getUniqueId())) return;
         if (player.getWorld() == null || !player.getWorld().getName().equals(camera.world)) return;
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(256); DataOutputStream out = new DataOutputStream(bytes);
         out.writeByte(VIEW); writeCamera(out, camera); out.flush(); player.sendPluginMessage(this, CHANNEL, bytes.toByteArray());
@@ -117,6 +124,30 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
         out.writeInt(camera.id); byte[] name = camera.name.getBytes(StandardCharsets.UTF_8); out.writeShort(Math.min(name.length, 128)); out.write(name, 0, Math.min(name.length, 128));
         byte[] world = camera.world.getBytes(StandardCharsets.UTF_8); out.writeShort(Math.min(world.length, 128)); out.write(world, 0, Math.min(world.length, 128));
         out.writeDouble(camera.x); out.writeDouble(camera.y); out.writeDouble(camera.z); out.writeFloat(camera.yaw); out.writeFloat(camera.pitch);
+    }
+
+    private void loadCameras() {
+        cameras.clear(); nextId = 1;
+        org.bukkit.configuration.ConfigurationSection section = getConfig().getConfigurationSection("cameras");
+        if (section == null) return;
+        for (String key : section.getKeys(false)) try {
+            int id = Integer.parseInt(key); String path = "cameras." + key;
+            org.bukkit.World world = Bukkit.getWorld(getConfig().getString(path + ".world"));
+            UUID owner = UUID.fromString(getConfig().getString(path + ".owner"));
+            if (world == null) continue;
+            Location location = new Location(world, getConfig().getDouble(path + ".x"), getConfig().getDouble(path + ".y"), getConfig().getDouble(path + ".z"), (float) getConfig().getDouble(path + ".yaw"), (float) getConfig().getDouble(path + ".pitch"));
+            cameras.put(id, new Camera(id, owner, getConfig().getString(path + ".name", "Camera " + id), location)); nextId = Math.max(nextId, id + 1);
+        } catch (RuntimeException ignored) { }
+    }
+
+    private void saveCameras() {
+        getConfig().set("cameras", null);
+        for (Camera camera : cameras.values()) {
+            String path = "cameras." + camera.id;
+            getConfig().set(path + ".owner", camera.owner.toString()); getConfig().set(path + ".name", camera.name); getConfig().set(path + ".world", camera.world);
+            getConfig().set(path + ".x", camera.x); getConfig().set(path + ".y", camera.y); getConfig().set(path + ".z", camera.z); getConfig().set(path + ".yaw", camera.yaw); getConfig().set(path + ".pitch", camera.pitch);
+        }
+        saveConfig();
     }
     private static String readText(DataInputStream in) throws IOException {
         int length = in.readUnsignedShort(); if (length > 128) throw new IOException("Camera name too long");
