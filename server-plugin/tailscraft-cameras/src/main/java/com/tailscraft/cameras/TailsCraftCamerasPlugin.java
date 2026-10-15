@@ -20,9 +20,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 /** Fixed-position CCTV cameras exposed to the TailsCraft client UI. */
-public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginMessageListener {
+public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginMessageListener, Listener {
     private static final String CHANNEL = "TC|Cameras";
     private static final int REQUEST_LIST = 1, REQUEST_VIEW = 2, REQUEST_STOP = 3, REQUEST_CREATE = 4, REQUEST_REMOVE = 5, LIST = 10, VIEW = 11, NOTICE = 12;
     private final Map<Integer, Camera> cameras = new LinkedHashMap<Integer, Camera>();
@@ -39,8 +42,20 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
 
     @Override public void onEnable() {
         loadCameras();
+        getServer().getPluginManager().registerEvents(this, this);
         getServer().getMessenger().registerIncomingPluginChannel(this, CHANNEL, this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, CHANNEL);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        getServer().getScheduler().runTaskLater(this, () -> {
+            try {
+                sendList(event.getPlayer());
+            } catch (IOException exception) {
+                getLogger().warning("Could not send camera list to " + event.getPlayer().getName());
+            }
+        }, 20L);
     }
 
     @Override public void onDisable() {
@@ -80,7 +95,10 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
         try {
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
             int type = in.readUnsignedByte();
-        if (type == REQUEST_LIST) sendList(player);
+        if (type == REQUEST_LIST) {
+            getLogger().info("Camera list requested by " + player.getName());
+            sendList(player);
+        }
             else if (type == REQUEST_VIEW) sendView(player, in.readInt());
             else if (type == REQUEST_STOP) { }
             else if (type == REQUEST_CREATE && player.hasPermission("tailscraft.cameras.manage")) createFromClient(player, readText(in));
@@ -108,6 +126,7 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(512); DataOutputStream out = new DataOutputStream(bytes);
         List<Camera> owned = new ArrayList<Camera>();
         for (Camera camera : cameras.values()) if (owns(camera, player)) owned.add(camera);
+        getLogger().info("Sending " + owned.size() + " camera(s) to " + player.getName());
         out.writeByte(LIST); out.writeShort(owned.size());
         for (Camera camera : owned) writeCamera(out, camera);
         out.flush(); player.sendPluginMessage(this, CHANNEL, bytes.toByteArray());

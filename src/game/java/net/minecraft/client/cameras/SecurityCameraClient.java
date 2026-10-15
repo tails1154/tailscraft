@@ -36,7 +36,7 @@ public final class SecurityCameraClient {
     public static int getRevision() { return revision; }
     public static boolean isLoaded() { return loaded; }
 
-    public static void open() { loaded = false; request(REQUEST_LIST); }
+    public static void open() { if (!loaded) request(REQUEST_LIST); }
     public static void view(int id) { requestInt(REQUEST_VIEW, id); }
     public static void stop() {
         Minecraft mc = Minecraft.getMinecraft();
