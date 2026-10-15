@@ -22,7 +22,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 /** Fixed-position CCTV cameras exposed to the TailsCraft client UI. */
 public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginMessageListener {
     private static final String CHANNEL = "TC|Cameras";
-    private static final int REQUEST_LIST = 1, REQUEST_VIEW = 2, REQUEST_STOP = 3, LIST = 10, VIEW = 11;
+    private static final int REQUEST_LIST = 1, REQUEST_VIEW = 2, REQUEST_STOP = 3, REQUEST_CREATE = 4, REQUEST_REMOVE = 5, LIST = 10, VIEW = 11, NOTICE = 12;
     private final Map<Integer, Camera> cameras = new LinkedHashMap<Integer, Camera>();
     private int nextId = 1;
 
@@ -79,7 +79,24 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
             if (type == REQUEST_LIST) sendList(player);
             else if (type == REQUEST_VIEW) sendView(player, in.readInt());
             else if (type == REQUEST_STOP) { }
+            else if (type == REQUEST_CREATE && player.hasPermission("tailscraft.cameras.manage")) createFromClient(player, readText(in));
+            else if (type == REQUEST_REMOVE && player.hasPermission("tailscraft.cameras.manage")) removeFromClient(player, in.readInt());
         } catch (IOException | RuntimeException exception) { getLogger().warning("Invalid camera packet from " + player.getName()); }
+    }
+
+    private void createFromClient(Player player, String name) throws IOException {
+        if (name == null || name.trim().isEmpty()) return;
+        Camera camera = new Camera(nextId++, name.trim(), player.getLocation()); cameras.put(camera.id, camera);
+        sendNotice(player, "Created camera #" + camera.id + " " + camera.name); sendList(player);
+    }
+
+    private void removeFromClient(Player player, int id) throws IOException {
+        if (cameras.remove(id) != null) { sendNotice(player, "Removed camera #" + id); sendList(player); }
+    }
+
+    private void sendNotice(Player player, String message) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream(160); DataOutputStream out = new DataOutputStream(bytes);
+        out.writeByte(NOTICE); writeText(out, message); out.flush(); player.sendPluginMessage(this, CHANNEL, bytes.toByteArray());
     }
 
     private void sendList(Player player) throws IOException {
@@ -100,6 +117,14 @@ public final class TailsCraftCamerasPlugin extends JavaPlugin implements PluginM
         out.writeInt(camera.id); byte[] name = camera.name.getBytes(StandardCharsets.UTF_8); out.writeShort(Math.min(name.length, 128)); out.write(name, 0, Math.min(name.length, 128));
         byte[] world = camera.world.getBytes(StandardCharsets.UTF_8); out.writeShort(Math.min(world.length, 128)); out.write(world, 0, Math.min(world.length, 128));
         out.writeDouble(camera.x); out.writeDouble(camera.y); out.writeDouble(camera.z); out.writeFloat(camera.yaw); out.writeFloat(camera.pitch);
+    }
+    private static String readText(DataInputStream in) throws IOException {
+        int length = in.readUnsignedShort(); if (length > 128) throw new IOException("Camera name too long");
+        byte[] bytes = new byte[length]; in.readFully(bytes); return new String(bytes, StandardCharsets.UTF_8);
+    }
+    private static void writeText(DataOutputStream out, String value) throws IOException {
+        byte[] bytes = (value == null ? "" : value).getBytes(StandardCharsets.UTF_8);
+        int length = Math.min(bytes.length, 128); out.writeShort(length); out.write(bytes, 0, length);
     }
     private static String join(String[] args, int start) { StringBuilder result = new StringBuilder(); for (int i = start; i < args.length; ++i) { if (result.length() > 0) result.append(' '); result.append(args[i]); } return result.toString(); }
 }
