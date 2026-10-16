@@ -21,6 +21,8 @@ import net.lax1dude.eaglercraft.EncoderException;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.nbt.NBTTagCompound;
@@ -228,13 +230,33 @@ public class PacketBuffer extends ByteBuf {
 		if (stack == null) {
 			this.writeShort(-1);
 		} else {
-			this.writeShort(Item.getIdFromItem(stack.getItem()));
+			Item packetItem = stack.getItem();
+			short packetDamage = (short) stack.getMetadata();
+			NBTTagCompound packetTag = stack.getTagCompound();
+
+			// TailsCraft's client-only decorative items must travel over the
+			// vanilla 1.12 protocol as legal placeholder items. The server plugin
+			// identifies them by their display name and converts the placed block.
+			if (packetItem == Items.LANTERN || packetItem == Items.SOUL_LANTERN || packetItem == Items.CHAIN) {
+				boolean chain = packetItem == Items.CHAIN;
+				packetItem = Item.getItemFromBlock(chain ? Blocks.IRON_BARS : Blocks.BARRIER);
+				packetDamage = (short) ((!chain && packetItem == Item.getItemFromBlock(Blocks.BARRIER)
+						&& stack.getItem() == Items.SOUL_LANTERN) ? 1 : 0);
+				packetTag = packetTag == null ? new NBTTagCompound() : packetTag.copy();
+				NBTTagCompound display = packetTag.hasKey("display", 10)
+						? packetTag.getCompoundTag("display") : new NBTTagCompound();
+				display.setString("Name", chain ? "Chain"
+						: (stack.getItem() == Items.SOUL_LANTERN ? "Soul Lantern" : "Lantern"));
+				packetTag.setTag("display", display);
+			}
+
+			this.writeShort(Item.getIdFromItem(packetItem));
 			this.writeByte(stack.func_190916_E());
-			this.writeShort(stack.getMetadata());
+			this.writeShort(packetDamage);
 			NBTTagCompound nbttagcompound = null;
 
-			if (stack.getItem().isDamageable() || stack.getItem().getShareTag()) {
-				nbttagcompound = stack.getTagCompound();
+			if (packetItem.isDamageable() || packetItem.getShareTag() || packetTag != null) {
+				nbttagcompound = packetTag;
 			}
 
 			this.writeNBTTagCompoundToBuffer(nbttagcompound);
