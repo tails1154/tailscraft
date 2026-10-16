@@ -17,7 +17,6 @@ import net.lax1dude.eaglercraft.opengl.RealOpenGLEnums;
 import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.baritone.BaritoneController;
 import net.minecraft.client.gui.chat.IChatListener;
 import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.chat.NormalChatListener;
@@ -239,7 +238,6 @@ public class GuiIngame extends Gui {
 		this.renderPotionEffects(scaledresolution);
 
 		this.overlayDebug.renderDebugInfo(scaledresolution);
-		this.renderPathfindingStatus(scaledresolution);
 
 		if (this.recordPlayingUpFor > 0) {
 			float f2 = (float) this.recordPlayingUpFor - partialTicks;
@@ -347,17 +345,6 @@ public class GuiIngame extends Gui {
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 		GlStateManager.disableLighting();
 		GlStateManager.enableAlpha();
-	}
-
-	private void renderPathfindingStatus(ScaledResolution scaledresolution) {
-		if (!BaritoneController.isActive()) return;
-		String title = "Pathfindinganator 9000";
-		String status = BaritoneController.getStatus();
-		int textWidth = Math.max(this.getFontRenderer().getStringWidth(title), this.getFontRenderer().getStringWidth(status));
-		int left = scaledresolution.getScaledWidth() - textWidth - 12;
-		this.drawRect(left - 4, 4, scaledresolution.getScaledWidth() - 4, 29, 0x99000000);
-		this.getFontRenderer().drawStringWithShadow(title, left, 6, 0xFF80FF80);
-		this.getFontRenderer().drawStringWithShadow(status, left, 17, 0xFFFFFFFF);
 	}
 
 	public void renderAttackIndicator(float p_184045_1_, ScaledResolution p_184045_2_) {

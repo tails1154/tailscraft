@@ -34,7 +34,6 @@ import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.baritone.BaritoneController;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.crash.CrashReport;
@@ -900,7 +899,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
 			Mouse.setGrabbed(true);
 		}
 
-		if (this.mc.inGameHasFocus && flag && !BaritoneController.isActive()) {
+		if (this.mc.inGameHasFocus && flag) {
 			this.mc.mouseHelper.mouseXYChange();
 			this.mc.func_193032_ao().func_193299_a(this.mc.mouseHelper);
 			float f = this.mc.gameSettings.mouseSensitivity * 0.6F + 0.2F;
@@ -1247,7 +1246,6 @@ public class EntityRenderer implements IResourceManagerReloadListener {
 		this.renderRainSnow(partialTicks);
 		GlStateManager.depthMask(true);
 		renderglobal.renderWorldBorder(entity, partialTicks);
-		BaritoneController.renderPath(d0, d1, d2);
 		GlStateManager.disableBlend();
 		GlStateManager.enableCull();
 		GlStateManager.tryBlendFuncSeparate(RealOpenGLEnums.GL_SRC_ALPHA, RealOpenGLEnums.GL_ONE_MINUS_SRC_ALPHA,

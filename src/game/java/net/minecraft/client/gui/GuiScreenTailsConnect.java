@@ -7,14 +7,19 @@ import net.minecraft.client.resources.I18n;
 
 /** Clear, compact TailsConnect room setup screen. */
 public class GuiScreenTailsConnect extends GuiScreen {
+	private static final int TAB_JOIN = 0;
+	private static final int TAB_HOST = 1;
+	private static final int TAB_SOCIAL = 2;
 	private final GuiScreen parent;
 	private final boolean sharing;
 	private GuiTextField roomCode;
+	private int activeTab;
 	private int players = 2;
 
 	public GuiScreenTailsConnect(GuiScreen parent, boolean sharing) {
 		this.parent = parent;
 		this.sharing = sharing;
+		this.activeTab = sharing ? TAB_HOST : TAB_JOIN;
 	}
 
 	private int panelTop() {
@@ -26,19 +31,26 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		buttonList.clear();
 		int left = width / 2 - 150;
 		int top = panelTop();
-		roomCode = new GuiTextField(2, fontRendererObj, left, top + 14, 300, 20);
-		roomCode.setMaxStringLength(6);
-		roomCode.setText(savedCode);
-
-		buttonList.add(new GuiButton(1, left, top + 38, 300, 20, "Join World"));
-		buttonList.add(new GuiButton(7, left, top + 62, 300, 20, "Search Public Worlds"));
-		buttonList.add(new GuiButton(6, left, top + 104, 146, 20, playerLabel()));
-		buttonList.add(new GuiButton(8, left + 154, top + 104, 146, 20, publicLabel()));
-		buttonList.add(new GuiButton(4, left, top + 128, 300, 20, "Host World"));
-		buttonList.add(new GuiButton(3, left, top + 152, 300, 20, "Find Match"));
-		buttonList.add(new GuiButton(10, left, top + 176, 300, 20, "Friends"));
-		buttonList.add(new GuiButton(0, left, top + 206, 146, 20, I18n.format("menu.tailsConnect.back")));
-		buttonList.add(new GuiButton(5, left + 154, top + 206, 146, 20, "Stop / Cancel"));
+		buttonList.add(new GuiTab(100, left, top, 100, "Join", activeTab == TAB_JOIN));
+		buttonList.add(new GuiTab(101, left + 100, top, 100, "Host", activeTab == TAB_HOST));
+		buttonList.add(new GuiTab(102, left + 200, top, 100, "Friends", activeTab == TAB_SOCIAL));
+		roomCode = null;
+		if (activeTab == TAB_JOIN) {
+			roomCode = new GuiTextField(2, fontRendererObj, left, top + 48, 300, 20);
+			roomCode.setMaxStringLength(6);
+			roomCode.setText(savedCode);
+			buttonList.add(new GuiButton(1, left, top + 78, 300, 20, "Join World"));
+			buttonList.add(new GuiButton(7, left, top + 102, 300, 20, "Search Public Worlds"));
+		} else if (activeTab == TAB_HOST) {
+			buttonList.add(new GuiButton(6, left, top + 48, 146, 20, playerLabel()));
+			buttonList.add(new GuiButton(8, left + 154, top + 48, 146, 20, publicLabel()));
+			buttonList.add(new GuiButton(4, left, top + 78, 300, 20, sharing ? "Host This World" : "Host World"));
+			buttonList.add(new GuiButton(3, left, top + 102, 300, 20, "Find Match"));
+		} else {
+			buttonList.add(new GuiButton(10, left, top + 48, 300, 20, "Open Friends"));
+		}
+		buttonList.add(new GuiButton(0, left, top + 176, 146, 20, I18n.format("menu.tailsConnect.back")));
+		buttonList.add(new GuiButton(5, left + 154, top + 176, 146, 20, "Stop / Cancel"));
 	}
 
 	private String playerLabel() { return "Players: " + (players == 0 ? "Infinite" : players); }
@@ -55,7 +67,8 @@ public class GuiScreenTailsConnect extends GuiScreen {
 	}
 
 	protected void actionPerformed(GuiButton b) throws IOException {
-		if (b.id == 0) mc.displayGuiScreen(parent);
+		if (b.id >= 100 && b.id <= 102) { activeTab = b.id - 100; initGui(); }
+		else if (b.id == 0) mc.displayGuiScreen(parent);
 		else if (b.id == 5) TailsConnectClient.reset();
 		else if (b.id == 1) TailsConnectClient.join("ecraft", roomCode.getText().trim().toUpperCase());
 		else if (b.id == 7) openWorldSearch();
@@ -75,7 +88,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		case 7: return "Browse public worlds that are currently online.";
 		case 6: return "Click to choose 2, 3, 4, or unlimited players when hosting.";
 		case 8: return "Public worlds appear in search; private worlds use a code only.";
-		case 4: return "Start your singleplayer world and let others join it.";
+		case 4: return sharing ? "Publish this singleplayer world through TailsConnect." : "Start a TailsConnect world for other players.";
 		case 3: return "Wait in the background until players are matched.";
 		case 5: return "Cancel matchmaking or disconnect from the current world.";
 		case 10: return "Manage your TC4 friends and friend requests.";
@@ -90,10 +103,13 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		int top = panelTop();
 		drawCenteredString(fontRendererObj, "TailsConnect", width / 2, top - 25, 0xFFFFFF);
 		drawCenteredString(fontRendererObj, TailsConnectClient.getState(), width / 2, top - 11, 0xAAAAAA);
-		drawString(fontRendererObj, "Room code (from a friend):", left, top + 2, 0xFFFFFF);
-		roomCode.drawTextBox();
-		if (roomCode.getText().isEmpty() && !roomCode.isFocused()) drawString(fontRendererObj, "Example: ABC123", left + 4, top + 20, 0x777777);
-		drawString(fontRendererObj, "Host a world", left, top + 91, 0xFFFFFF);
+		if (activeTab == TAB_JOIN && roomCode != null) {
+			drawString(fontRendererObj, "Room code (from a friend):", left, top + 36, 0xFFFFFF);
+			roomCode.drawTextBox();
+			if (roomCode.getText().isEmpty() && !roomCode.isFocused()) drawString(fontRendererObj, "Example: ABC123", left + 4, top + 54, 0x777777);
+		} else if (activeTab == TAB_HOST) {
+			drawString(fontRendererObj, "Host a world", left, top + 36, 0xFFFFFF);
+		}
 		String detail = TailsConnectClient.getError();
 		if (detail == null && TailsConnectClient.getRoomCode() != null) detail = "Room: " + TailsConnectClient.getRoomCode();
 		if (detail != null) drawCenteredString(fontRendererObj, fontRendererObj.trimStringToWidth(detail, width - 16), width / 2, height - 12, 0x55FF55);
