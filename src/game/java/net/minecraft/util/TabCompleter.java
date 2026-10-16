@@ -149,6 +149,10 @@ public abstract class TabCompleter {
 	public void updateSuggestions() {
 		if (this.requestedCompletions) return;
 		String prefix = this.textField.getText().substring(0, this.textField.getCursorPosition());
+		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0 && this.rootCompletions == null) {
+			this.requestCompletions("/");
+			return;
+		}
 		if (prefix.startsWith("/") && prefix.endsWith(" ")) {
 			this.automaticRequest = true;
 			this.requestCompletions(prefix);
@@ -210,7 +214,6 @@ public abstract class TabCompleter {
 	}
 
 	public void resetRequested() {
-		this.requestedCompletions = false;
 		this.popupVisible = false;
 	}
 }
