@@ -16,6 +16,16 @@ public class GuiScreenSavedPasswords extends GuiScreen {
 
 	public void initGui() {
 		servers = AuthMeStorage.getServers();
+		// Credentials created by the first Remember Me implementation did not have
+		// an index entry. Discover the current server and repair the index lazily.
+		if (mc.getCurrentServerData() != null) {
+			String currentServer = mc.getCurrentServerData().serverIP;
+			if (currentServer != null && currentServer.length() > 0
+					&& AuthMeStorage.get(currentServer) != null && !servers.contains(currentServer)) {
+				AuthMeStorage.addServer(currentServer);
+				servers.add(currentServer);
+			}
+		}
 		buttonList.clear();
 		int left = width / 2 - 150;
 		int top = height / 6 + 30;

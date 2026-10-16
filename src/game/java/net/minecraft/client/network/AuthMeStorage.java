@@ -24,6 +24,10 @@ public final class AuthMeStorage {
 
 	public static void save(String server, String password) {
 		EagRuntime.setStorage(key(server), password.getBytes(StandardCharsets.UTF_8));
+		addServer(server);
+	}
+
+	public static void addServer(String server) {
 		List<String> servers = getServers();
 		if (!servers.contains(server)) {
 			servers.add(server);
