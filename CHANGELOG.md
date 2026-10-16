@@ -34,6 +34,9 @@ for context and are not part of the current client.
   inventory panels, resource-pack screens, widgets, and icons.
 - Fixed REALISTIC MODE activation and made built-in resource packs reuse their
   cached installation instead of creating duplicate copies.
+- Added a non-blocking client updater that embeds the build commit, checks the
+  server manifest every second, and offers a cache-busted refresh when a newer
+  commit is available.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved
