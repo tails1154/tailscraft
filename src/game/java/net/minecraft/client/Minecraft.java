@@ -2211,11 +2211,33 @@ public class Minecraft implements IThreadListener {
 	}
 
 	private static final String MS_PAINT_PACK_URL = "https://cdn.modrinth.com/data/OlXbJrCZ/versions/kqrtgIxV/ms%20paintcraft.zip";
-	private static final String REALISTIC_PACK_NAME = "REALISTIC MODE";
+	private static final String REALISTIC_PACK_NAME = "realistic-128";
+
+	/** Selects an already-imported built-in pack without creating another copy. */
+	private boolean selectInstalledResourcePack(String packName) {
+		this.mcResourcePackRepository.updateRepositoryEntriesAll();
+		List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
+		for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntriesAll()) {
+			if (packName.equalsIgnoreCase(entry.getResourcePackName())) {
+				selected.add(entry);
+			}
+		}
+		if (selected.isEmpty()) {
+			return false;
+		}
+		this.mcResourcePackRepository.setRepositories(selected);
+		this.gameSettings.resourcePacks.clear();
+		this.gameSettings.resourcePacks.add(packName);
+		this.scheduleResourcesRefresh();
+		return true;
+	}
 
 	/** Applies the MS Paint pack to the normal local pack store and selects it. */
 	private void applyMsPaintPack(byte[] bytes) {
 		try {
+			if (this.selectInstalledResourcePack("ms paintcraft")) {
+				return;
+			}
 			EaglerFolderResourcePack.importResourcePack("ms paintcraft.zip",
 					EaglerFolderResourcePack.RESOURCE_PACKS, bytes);
 			this.mcResourcePackRepository.updateRepositoryEntriesAll();
@@ -2299,6 +2321,9 @@ public class Minecraft implements IThreadListener {
 		if (bundled == null) {
 			this.gameSettings.realisticMode = false;
 			this.gameSettings.saveOptions();
+			return;
+		}
+		if (this.selectInstalledResourcePack(REALISTIC_PACK_NAME)) {
 			return;
 		}
 		final byte[] bundledPack = bundled;

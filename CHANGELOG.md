@@ -32,6 +32,8 @@ for context and are not part of the current client.
 - Added Video Settings -> REALISTIC MODE with a bundled 128x TailsCraft
   texture pack covering core overworld, Nether, End, utility blocks, menus,
   inventory panels, resource-pack screens, widgets, and icons.
+- Fixed REALISTIC MODE activation and made built-in resource packs reuse their
+  cached installation instead of creating duplicate copies.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved
