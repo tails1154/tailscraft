@@ -105,6 +105,9 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		buttonList.add(new GuiButton(43, width / 2 + 63, height - 56, 52, 20, "Pick"));
 		buttonList.add(new GuiButton(44, width / 2 + 118, height - 56, 48, 20, "Line"));
 		buttonList.add(new GuiButton(45, width / 2 + 171, height - 56, 55, 20, "Rect"));
+		buttonList.add(new GuiButton(70, width / 2 + 231, height - 56, 48, 20, "Flip H"));
+		buttonList.add(new GuiButton(71, width / 2 + 284, height - 56, 48, 20, "Flip V"));
+		buttonList.add(new GuiButton(72, width / 2 + 337, height - 56, 58, 20, "Rotate"));
 		buttonList.add(new GuiButton(50, width / 2 - 95, height - 82, 30, 20, "1px"));
 		buttonList.add(new GuiButton(51, width / 2 - 62, height - 82, 30, 20, "2px"));
 		buttonList.add(new GuiButton(52, width / 2 - 29, height - 82, 30, 20, "4px"));
@@ -226,6 +229,9 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		else if (button.id == 60) zoomOffset = Math.max(-4, zoomOffset - 1);
 		else if (button.id == 61) zoomOffset = Math.min(8, zoomOffset + 1);
 		else if (button.id == 62) { grid = !grid; button.displayString = grid ? "Grid: on" : "Grid: off"; }
+		else if (button.id == 70) transform(0);
+		else if (button.id == 71) transform(1);
+		else if (button.id == 72) transform(2);
 		else if (button.id >= 20 && button.id < 20 + PALETTE.length) {
 			selectedColor = PALETTE[button.id - 20];
 			hexColor.setText(formatHex(selectedColor));
@@ -250,6 +256,26 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		String value = Integer.toHexString(color).toUpperCase();
 		while (value.length() < 8) value = "0" + value;
 		return "#" + value;
+	}
+
+	private void transform(int mode) {
+		if (image == null) return;
+		recordUndo();
+		if (mode == 0 || mode == 1) {
+			int[] pixels = new int[image.pixels.length];
+			for (int y = 0; y < image.height; ++y) for (int x = 0; x < image.width; ++x) {
+				int tx = mode == 0 ? image.width - 1 - x : x;
+				int ty = mode == 1 ? image.height - 1 - y : y;
+				pixels[ty * image.width + tx] = image.pixels[y * image.width + x];
+			}
+			image = new ImageData(image.width, image.height, pixels, image.alpha);
+		} else {
+			ImageData rotated = new ImageData(image.height, image.width, image.alpha);
+			for (int y = 0; y < image.height; ++y) for (int x = 0; x < image.width; ++x)
+				rotated.pixels[x * rotated.width + (rotated.width - 1 - y)] = image.pixels[y * image.width + x];
+			image = rotated;
+		}
+		markEdited();
 	}
 
 	@Override
