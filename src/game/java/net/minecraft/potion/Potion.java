@@ -370,5 +370,7 @@ public class Potion {
 				(new Potion(true, 12624973)).setPotionName("effect.unluck").setIconIndex(6, 2)
 						.registerPotionAttributeModifier(SharedMonsterAttributes.LUCK,
 								"CC5AF142-2BD2-4215-B636-2605AED11727", -1.0D, 0));
+		REGISTRY.register(33, new ResourceLocation("tailscraft_crashing"),
+				(new PotionCrash(true, 16121725)).setPotionName("effect.tailscraft.crashing").setIconIndex(7, 3));
 	}
 }

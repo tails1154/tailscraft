@@ -5,6 +5,9 @@ for context and are not part of the current client.
 
 ## Current client
 
+- Added a singleplayer-only Potion of Crashing joke item. It saves the
+  integrated world first, then opens a deliberate client crash report; it has
+  no crash behavior on multiplayer servers.
 - Added a main-menu Credits button with attribution for bundled music and
   resource-pack content.
 - Replaced the `record.chirp` music disc audio and label with “Shiawase VIP
