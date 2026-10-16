@@ -938,12 +938,6 @@ public class RenderItem implements IResourceManagerReloadListener {
 		this.registerItem(Items.EGG, "egg");
 		this.registerItem(Items.COMPASS, "compass");
 		this.registerItem(Items.FISHING_ROD, "fishing_rod");
-		// These models live in the normal minecraft resource namespace. The
-		// item registry IDs are tailscraft:* for networking, but using that
-		// namespace here makes the model loader look under assets/tailscraft/.
-		this.registerItem(Items.LANTERN, "lantern");
-		this.registerItem(Items.SOUL_LANTERN, "soul_lantern");
-		this.registerItem(Items.CHAIN, "chain");
 		this.registerItem(Items.CLOCK, "clock");
 		this.registerItem(Items.GLOWSTONE_DUST, "glowstone_dust");
 		this.registerItem(Items.FISH, ItemFishFood.FishType.COD.getMetadata(), "cod");

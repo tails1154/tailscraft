@@ -108,12 +108,6 @@ createWorld.customize.flat.layer=%s
 createWorld.customize.flat.layer.bottom=Bottom - %s
 
 createWorld.customize.preset.classic_flat=Classic Flat
-tile.lantern.name=Lantern
-tile.soul_lantern.name=Soul Lantern
-tile.chain.name=Chain
-item.lantern.name=Lantern
-item.soul_lantern.name=Soul Lantern
-item.chain.name=Chain
 createWorld.customize.preset.tunnelers_dream=Tunnelers' Dream
 createWorld.customize.preset.water_world=Water World
 createWorld.customize.preset.overworld=Overworld

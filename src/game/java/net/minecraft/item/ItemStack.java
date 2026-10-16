@@ -169,26 +169,7 @@ public final class ItemStack {
 		if (this.field_190928_g) {
 			return Item.getItemFromBlock(Blocks.AIR);
 		}
-		if (this.item instanceof ItemBlock && isTailsCraftLantern()) {
-			return Items.getLanternForVariant(this.stackTagCompound != null
-					? this.stackTagCompound.getInteger("TailsCraftLanternVariant") : lanternVariantFromName());
-		}
-		if (this.item instanceof ItemBlock && isTailsCraftChain()) return Items.CHAIN;
 		return this.item;
-	}
-
-	private boolean isTailsCraftLantern() {
-		if (this.stackTagCompound != null && this.stackTagCompound.getBoolean("TailsCraftLantern")) return true;
-		return this.hasDisplayName() && this.getDisplayName().toLowerCase().contains(" lantern");
-	}
-
-	private int lanternVariantFromName() {
-		return this.getDisplayName().toLowerCase().contains("soul") ? 1 : 0;
-	}
-
-	private boolean isTailsCraftChain() {
-		if (this.stackTagCompound != null && this.stackTagCompound.getBoolean("TailsCraftChain")) return true;
-		return this.hasDisplayName() && this.getDisplayName().toLowerCase().contains("chain");
 	}
 
 	/**

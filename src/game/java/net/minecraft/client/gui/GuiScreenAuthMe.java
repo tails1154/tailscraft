@@ -10,10 +10,13 @@ public class GuiScreenAuthMe extends GuiScreen {
 	private GuiTextField password;
 	private GuiTextField confirmation;
 	private String error;
+	private boolean rememberMe;
 
 	public GuiScreenAuthMe(GuiScreen parent, boolean register) {
 		this.parent = parent;
 		this.register = register;
+		this.rememberMe = !register && mc != null && mc.getConnection() != null
+				&& mc.getConnection().hasRememberedAuthMePassword();
 	}
 
 	public boolean doesGuiPauseGame() {
@@ -33,11 +36,19 @@ public class GuiScreenAuthMe extends GuiScreen {
 			confirmation.setMaxStringLength(64);
 			confirmation.setPasswordMode(true);
 		}
-		buttonList.add(new GuiButton(0, left, top + (register ? 100 : 62), 98, 20, register ? "Register" : "Login"));
-		buttonList.add(new GuiButton(1, left + 102, top + (register ? 100 : 62), 98, 20, "Cancel"));
+		int buttonY = top + (register ? 100 : 62);
+		buttonList.add(new GuiButton(0, left, buttonY, 98, 20, register ? "Register" : "Login"));
+		buttonList.add(new GuiButton(1, left + 102, buttonY, 98, 20, "Cancel"));
+		buttonList.add(new GuiButton(2, left, buttonY - 24, 200, 20,
+				"Remember me: " + (rememberMe ? "ON" : "OFF")));
 	}
 
 	protected void actionPerformed(GuiButton button) throws IOException {
+		if (button.id == 2) {
+			rememberMe = !rememberMe;
+			button.displayString = "Remember me: " + (rememberMe ? "ON" : "OFF");
+			return;
+		}
 		if (button.id == 1 || button.displayString.equals("Cancel")) {
 			mc.displayGuiScreen(parent);
 			return;
@@ -52,7 +63,10 @@ public class GuiScreenAuthMe extends GuiScreen {
 			return;
 		}
 		mc.player.sendChatMessage(register ? "/register " + value + " " + confirmation.getText() : "/login " + value);
-		if (!register && mc.getConnection() != null) mc.getConnection().markAuthMeLoginPending();
+		if (!register && mc.getConnection() != null) {
+			mc.getConnection().setAuthMeRememberMe(value, rememberMe);
+			mc.getConnection().markAuthMeLoginPending();
+		}
 		mc.displayGuiScreen(parent);
 	}
 

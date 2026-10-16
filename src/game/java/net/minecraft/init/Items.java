@@ -9,8 +9,6 @@ import net.minecraft.item.ItemFishingRod;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemPotion;
 import net.minecraft.item.ItemShears;
-import net.minecraft.item.ItemLantern;
-import net.minecraft.item.ItemChain;
 import net.minecraft.util.ResourceLocation;
 
 public class Items {
@@ -224,13 +222,6 @@ public class Items {
 	public static final Item SHULKER_SHELL;
 	public static final Item IRON_NUGGET;
 	public static final Item KNOWLEDGE_BOOK;
-	public static final ItemLantern LANTERN;
-	public static final ItemLantern SOUL_LANTERN;
-	public static final ItemChain CHAIN;
-
-	public static ItemLantern getLanternForVariant(int variant) {
-		return (variant & 1) != 0 ? SOUL_LANTERN : LANTERN;
-	}
 
 	private static Item getRegisteredItem(String name) {
 		Item item = Item.REGISTRY.getObject(new ResourceLocation(name));
@@ -456,9 +447,6 @@ public class Items {
 			SHULKER_SHELL = getRegisteredItem("shulker_shell");
 			IRON_NUGGET = getRegisteredItem("iron_nugget");
 			KNOWLEDGE_BOOK = getRegisteredItem("knowledge_book");
-			LANTERN = (ItemLantern) getRegisteredItem("tailscraft:lantern");
-			SOUL_LANTERN = (ItemLantern) getRegisteredItem("tailscraft:soul_lantern");
-			CHAIN = (ItemChain) getRegisteredItem("tailscraft:chain");
 		}
 	}
 }

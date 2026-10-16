@@ -13,6 +13,7 @@ import java.util.Map;
 import net.lax1dude.eaglercraft.ClientUUIDLoadingCache;
 import net.lax1dude.eaglercraft.EaglercraftRandom;
 import net.lax1dude.eaglercraft.EaglercraftUUID;
+import net.lax1dude.eaglercraft.EagRuntime;
 import net.lax1dude.eaglercraft.minecraft.EaglerFolderResourcePack;
 import net.lax1dude.eaglercraft.notifications.ServerNotificationManager;
 import net.lax1dude.eaglercraft.profile.ServerCapeCache;
@@ -23,6 +24,7 @@ import net.lax1dude.eaglercraft.socket.protocol.pkt.GameMessagePacket;
 import net.lax1dude.eaglercraft.webview.WebViewOverlayController;
 
 import java.util.Map.Entry;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.block.Block;
@@ -320,6 +322,8 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	private boolean isIntegratedServer = false;
 	private boolean authMeGuiOpened = false;
 	private boolean authMeLoginPending = false;
+	private boolean authMeRememberMe = false;
+	private String authMeRememberPassword = null;
 
 	public NetHandlerPlayClient(Minecraft mcIn, GuiScreen p_i46300_2_, NetworkManager networkManagerIn,
 			GameProfile profileIn) {
@@ -927,13 +931,26 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 */
 	public void handleChat(SPacketChat packetIn) {
 		if (!isIntegratedServer && packetIn.getChatComponent() != null) {
-			String chat = packetIn.getChatComponent().getUnformattedText().toLowerCase(Locale.ROOT);
-			if (!authMeGuiOpened && chat.contains("register")) {
+			String unformatted = packetIn.getChatComponent().getUnformattedText();
+			String chat = unformatted.toLowerCase(Locale.ROOT);
+			if (chat.contains("successful login!")) {
+				if (authMeRememberMe && authMeRememberPassword != null && authMeRememberPassword.length() > 0) {
+					EagRuntime.setStorage(authMeStorageKey(), authMeRememberPassword.getBytes(StandardCharsets.UTF_8));
+				}
+				authMeRememberMe = false;
+				authMeRememberPassword = null;
+			} else if (!authMeGuiOpened && chat.contains("register")) {
 				authMeGuiOpened = true;
 				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, true));
 			} else if (!authMeGuiOpened && chat.contains("login")) {
 				authMeGuiOpened = true;
-				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, false));
+				String remembered = getRememberedAuthMePassword();
+				if (remembered != null && remembered.length() > 0) {
+					this.gameController.player.sendChatMessage("/login " + remembered);
+					this.authMeLoginPending = true;
+				} else {
+					this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, false));
+				}
 			}
 		}
 		this.gameController.ingameGUI.func_191742_a(packetIn.func_192590_c(), packetIn.getChatComponent());
@@ -941,6 +958,27 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 
 	public void markAuthMeLoginPending() {
 		authMeLoginPending = true;
+	}
+
+	public void setAuthMeRememberMe(String password, boolean remember) {
+		authMeRememberMe = remember;
+		authMeRememberPassword = remember ? password : null;
+		if (!remember) EagRuntime.setStorage(authMeStorageKey(), new byte[0]);
+	}
+
+	public boolean hasRememberedAuthMePassword() {
+		return getRememberedAuthMePassword() != null;
+	}
+
+	private String authMeStorageKey() {
+		String server = gameController.getCurrentServerData() == null ? "unknown"
+				: gameController.getCurrentServerData().serverIP;
+		return "tailscraft_authme_" + server.replaceAll("[^A-Za-z0-9_.-]", "_");
+	}
+
+	private String getRememberedAuthMePassword() {
+		byte[] stored = EagRuntime.getStorage(authMeStorageKey());
+		return stored == null || stored.length == 0 ? null : new String(stored, StandardCharsets.UTF_8);
 	}
 
 	/**
