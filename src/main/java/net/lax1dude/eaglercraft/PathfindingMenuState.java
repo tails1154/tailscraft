@@ -11,6 +11,7 @@ public final class PathfindingMenuState {
 	private PathfindingMenuState() { }
 
 	public static boolean handleKey(int keyCode) {
+		Minecraft mc = Minecraft.getMinecraft();
 		boolean keyK = keyCode == KeyboardConstants.KEY_K || keyCode == 75;
 		boolean keyP = keyCode == KeyboardConstants.KEY_P || keyCode == 80;
 		if (keyK && (Keyboard.isKeyDown(KeyboardConstants.KEY_LCONTROL)
@@ -21,7 +22,7 @@ public final class PathfindingMenuState {
 		}
 		if (keyP && ctrlKArmed && Minecraft.getSystemTime() <= ctrlKDeadline) {
 			ctrlKArmed = false;
-			Minecraft.getMinecraft().displayGuiScreen(new GuiPathfindingMenu());
+			if (mc != null && mc.world != null && mc.player != null) mc.displayGuiScreen(new GuiPathfindingMenu());
 			return true;
 		}
 		if (Minecraft.getSystemTime() > ctrlKDeadline) ctrlKArmed = false;

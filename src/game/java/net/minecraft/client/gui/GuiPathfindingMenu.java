@@ -21,8 +21,10 @@ public class GuiPathfindingMenu extends GuiScreen {
 		block.setText("dirt");
 		buttonList.add(new GuiButton(1, width / 2 - 100, height / 2 + 24, 98, 20, "Go to coordinates"));
 		buttonList.add(new GuiButton(2, width / 2 + 2, height / 2 + 24, 98, 20, "Mine block"));
-		buttonList.add(new GuiButton(3, width / 2 - 100, height / 2 + 50, 98, 20, "Stop"));
-		buttonList.add(new GuiButton(4, width / 2 + 2, height / 2 + 50, 98, 20, "Done"));
+		buttonList.add(new GuiButton(3, width / 2 - 100, height / 2 + 50, 98, 20, "Break: " + (BaritoneController.isAllowBreak() ? "ON" : "OFF")));
+		buttonList.add(new GuiButton(4, width / 2 + 2, height / 2 + 50, 98, 20, "Place: " + (BaritoneController.isAllowPlace() ? "ON" : "OFF")));
+		buttonList.add(new GuiButton(5, width / 2 - 100, height / 2 + 76, 98, 20, "Stop"));
+		buttonList.add(new GuiButton(6, width / 2 + 2, height / 2 + 76, 98, 20, "Done"));
 	}
 
 	protected void actionPerformed(GuiButton button) throws IOException {
@@ -33,9 +35,15 @@ public class GuiPathfindingMenu extends GuiScreen {
 			BaritoneController.handleCommand("#mine " + block.getText());
 			mc.displayGuiScreen(null);
 		} else if (button.id == 3) {
+			BaritoneController.setAllowBreak(!BaritoneController.isAllowBreak());
+			initGui();
+		} else if (button.id == 4) {
+			BaritoneController.setAllowPlace(!BaritoneController.isAllowPlace());
+			initGui();
+		} else if (button.id == 5) {
 			BaritoneController.handleCommand("#stop");
 			mc.displayGuiScreen(null);
-		} else if (button.id == 4) {
+		} else if (button.id == 6) {
 			mc.displayGuiScreen(null);
 		}
 	}
@@ -62,7 +70,7 @@ public class GuiPathfindingMenu extends GuiScreen {
 		drawString(fontRendererObj, "Block name", width / 2 - 100, height / 2 - 18, 0xAAAAAA);
 		coordinates.drawTextBox();
 		block.drawTextBox();
-		drawString(fontRendererObj, "Status: " + BaritoneController.getStatus(), width / 2 - 100, height / 2 + 78, 0xAAAAAA);
+		drawString(fontRendererObj, "Status: " + BaritoneController.getStatus(), width / 2 - 100, height / 2 + 104, 0xAAAAAA);
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 }

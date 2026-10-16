@@ -28,11 +28,10 @@ import baritone.api.pathing.goals.GoalXZ;
 import baritone.api.pathing.goals.GoalYLevel;
 
 /**
- * Small Baritone command surface for the 1.12.2 client.
+ * Local Pathfindinganator controller for the 1.12.2 client.
  *
-	 * This is intentionally command driven: it has no remote planner or
-	 * natural-language layer. The command names and prefix follow Baritone
-	 * (#goto, #mine, #stop).
+	 * The command parser is private to the GUI; chat never invokes it. The
+	 * operation names follow Baritone (#goto, #mine, #stop) for familiarity.
  */
 public final class BaritoneController {
 	private static boolean active;
@@ -416,6 +415,10 @@ public final class BaritoneController {
 		return origin + Integer.parseInt(value.substring(1));
 	}
 	public static String getStatus() { return status; }
+	public static boolean isAllowBreak() { return allowBreak; }
+	public static boolean isAllowPlace() { return allowPlace; }
+	public static void setAllowBreak(boolean value) { allowBreak = value; }
+	public static void setAllowPlace(boolean value) { allowPlace = value; }
 	public static void stop() { active = false; mining = false; goingToBlock = false; mineBlocks = Collections.emptyList(); searchBlocks = Collections.emptyList(); path = Collections.emptyList(); pathSearch = null; pathGoal = null; mineTarget = null; gotoTarget = null; gotoBlock = null; mineLimit = 0; resetSearch(); releaseKeys(Minecraft.getMinecraft()); status = "Stopped"; }
 	private static void releaseKeys(Minecraft mc) { if (mc == null) return; KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false); }
 	private static void message(String text) { Minecraft mc = Minecraft.getMinecraft(); if (mc != null && mc.ingameGUI != null) mc.ingameGUI.getChatGUI().printChatMessage(new net.minecraft.util.text.TextComponentString(text)); }
