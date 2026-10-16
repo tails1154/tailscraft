@@ -54,6 +54,8 @@ public class GuiTexturePackCreator extends GuiScreen {
 	private boolean importing;
 	private boolean dirty;
 	private boolean paintGesture;
+	private int tool = 0;
+	private int brushSize = 1;
 	private int canvasX, canvasY, canvasScale;
 
 	public GuiTexturePackCreator(GuiScreen parent) {
@@ -72,6 +74,13 @@ public class GuiTexturePackCreator extends GuiScreen {
 		buttonList.add(new GuiButton(4, width / 2 + 100, height - 28, 90, 20, "Clear canvas"));
 		buttonList.add(new GuiButton(5, width / 2 - 190, height - 56, 42, 20, "Undo"));
 		buttonList.add(new GuiButton(6, width / 2 - 145, height - 56, 42, 20, "Redo"));
+		buttonList.add(new GuiButton(40, width / 2 - 95, height - 56, 52, 20, "Pencil"));
+		buttonList.add(new GuiButton(41, width / 2 - 40, height - 56, 52, 20, "Eraser"));
+		buttonList.add(new GuiButton(42, width / 2 + 15, height - 56, 45, 20, "Fill"));
+		buttonList.add(new GuiButton(43, width / 2 + 63, height - 56, 52, 20, "Pick"));
+		buttonList.add(new GuiButton(50, width / 2 - 95, height - 82, 30, 20, "1px"));
+		buttonList.add(new GuiButton(51, width / 2 - 62, height - 82, 30, 20, "2px"));
+		buttonList.add(new GuiButton(52, width / 2 - 29, height - 82, 30, 20, "4px"));
 		for (int i = 0; i < PALETTE.length; ++i) {
 			GuiButton b = new GuiButton(20 + i, width / 2 + 20 + (i % 5) * 22, height - 56 + (i / 5) * 22, 20, 20, "");
 			buttonList.add(b);
@@ -140,6 +149,8 @@ public class GuiTexturePackCreator extends GuiScreen {
 		else if (button.id == 4) { recordUndo(); image = new ImageData(image.width, image.height, true); markEdited(); }
 		else if (button.id == 5) undo();
 		else if (button.id == 6) redo();
+		else if (button.id >= 40 && button.id <= 43) tool = button.id - 40;
+		else if (button.id >= 50 && button.id <= 52) brushSize = 1 << (button.id - 50);
 		else if (button.id >= 20 && button.id < 20 + PALETTE.length) selectedColor = PALETTE[button.id - 20];
 	}
 
@@ -227,14 +238,45 @@ public class GuiTexturePackCreator extends GuiScreen {
 	private void paint(int mouseX, int mouseY) {
 		if (image == null || mouseX < canvasX || mouseY < canvasY) return;
 		int px = (mouseX - canvasX) / canvasScale, py = (mouseY - canvasY) / canvasScale;
-		if (px >= 0 && py >= 0 && px < image.width && py < image.height) { image.pixels[py * image.width + px] = selectedColor; markEdited(); }
+		if (px < 0 || py < 0 || px >= image.width || py >= image.height) return;
+		if (tool == 2) { fill(px, py); return; }
+		if (tool == 3) { selectedColor = image.pixels[py * image.width + px]; tool = 0; return; }
+		int color = tool == 1 ? 0 : selectedColor;
+		for (int yy = py - brushSize / 2; yy < py + (brushSize + 1) / 2; ++yy) {
+			for (int xx = px - brushSize / 2; xx < px + (brushSize + 1) / 2; ++xx) {
+				if (xx >= 0 && yy >= 0 && xx < image.width && yy < image.height) image.pixels[yy * image.width + xx] = color;
+			}
+		}
+		markEdited();
+	}
+
+	private void fill(int x, int y) {
+		int target = image.pixels[y * image.width + x];
+		int replacement = tool == 1 ? 0 : selectedColor;
+		if (target == replacement) return;
+		List<Integer> queue = new ArrayList<Integer>();
+		queue.add(y * image.width + x);
+		for (int i = 0; i < queue.size(); ++i) {
+			int pos = queue.get(i), px = pos % image.width, py = pos / image.width;
+			if (image.pixels[pos] != target) continue;
+			image.pixels[pos] = replacement;
+			if (px > 0) queue.add(pos - 1);
+			if (px + 1 < image.width) queue.add(pos + 1);
+			if (py > 0) queue.add(pos - image.width);
+			if (py + 1 < image.height) queue.add(pos + image.width);
+		}
+		markEdited();
 	}
 
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 		packName.mouseClicked(mouseX, mouseY, mouseButton);
-		if (mouseButton == 0 && isOnCanvas(mouseX, mouseY)) { recordUndo(); paintGesture = true; paint(mouseX, mouseY); }
+		if ((mouseButton == 0 || mouseButton == 1) && isOnCanvas(mouseX, mouseY)) {
+			recordUndo(); paintGesture = true;
+			if (mouseButton == 1 && tool == 0) { int oldTool = tool; tool = 1; paint(mouseX, mouseY); tool = oldTool; }
+			else paint(mouseX, mouseY);
+		}
 	}
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
@@ -242,7 +284,7 @@ public class GuiTexturePackCreator extends GuiScreen {
 		super.keyTyped(typedChar, keyCode);
 	}
 	@Override
-	protected void mouseClickMove(int mouseX, int mouseY, int button, long time) { super.mouseClickMove(mouseX, mouseY, button, time); if (button == 0) paint(mouseX, mouseY); }
+	protected void mouseClickMove(int mouseX, int mouseY, int button, long time) { super.mouseClickMove(mouseX, mouseY, button, time); if (button == 0 || button == 1) paint(mouseX, mouseY); }
 	@Override
 	protected void mouseReleased(int mouseX, int mouseY, int state) { super.mouseReleased(mouseX, mouseY, state); paintGesture = false; }
 
@@ -259,7 +301,7 @@ public class GuiTexturePackCreator extends GuiScreen {
 		drawCenteredString(fontRendererObj, "Texture Pack Creator 9000", width / 2, 2, 0xFFFFFF);
 		packName.drawTextBox();
 		drawString(fontRendererObj, "Texture: " + selectedPath, 224, 38, 0xCCCCCC);
-		drawString(fontRendererObj, "Click or drag to paint • right-click is reserved for future tools", 224, height - 70, 0xAAAAAA);
+		drawString(fontRendererObj, "Tool: " + (tool == 0 ? "Pencil" : tool == 1 ? "Eraser" : tool == 2 ? "Fill" : "Picker") + "  Brush: " + brushSize + "px", 224, height - 70, 0xAAAAAA);
 		if (image != null) {
 			canvasScale = Math.max(1, Math.min(8, 220 / Math.max(image.width, image.height)));
 			canvasX = width / 2 - 90; canvasY = 58;
