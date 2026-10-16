@@ -185,10 +185,12 @@ public final class BaritoneController {
 					releaseKeys(mc);
 					return;
 				}
-				targetForBlock(world, mineTarget);
+				if (!withinMiningReach(player, mineTarget)) targetForBlock(world, mineTarget);
 				path = Collections.emptyList(); pathSearch = null; recalc = 10; status = "Going to " + blockName(mineBlock);
 			}
-			if (!nearTarget(player)) { moveTo(mc, player, world); return; }
+			if (!withinMiningReach(player, mineTarget)) {
+				if (!nearTarget(player)) { moveTo(mc, player, world); return; }
+			}
 			faceAndMine(mc, player, mineTarget);
 			return;
 		}
@@ -244,7 +246,13 @@ public final class BaritoneController {
 	private static void faceAndMine(Minecraft mc, EntityPlayerSP player, BlockPos pos) {
 		releaseKeys(mc);
 		lookAt(player, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
-		KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), true);
+		/* Do not depend on the camera ray/objectMouseOver. The controller owns the
+		 * target, so drive the same PlayerControllerMP block-damage cycle directly. */
+		if (!mc.playerController.getIsHittingBlock()) {
+			mc.playerController.clickBlock(pos, EnumFacing.UP);
+		} else {
+			mc.playerController.onPlayerDamageBlock(pos, EnumFacing.UP);
+		}
 		status = "Mining " + blockName(mineBlock);
 	}
 
@@ -296,6 +304,9 @@ public final class BaritoneController {
 	}
 
 	private static BlockPos findBlock(World world, EntityPlayerSP player) {
+		/* Prefer blocks immediately around the player so mining never waits for the broad scan. */
+		BlockPos nearby = findNearbyBlock(world, player);
+		if (nearby != null) return nearby;
 		if (!scanActive && !searchFinished) {
 			int px = (int)Math.floor(player.posX), py = (int)Math.floor(player.posY), pz = (int)Math.floor(player.posZ);
 			scanMinY = Math.max(0, py - 48); scanMaxY = Math.min(255, py + 16);
@@ -319,6 +330,23 @@ public final class BaritoneController {
 		}
 		if (scanActive) return null;
 		searchFinished = true;
+		return null;
+	}
+
+	private static BlockPos findNearbyBlock(World world, EntityPlayerSP player) {
+		int px = (int)Math.floor(player.posX), py = (int)Math.floor(player.posY), pz = (int)Math.floor(player.posZ);
+		for (int dy = -2; dy <= 2; ++dy) {
+			for (int dx = -1; dx <= 1; ++dx) {
+				for (int dz = -1; dz <= 1; ++dz) {
+					BlockPos pos = new BlockPos(px + dx, py + dy, pz + dz);
+					if (world.getChunkProvider().getLoadedChunk(pos.getX() >> 4, pos.getZ() >> 4) != null
+							&& searchBlocks.contains(world.getBlockState(pos).getBlock())) {
+						mineBlock = world.getBlockState(pos).getBlock();
+						return pos;
+					}
+				}
+			}
+		}
 		return null;
 	}
 
@@ -420,6 +448,13 @@ public final class BaritoneController {
 				: pathGoal instanceof GoalXZ
 				? Math.abs(player.posX - targetX) < 1.2D && Math.abs(player.posZ - targetZ) < 1.2D
 				: Math.abs(player.posX - targetX) < 1.2D && Math.abs(player.posY - targetY) < 2.0D && Math.abs(player.posZ - targetZ) < 1.2D;
+	}
+	private static boolean withinMiningReach(EntityPlayerSP player, BlockPos pos) {
+		if (pos == null) return false;
+		double dx = player.posX - (pos.getX() + 0.5D);
+		double dy = player.posY + player.getEyeHeight() - (pos.getY() + 0.5D);
+		double dz = player.posZ - (pos.getZ() + 0.5D);
+		return dx * dx + dy * dy + dz * dz <= 25.0D;
 	}
 	private static boolean isNear(EntityPlayerSP player, BlockPos pos) { return Math.abs(player.posX - (pos.getX() + .5D)) < .8D && Math.abs(player.posY - pos.getY()) < 1.5D && Math.abs(player.posZ - (pos.getZ() + .5D)) < .8D; }
 	private static boolean canStand(World world, int x, int y, int z) { BlockPos p = new BlockPos(x, y, z); return world.isAirBlock(p) && world.isAirBlock(p.up()) && !world.isAirBlock(p.down()); }

@@ -22,6 +22,8 @@
 - Made support-placement planning depend on an actual placeable block in the hotbar, preventing impossible floating routes.
 - Added a real tabbed Pathfindinganator controller with Navigation, Mining, and Settings tabs.
 - Fixed automated turning so active pathfinding controls yaw, head rotation, body rotation, and pitch without mouse-look overwriting it.
+- Fixed `#mine` to immediately mine nearby targets instead of routing to a neighboring stand position first; blocks directly below the player are now handled directly.
+- Made automated mining drive the normal client block-damage cycle directly instead of relying on the camera's `objectMouseOver` and attack key state.
 
 ## Historical removed experiments
 - Removed the former AI chatbot, remote planner, copilot panel, observation loop, status overlay, and look-around action.
