@@ -11,8 +11,10 @@ for context and are not part of the current client.
 - Added TC4 friends and presence: friend cards, requests, online presence,
   join requests, approval dialogs, join progress, and automatic friends-service
   connection.
-- Added local singleplayer replay mode with pause-menu controls for recording,
-  stopping, and replaying the player camera.
+- Added local singleplayer replay mode with pause-menu controls for recording
+  the game canvas to a downloadable `.webm` video.
+- Replay recording is browser-local and does not retain player/world frames or
+  upload anything to a server.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved

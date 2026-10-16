@@ -85,7 +85,7 @@ public class GuiIngameMenu extends GuiScreen {
 
 		if (this.mc.isSingleplayer()) {
 			this.buttonList.add(new GuiButtonWithStupidIcons(12, this.width / 2 + 2, this.height / 4 + 72 - 16, 98, 20,
-					ReplayManager.isPlaying() ? "Stop Replay" : "Replay Mode", PauseMenuCustomizeState.icon_serverInfo_L,
+					ReplayManager.isRecording() ? "Stop Video" : "Replay Mode", PauseMenuCustomizeState.icon_serverInfo_L,
 					PauseMenuCustomizeState.icon_serverInfo_L_aspect, PauseMenuCustomizeState.icon_serverInfo_R,
 					PauseMenuCustomizeState.icon_serverInfo_R_aspect));
 		}
@@ -178,8 +178,8 @@ public class GuiIngameMenu extends GuiScreen {
 			this.mc.displayGuiScreen(new GuiScreenNotifications(this));
 			break;
 		case 12:
-			if (ReplayManager.isPlaying()) {
-				ReplayManager.stopPlayback();
+			if (ReplayManager.isRecording()) {
+				ReplayManager.stopRecording();
 			} else {
 				this.mc.displayGuiScreen(new GuiScreenReplay(this));
 			}

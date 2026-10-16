@@ -1307,7 +1307,6 @@ public class Minecraft implements IThreadListener {
 	 */
 	public void runTick() throws IOException {
 		TailsConnectFriends.update();
-		ReplayManager.tick(this);
 		if (this.rightClickDelayTimer > 0) {
 			--this.rightClickDelayTimer;
 		}
@@ -1504,6 +1503,8 @@ public class Minecraft implements IThreadListener {
 			}
 		}
 
+		// Keep the browser recorder lifecycle check after world/network updates.
+		ReplayManager.tick(this);
 		this.systemTime = getSystemTime();
 	}
 
