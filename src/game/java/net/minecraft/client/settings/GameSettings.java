@@ -20,6 +20,7 @@ import net.lax1dude.eaglercraft.HString;
 import net.lax1dude.eaglercraft.IOUtils;
 import net.lax1dude.eaglercraft.Keyboard;
 import net.lax1dude.eaglercraft.KeyboardConstants;
+import net.lax1dude.eaglercraft.LightingBypass;
 import net.lax1dude.eaglercraft.Mouse;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiNewChat;
@@ -190,6 +191,7 @@ public class GameSettings {
 	public boolean hudCoords = true;
 	public boolean fog = false;
 	public boolean rainSnow = false;
+	public boolean lightingBypass = true;
 	
 	public boolean customItemsOF = true;
 
@@ -210,6 +212,7 @@ public class GameSettings {
 		GameSettings.Options.RENDER_DISTANCE.setValueMax(16.0F);
 		this.renderDistanceChunks = 8;
 		this.loadOptions();
+		LightingBypass.setEnabled(this.lightingBypass);
 		// TailsCraft always starts at the stable 8-chunk default, even when an
 		// older saved options file contains a different render distance.
 		this.renderDistanceChunks = 8;
@@ -497,6 +500,14 @@ public class GameSettings {
 			this.mc.renderGlobal.loadRenderers();
 		}
 
+		if (settingsOption == GameSettings.Options.LIGHTING_BYPASS) {
+			this.lightingBypass = !this.lightingBypass;
+			LightingBypass.setEnabled(this.lightingBypass);
+			if (this.mc != null && this.mc.renderGlobal != null) {
+				this.mc.renderGlobal.loadRenderers();
+			}
+		}
+
 		this.saveOptions();
 	}
 
@@ -576,6 +587,8 @@ public class GameSettings {
 			return this.rainSnow;
 		case OF_CUSTOM_ITEMS:
 			return this.customItemsOF;
+		case LIGHTING_BYPASS:
+			return this.lightingBypass;
 		default:
 			return false;
 		}
@@ -724,6 +737,10 @@ public class GameSettings {
 
 					if ("gamma".equals(s1)) {
 						this.gammaSetting = this.parseFloat(s2);
+					}
+
+					if ("lightingBypass".equals(s1)) {
+						this.lightingBypass = "true".equals(s2);
 					}
 
 					if ("saturation".equals(s1)) {
@@ -1071,6 +1088,7 @@ public class GameSettings {
 			printwriter.println("mouseSensitivity:" + this.mouseSensitivity);
 			printwriter.println("fov:" + (this.fovSetting - 70.0F) / 40.0F);
 			printwriter.println("gamma:" + this.gammaSetting);
+		printwriter.println("lightingBypass:" + this.lightingBypass);
 			printwriter.println("saturation:" + this.saturation);
 			printwriter.println("renderDistance:" + this.renderDistanceChunks);
 			printwriter.println("guiScale:" + this.guiScale);
@@ -1268,7 +1286,8 @@ public class GameSettings {
 		HUD_COORDS("options.hud.coords", false, true),
 		FOG("options.fog", false, true),
 		RAIN_SNOW("options.enableRain", false, true),
-		OF_CUSTOM_ITEMS("options.customItemsOF", false, true);
+		OF_CUSTOM_ITEMS("options.customItemsOF", false, true),
+		LIGHTING_BYPASS("options.tailscraft.lightingBypass", false, true);
 
 		// NARRATOR("options.narrator", false, false),
 		private final boolean enumFloat;

@@ -20,6 +20,10 @@ for context and are not part of the current client.
   lighter VP8 encoder for smoother capture.
 - Reduced replay capture to 30 FPS and 2 Mbps to reduce gameplay lag while
   recording.
+- Added the client-only Lighting Bypass option for fullbright rendering without
+  applying client light updates from light-emitting blocks.
+- Lighting Bypass defaults to ON for new game profiles and remembers an explicit
+  player choice afterward.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved

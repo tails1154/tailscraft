@@ -14,6 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import net.lax1dude.eaglercraft.LightingBypass;
 
 public class ChunkCache implements IBlockAccess {
 	private final IBlockState DEFAULT_STATE = Blocks.AIR.getDefaultState();
@@ -78,6 +79,9 @@ public class ChunkCache implements IBlockAccess {
 	}
 
 	public int getCombinedLight(BlockPos pos, int lightValue) {
+		if (this.worldObj.isRemote && LightingBypass.isEnabled()) {
+			return 15728880;
+		}
 		IBlockState state = getBlockState(pos);
 		Block b = state.getBlock();
 		int j = b.alfheim$getLightFor(state, this, EnumSkyBlock.SKY, pos);

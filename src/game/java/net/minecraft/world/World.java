@@ -15,6 +15,7 @@ import java.util.List;
 import net.lax1dude.eaglercraft.EaglercraftRandom;
 import net.lax1dude.eaglercraft.EaglercraftUUID;
 import net.lax1dude.eaglercraft.HString;
+import net.lax1dude.eaglercraft.LightingBypass;
 
 import javax.annotation.Nullable;
 import net.minecraft.advancements.AdvancementManager;
@@ -677,6 +678,9 @@ public abstract class World implements IBlockAccess {
 	}
 
 	public void setLightFor(EnumSkyBlock type, BlockPos pos, int lightValue) {
+		if (this.isRemote && LightingBypass.isEnabled()) {
+			return;
+		}
 		if (this.isValid(pos)) {
 			if (this.isBlockLoaded(pos)) {
 				Chunk chunk = this.getChunkFromBlockCoords(pos);
@@ -693,6 +697,9 @@ public abstract class World implements IBlockAccess {
 	}
 
 	public int getCombinedLight(BlockPos pos, int lightValue) {
+		if (this.isRemote && LightingBypass.isEnabled()) {
+			return 15728880;
+		}
 		int i = this.getLightFromNeighborsFor(EnumSkyBlock.SKY, pos);
 		int j = this.getLightFromNeighborsFor(EnumSkyBlock.BLOCK, pos);
 
@@ -704,6 +711,9 @@ public abstract class World implements IBlockAccess {
 	}
 
 	public float getLightBrightness(BlockPos pos) {
+		if (this.isRemote && LightingBypass.isEnabled()) {
+			return 1.0F;
+		}
 		return this.provider.getLightBrightnessTable()[this.getLightFromNeighbors(pos)];
 	}
 
