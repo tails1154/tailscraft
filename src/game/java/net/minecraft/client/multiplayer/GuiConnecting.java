@@ -264,9 +264,9 @@ public class GuiConnecting extends GuiScreen {
 					}
 				}
 			}
-			if (timer > 200) {
+			if (timer > 900) {
 				this.connectionPhase = "Connection timed out";
-				this.connectionDetail = "No usable play connection after 10 seconds; cancel and try again";
+				this.connectionDetail = "No usable play connection after 45 seconds; cancel and try again";
 				if (webSocket != null) {
 					webSocket.close();
 				}
