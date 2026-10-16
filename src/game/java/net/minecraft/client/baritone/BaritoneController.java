@@ -216,7 +216,8 @@ public final class BaritoneController {
 	private static void moveTo(Minecraft mc, EntityPlayerSP player, World world) {
 		if (pathSearch == null && path.isEmpty() && recalc >= 10) {
 			if (pathGoal == null) pathGoal = new GoalBlock(targetX, targetY, targetZ);
-			pathSearch = BaritonePathfinder.createSearch(world, new BlockPos(player), pathGoal, allowBreak, allowPlace);
+			boolean canPlace = allowPlace && hasPlaceableBlock(player);
+			pathSearch = BaritonePathfinder.createSearch(world, new BlockPos(player), pathGoal, allowBreak, canPlace);
 			recalc = 0;
 		}
 		if (pathSearch != null && !pathSearch.isDone()) {
@@ -266,6 +267,7 @@ public final class BaritoneController {
 	}
 	private static void face(EntityPlayerSP player, BlockPos pos) { float yaw = (float)(Math.atan2(-(pos.getX() + .5D - player.posX), pos.getZ() + .5D - player.posZ) * 180.0D / Math.PI); player.rotationYaw = yaw; player.prevRotationYaw = yaw; }
 	private static void releaseMovement(Minecraft mc) { KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false); }
+	private static boolean hasPlaceableBlock(EntityPlayerSP player) { for (int i = 0; i < 9; ++i) { ItemStack stack = player.inventory.mainInventory.get(i); if (stack != null && !stack.func_190926_b() && stack.getItem() instanceof ItemBlock) return true; } return false; }
 	private static ItemStack findPlaceableBlock(EntityPlayerSP player) { for (int i = 0; i < 9; ++i) { ItemStack stack = player.inventory.mainInventory.get(i); if (stack != null && !stack.func_190926_b() && stack.getItem() instanceof ItemBlock) { player.inventory.currentItem = i; return stack; } } return null; }
 
 	private static void targetForBlock(World world, BlockPos block) {

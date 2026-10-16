@@ -19,6 +19,7 @@
 - Added visible in-world route lines for active paths.
 - Added GUI toggles for block breaking and support-block placement, and restricted the Ctrl+K/P launcher to active worlds.
 - Added a live top-right Pathfindinganator status display while navigation or mining is active.
+- Made support-placement planning depend on an actual placeable block in the hotbar, preventing impossible floating routes.
 
 ## Historical removed experiments
 - Removed the former AI chatbot, remote planner, copilot panel, observation loop, status overlay, and look-around action.
