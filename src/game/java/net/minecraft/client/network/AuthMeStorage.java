@@ -52,6 +52,12 @@ public final class AuthMeStorage {
 		return result;
 	}
 
+	public static void cleanupUnlistedLegacyPasswords() {
+		if (!getServers().contains("ws://tails1154.com:25565")) {
+			EagRuntime.setStorage(key("ws://tails1154.com:25565"), new byte[0]);
+		}
+	}
+
 	private static void writeServers(List<String> servers) {
 		StringBuilder value = new StringBuilder();
 		for (String server : servers) {
