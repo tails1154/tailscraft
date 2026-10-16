@@ -1,5 +1,6 @@
 package net.minecraft.potion;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -21,6 +22,12 @@ public class PotionCrash extends Potion {
 		if (!(entity instanceof EntityPlayer)) {
 			return;
 		}
+		if (entity.world.isRemote) {
+			if (Minecraft.getMinecraft().isSingleplayer()) {
+				throw new RuntimeException("undefined function: TailsCraftCrash");
+			}
+			return;
+		}
 		MinecraftServer server = entity.world.getMinecraftServer();
 		if (server == null) {
 			return;
@@ -36,8 +43,6 @@ public class PotionCrash extends Potion {
 		}
 		if (!entity.world.isRemote) {
 			server.saveAllWorlds(true);
-		} else if (entity.world.isRemote) {
-			throw new RuntimeException("undefined function: TailsCraftCrash");
 		}
 	}
 }
