@@ -34,7 +34,7 @@ public class GuiIngameMenu extends GuiScreen {
 		this.buttonList.clear();
 		int i = -16;
 		int j = 98;
-		this.buttonList.add(new GuiButtonWithStupidIcons(1, this.width / 2 - 100, this.height / 4 + 120 + -16, I18n.format("menu.returnToMenu"), PauseMenuCustomizeState.icon_disconnect_L,
+		this.buttonList.add(new GuiButtonWithStupidIcons(1, this.width / 2 - 100, this.height / 4 + 144 - 16, I18n.format("menu.returnToMenu"), PauseMenuCustomizeState.icon_disconnect_L,
 				PauseMenuCustomizeState.icon_disconnect_L_aspect, PauseMenuCustomizeState.icon_disconnect_R,
 				PauseMenuCustomizeState.icon_disconnect_R_aspect));
 
@@ -87,6 +87,7 @@ public class GuiIngameMenu extends GuiScreen {
 				ReplayManager.isRecording() ? "Stop Video" : "Replay Mode", PauseMenuCustomizeState.icon_serverInfo_L,
 				PauseMenuCustomizeState.icon_serverInfo_L_aspect, PauseMenuCustomizeState.icon_serverInfo_R,
 				PauseMenuCustomizeState.icon_serverInfo_R_aspect));
+		this.buttonList.add(new GuiButton(13, this.width / 2 - 100, this.height / 4 + 120 - 16, 200, 20, "AI Chatbot"));
 		
 		if (!hasSentAutoSave) {
 			hasSentAutoSave = true;
@@ -181,6 +182,9 @@ public class GuiIngameMenu extends GuiScreen {
 			} else {
 				this.mc.displayGuiScreen(new GuiScreenReplay(this));
 			}
+			break;
+		case 13:
+			this.mc.displayGuiScreen(new GuiScreenAIChat(this));
 			break;
 		}
 	}

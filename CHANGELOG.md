@@ -1,5 +1,10 @@
 # TailsCraft changelog
 
+## AI surroundings chatbot
+- Added an in-game AI Chatbot button to the pause menu.
+- Uses the asynchronous public Pollinations text endpoint with a local fallback.
+- Sends only a small surroundings snapshot; no passwords, inventory, or world files.
+
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.
 
