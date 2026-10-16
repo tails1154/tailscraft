@@ -32,7 +32,6 @@ public class MobEffects {
 	public static final Potion LEVITATION;
 	public static final Potion LUCK;
 	public static final Potion UNLUCK;
-	public static final Potion CRASHING;
 
 	@Nullable
 	private static Potion getRegisteredMobEffect(String id) {
@@ -76,7 +75,6 @@ public class MobEffects {
 			LEVITATION = getRegisteredMobEffect("levitation");
 			LUCK = getRegisteredMobEffect("luck");
 			UNLUCK = getRegisteredMobEffect("unluck");
-			CRASHING = getRegisteredMobEffect("tailscraft_crashing");
 		}
 	}
 }

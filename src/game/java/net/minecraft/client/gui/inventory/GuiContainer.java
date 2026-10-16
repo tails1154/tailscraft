@@ -17,11 +17,8 @@ import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.PotionType;
-import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 
 public abstract class GuiContainer extends GuiScreen {
@@ -603,16 +600,6 @@ public abstract class GuiContainer extends GuiScreen {
 	 * Called when the mouse is clicked over a slot or outside the gui.
 	 */
 	protected void handleMouseClick(Slot slotIn, int slotId, int mouseButton, ClickType type) {
-		if (slotIn != null && slotIn.getHasStack() && !this.mc.isSingleplayer()
-				&& this.mc.getConnection() != null) {
-			PotionType potion = PotionUtils.getPotionFromItem(slotIn.getStack());
-			ResourceLocation potionName = PotionType.REGISTRY.getNameForObject(potion);
-			if (potionName != null && "tailscraft_crashing".equals(potionName.getResourcePath())) {
-				this.mc.getConnection().getNetworkManager()
-						.closeChannel(new TextComponentString("What do you think you're doing?"));
-				return;
-			}
-		}
 		if (slotIn != null) {
 			slotId = slotIn.slotNumber;
 		}

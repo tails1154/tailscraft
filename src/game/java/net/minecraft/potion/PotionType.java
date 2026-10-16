@@ -54,8 +54,6 @@ public class PotionType {
 		registerPotionType("mundane", new PotionType(new PotionEffect[0]));
 		registerPotionType("thick", new PotionType(new PotionEffect[0]));
 		registerPotionType("awkward", new PotionType(new PotionEffect[0]));
-		registerPotionType("tailscraft_crashing", new PotionType("tailscraft.crashing",
-				new PotionEffect[] { new PotionEffect(MobEffects.CRASHING, 40) }));
 		registerPotionType("night_vision",
 				new PotionType(new PotionEffect[] { new PotionEffect(MobEffects.NIGHT_VISION, 3600) }));
 		registerPotionType("long_night_vision",
