@@ -83,6 +83,8 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		packName.setText("My TailsCraft Pack");
 		buttonList.add(new GuiButton(107, 8, 8, 80, 20, "Save project"));
 		buttonList.add(new GuiButton(108, 92, 8, 80, 20, "Load project"));
+		buttonList.add(new GuiButton(9, 176, 8, 80, 20, "New texture"));
+		buttonList.add(new GuiButton(10, 260, 8, 80, 20, "Duplicate"));
 		buttonList.add(new GuiButton(109, width - 86, 8, 78, 20, "New project"));
 		buttonList.add(new GuiButton(0, 8, height - 28, 70, 20, I18n.format("gui.back")));
 		buttonList.add(new GuiButton(2, width / 2 - 190, height - 28, 90, 20, "Import texture"));
@@ -114,6 +116,28 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 
 	void selectTexture(int index) {
 		if (index >= 0 && index < entries.size()) loadTexture(entries.get(index).path);
+	}
+
+	private void createTexture(boolean duplicate) {
+		String base = duplicate && selectedPath != null ? selectedPath : "textures/custom_texture.png";
+		int slash = base.lastIndexOf('/');
+		String directory = slash >= 0 ? base.substring(0, slash + 1) : "textures/";
+		String file = duplicate && slash >= 0 ? base.substring(slash + 1, base.length() - 4) : "custom_texture";
+		String path = directory + file + ".png";
+		int number = 2;
+		while (editedTextures.containsKey(path) || containsEntry(path)) {
+			path = directory + file + "_" + number++ + ".png";
+		}
+		ImageData created = duplicate && image != null ? copyImage(image) : new ImageData(16, 16, true);
+		entries.add(new TextureEntry(path));
+		editedTextures.put(path, created);
+		loadTexture(path);
+		dirty = true;
+	}
+
+	private boolean containsEntry(String path) {
+		for (TextureEntry entry : entries) if (entry.path.equals(path)) return true;
+		return false;
 	}
 
 	private void loadTexture(String path) {
@@ -174,6 +198,8 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		else if (button.id == 6) redo();
 		else if (button.id == 107) saveProject();
 		else if (button.id == 108) loadProject();
+		else if (button.id == 9) createTexture(false);
+		else if (button.id == 10) createTexture(true);
 		else if (button.id == 109) mc.displayGuiScreen(new GuiYesNo(this, "Start a new texture project?", "Unsaved edits will be cleared.", "Start over", "Cancel", 109));
 		else if (button.id >= 40 && button.id <= 45) tool = button.id - 40;
 		else if (button.id >= 50 && button.id <= 52) brushSize = 1 << (button.id - 50);
@@ -187,6 +213,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	public void confirmClicked(boolean result, int id) {
 		if (result && id == 109) {
 			editedTextures.clear();
+			for (int i = entries.size() - 1; i >= TEXTURES.length; --i) entries.remove(i);
 			undoStack.clear();
 			redoStack.clear();
 			packName.setText("My TailsCraft Pack");
@@ -300,6 +327,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 			}
 			editedTextures.clear();
 			editedTextures.putAll(loaded);
+			for (String path : loaded.keySet()) if (!containsEntry(path)) entries.add(new TextureEntry(path));
 			packName.setText(savedName);
 			undoStack.clear();
 			redoStack.clear();
