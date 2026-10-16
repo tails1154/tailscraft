@@ -136,6 +136,7 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 				if (textBefore.isEmpty() && this.inputField.getText().equals("/")) {
 					this.tabCompleter.complete();
 				}
+				this.tabCompleter.updateSuggestions();
 			}
 		} else {
 			String s = this.inputField.getText().trim();

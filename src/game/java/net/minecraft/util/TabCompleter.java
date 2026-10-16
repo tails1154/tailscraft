@@ -101,10 +101,13 @@ public abstract class TabCompleter {
 				}
 			}
 			List<String> cached = new ArrayList<String>(this.completions);
-			this.completionCache.put(this.requestedPrefix, cached);
+			boolean rootRequest = "/".equals(this.requestedPrefix);
+			if (rootRequest) {
+				this.completionCache.put("/", cached);
+			}
 
 			String s1 = this.textField.getText().substring(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false));
-			String s2 = org.apache.commons.lang3.StringUtils.getCommonPrefix(newCompl);
+			String s2 = rootRequest ? "" : org.apache.commons.lang3.StringUtils.getCommonPrefix(newCompl);
 
 			if (!s2.isEmpty() && !s1.equalsIgnoreCase(s2)) {
 				this.textField.deleteFromCursor(0);
@@ -116,7 +119,9 @@ public abstract class TabCompleter {
 			if (!this.completions.isEmpty()) {
 				this.didComplete = true;
 				this.completionIdx = 0;
-				this.replaceCurrentWord(this.completions.get(0));
+				if (!rootRequest) {
+					this.replaceCurrentWord(this.completions.get(0));
+				}
 				this.popupVisible = true;
 			}
 		}
@@ -124,7 +129,36 @@ public abstract class TabCompleter {
 
 	private List<String> getCachedCompletions(String prefix) {
 		this.resetCacheIfConnectionChanged();
+		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0) {
+			List<String> root = this.completionCache.get("/");
+			if (root != null) {
+				List<String> filtered = new ArrayList<String>();
+				for (String completion : root) {
+					if (completion.regionMatches(true, 0, prefix, 0, prefix.length())) {
+						filtered.add(completion);
+					}
+				}
+				return filtered;
+			}
+		}
 		return this.completionCache.get(prefix);
+	}
+
+	/** Refreshes the visible command list from the cached root command index. */
+	public void updateSuggestions() {
+		if (this.requestedCompletions) return;
+		String prefix = this.textField.getText().substring(0, this.textField.getCursorPosition());
+		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0 && this.completionCache.containsKey("/")) {
+			List<String> filtered = this.getCachedCompletions(prefix);
+			this.completions.clear();
+			this.completions.addAll(filtered);
+			this.completionIdx = 0;
+			this.didComplete = false;
+			this.popupVisible = !this.completions.isEmpty();
+		} else {
+			this.popupVisible = false;
+			this.didComplete = false;
+		}
 	}
 
 	private void resetCacheIfConnectionChanged() {
