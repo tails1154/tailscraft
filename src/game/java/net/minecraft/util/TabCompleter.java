@@ -23,6 +23,7 @@ public abstract class TabCompleter {
 	protected List<String> completions = Lists.<String>newArrayList();
 	private boolean popupVisible;
 	private String requestedPrefix;
+	private boolean automaticRequest;
 	private static Object cachedConnection;
 	private static final Map<String, List<String>> completionCache = new HashMap<String, List<String>>();
 
@@ -60,7 +61,9 @@ public abstract class TabCompleter {
 			this.textField.deleteFromCursor(i - this.textField.getCursorPosition());
 		}
 		if (!this.completions.isEmpty()) {
-			this.replaceCurrentWord(this.completions.get(this.completionIdx));
+			if (!"/".equals(this.textField.getText().substring(0, this.textField.getCursorPosition()))) {
+				this.replaceCurrentWord(this.completions.get(this.completionIdx));
+			}
 			this.popupVisible = true;
 		}
 	}
@@ -92,6 +95,8 @@ public abstract class TabCompleter {
 		if (this.requestedCompletions) {
 			this.resetCacheIfConnectionChanged();
 			this.requestedCompletions = false;
+			boolean automaticRequest = this.automaticRequest;
+			this.automaticRequest = false;
 			this.didComplete = false;
 			this.completions.clear();
 
@@ -107,7 +112,7 @@ public abstract class TabCompleter {
 			}
 
 			String s1 = this.textField.getText().substring(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false));
-			String s2 = rootRequest ? "" : org.apache.commons.lang3.StringUtils.getCommonPrefix(newCompl);
+			String s2 = rootRequest || automaticRequest ? "" : org.apache.commons.lang3.StringUtils.getCommonPrefix(newCompl);
 
 			if (!s2.isEmpty() && !s1.equalsIgnoreCase(s2)) {
 				this.textField.deleteFromCursor(0);
@@ -119,7 +124,7 @@ public abstract class TabCompleter {
 			if (!this.completions.isEmpty()) {
 				this.didComplete = true;
 				this.completionIdx = 0;
-				if (!rootRequest) {
+				if (!rootRequest && !automaticRequest) {
 					this.replaceCurrentWord(this.completions.get(0));
 				}
 				this.popupVisible = true;
@@ -148,6 +153,11 @@ public abstract class TabCompleter {
 	public void updateSuggestions() {
 		if (this.requestedCompletions) return;
 		String prefix = this.textField.getText().substring(0, this.textField.getCursorPosition());
+		if (prefix.startsWith("/") && prefix.endsWith(" ")) {
+			this.automaticRequest = true;
+			this.requestCompletions(prefix);
+			return;
+		}
 		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0 && this.completionCache.containsKey("/")) {
 			List<String> filtered = this.getCachedCompletions(prefix);
 			this.completions.clear();
