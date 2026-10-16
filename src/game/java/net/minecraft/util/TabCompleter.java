@@ -128,7 +128,7 @@ public abstract class TabCompleter {
 	public void updateSuggestions() {
 		if (this.requestedCompletions) return;
 		String prefix = this.textField.getText().substring(0, this.textField.getCursorPosition());
-		if (prefix.startsWith("/") && (prefix.indexOf(' ') < 0 || prefix.endsWith(" "))) {
+		if (prefix.startsWith("/")) {
 			this.automaticRequest = true;
 			this.requestCompletions(prefix);
 			return;
