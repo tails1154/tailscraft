@@ -283,7 +283,7 @@ public class GuiConnecting extends GuiScreen {
 	public void initGui() {
 		this.buttonList.clear();
 		this.buttonList.add(
-				new GuiButton(0, this.width / 2 - 100, this.height / 2 - 10, I18n.format("gui.cancel", new Object[0])));
+				new GuiButton(0, this.width / 2 - 100, this.height / 2 + 58, I18n.format("gui.cancel", new Object[0])));
 	}
 
 	/**+
