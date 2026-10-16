@@ -10,11 +10,11 @@ public final class ReplayVideoPlatform {
     @JSBody(params = {}, script = "return !!(window.MediaRecorder && HTMLCanvasElement.prototype.captureStream && document.querySelector('canvas')); ")
     public static native boolean isSupported();
 
-    @JSBody(params = {}, script = "(function() {"
-        + "try {"
+    @JSBody(params = {}, script = ""
         + "if (window.__tailscraftReplayRecorder) return true;"
         + "var canvas = document.querySelector('canvas');"
         + "if (!canvas || !canvas.captureStream || !window.MediaRecorder) return false;"
+        + "try {"
         + "var stream = canvas.captureStream(30);"
         + "var mime = '';"
         + "var choices = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];"
@@ -41,8 +41,7 @@ public final class ReplayVideoPlatform {
         + "recorder.start(1000);"
         + "window.__tailscraftReplayRecorder = recorder;"
         + "return true;"
-        + "} catch (e) { window.__tailscraftReplayRecorder = null; return false; }"
-        + "})()")
+        + "} catch (e) { window.__tailscraftReplayRecorder = null; return false; }")
     public static native boolean start();
 
     @JSBody(params = {}, script = "if(window.__tailscraftReplayRecorder) { try { window.__tailscraftReplayRecorder.stop(); } catch(e) {} }")
