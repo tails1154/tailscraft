@@ -62,6 +62,9 @@ public class GuiConnecting extends GuiScreen {
 	private boolean hasOpened;
 	private final GuiScreen previousGuiScreen;
 	private int timer = 0;
+	private long connectionStartedAt;
+	private String connectionPhase = "Preparing connection";
+	private String connectionDetail = "Waiting for the client networking layer";
 
 	public GuiConnecting(GuiScreen parGuiScreen, Minecraft mcIn, ServerData parServerData) {
 		this(parGuiScreen, mcIn, parServerData, false);
@@ -132,6 +135,9 @@ public class GuiConnecting extends GuiScreen {
 		this.currentPassword = password;
 		this.allowPlaintext = allowPlaintext;
 		this.allowCookies = allowCookies;
+		this.connectionStartedAt = System.currentTimeMillis();
+		this.connectionPhase = "Preparing connection";
+		this.connectionDetail = "Resolving the requested server address";
 	}
 
 	/**+
@@ -141,8 +147,12 @@ public class GuiConnecting extends GuiScreen {
 		++timer;
 		if (timer > 1) {
 			if (this.currentAddress == null) {
+				this.connectionPhase = "Rate limited";
+				this.connectionDetail = "The server previously blocked this client";
 				mc.displayGuiScreen(GuiDisconnected.createRateLimitKick(previousGuiScreen));
 			} else if (webSocket == null) {
+				this.connectionPhase = "Opening WebSocket";
+				this.connectionDetail = "Creating a browser transport to " + currentAddress;
 				logger.info("Connecting to: {}", currentAddress);
 				webSocket = PlatformNetworking.openWebSocket(currentAddress);
 				if (webSocket == null) {
@@ -151,9 +161,13 @@ public class GuiConnecting extends GuiScreen {
 				}
 			} else {
 				if (webSocket.getState() == EnumEaglerConnectionState.CONNECTED) {
+					this.connectionPhase = "WebSocket connected";
+					this.connectionDetail = "Transport is open; starting the Eagler handshake";
 					if (!hasOpened) {
 						hasOpened = true;
 						logger.info("Logging in: {}", currentAddress);
+						this.connectionPhase = "Authenticating";
+						this.connectionDetail = "Negotiating protocol, profile, cookies, and server capabilities";
 						byte[] cookieData = null;
 						if (allowCookies) {
 							ServerCookieDataStore.ServerCookie cookie = ServerCookieDataStore
@@ -165,6 +179,8 @@ public class GuiConnecting extends GuiScreen {
 						if (ConnectionHandshake.attemptHandshake(this.mc, webSocket, this, previousGuiScreen,
 								currentPassword, allowPlaintext, allowCookies, cookieData)) {
 							logger.info("Handshake Success");
+							this.connectionPhase = "Handshake complete";
+							this.connectionDetail = "Switching the connection into the PLAY state";
 							webSocket.setEnableStringFrames(false);
 							webSocket.clearStringFrames();
 							this.networkManager = new WebSocketNetworkManager(webSocket);
@@ -197,13 +213,19 @@ public class GuiConnecting extends GuiScreen {
 						}
 					}
 					if (this.networkManager != null) {
+						this.connectionPhase = "Loading play connection";
+						this.connectionDetail = "Processing packets while the server prepares the world";
 						try {
 							this.networkManager.processReceivedPackets();
 						} catch (IOException ex) {
 						}
 					}
 				} else {
+					this.connectionPhase = "Waiting for WebSocket";
+					this.connectionDetail = "Browser transport state: " + webSocket.getState();
 					if (webSocket.getState() == EnumEaglerConnectionState.FAILED) {
+						this.connectionPhase = "WebSocket failed";
+						this.connectionDetail = "The browser could not establish a transport to the server";
 						if (!hasOpened) {
 							mc.getSession().reset();
 							checkRatelimit();
@@ -233,6 +255,8 @@ public class GuiConnecting extends GuiScreen {
 				}
 			}
 			if (timer > 200) {
+				this.connectionPhase = "Connection timed out";
+				this.connectionDetail = "No usable play connection after 10 seconds; cancel and try again";
 				if (webSocket != null) {
 					webSocket.close();
 				}
@@ -286,15 +310,23 @@ public class GuiConnecting extends GuiScreen {
 	 */
 	public void drawScreen(int i, int j, float f) {
 		this.drawDefaultBackground();
-		if (this.networkManager == null || !this.networkManager.isChannelOpen()) {
-			this.drawCenteredString(this.fontRendererObj, I18n.format("connect.connecting", new Object[0]),
-					this.width / 2, this.height / 2 - 50, 16777215);
-		} else {
-			this.drawCenteredString(this.fontRendererObj, I18n.format("connect.authorizing", new Object[0]),
-					this.width / 2, this.height / 2 - 50, 16777215);
-		}
+		int top = this.height / 2 - 112;
+		this.drawCenteredString(this.fontRendererObj, "Connecting to server", this.width / 2, top, 0xFFFFFF);
+		this.drawCenteredString(this.fontRendererObj, this.connectionPhase, this.width / 2, top + 24, 0x55FFFF);
+		this.drawCenteredString(this.fontRendererObj, this.connectionDetail, this.width / 2, top + 40, 0xDDDDDD);
+		this.drawConnectionDetail("Target: " + (currentAddress == null ? "unknown" : currentAddress), top + 68, 0xFFFFFF);
+		this.drawConnectionDetail("Elapsed: " + ((System.currentTimeMillis() - connectionStartedAt) / 1000L) + " seconds", top + 82, 0xAAAAAA);
+		this.drawConnectionDetail("Transport: " + (webSocket == null ? "not opened" : webSocket.getState()), top + 96, 0xAAAAAA);
+		this.drawConnectionDetail("Handshake: " + (hasOpened ? "started" : "not started") + " | Network manager: " + (networkManager == null ? "not created" : "created"), top + 110, 0xAAAAAA);
+		this.drawConnectionDetail("Options: plaintext=" + allowPlaintext + " | cookies=" + allowCookies, top + 124, 0xAAAAAA);
+		this.drawConnectionDetail("Packets are processed on the normal game loop; Cancel remains available below.", top + 148, 0x777777);
 
 		super.drawScreen(i, j, f);
+	}
+
+	private void drawConnectionDetail(String text, int y, int color) {
+		String clipped = this.fontRendererObj.trimStringToWidth(text, this.width - 24);
+		this.drawCenteredString(this.fontRendererObj, clipped, this.width / 2, y, color);
 	}
 
 	private void checkRatelimit() {
