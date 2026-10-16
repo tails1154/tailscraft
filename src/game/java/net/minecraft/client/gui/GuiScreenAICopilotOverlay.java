@@ -30,9 +30,11 @@ public class GuiScreenAICopilotOverlay extends GuiScreen {
 
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		int left = width - 230;
-		drawRect(left, 8, width - 8, 62, 0xAA000000);
+		drawRect(left, 8, width - 8, 76, 0xAA000000);
 		drawString(fontRendererObj, "AI Copilot", left + 8, 14, 0xFFFFFF);
-		drawString(fontRendererObj, fontRendererObj.trimStringToWidth(AICopilotController.getStatus(), 210), left + 8, 25, 0x55FF55);
+		String status = net.minecraft.client.ai.AICopilotAgent.getStatus();
+		drawString(fontRendererObj, fontRendererObj.trimStringToWidth(status, 210), left + 8, 25, 0x55FF55);
+		drawString(fontRendererObj, "Cycle " + net.minecraft.client.ai.AICopilotAgent.getCompletedSteps() + "/" + net.minecraft.client.ai.AICopilotAgent.getMaxSteps(), left + 8, 36, 0xAAAAAA);
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 
