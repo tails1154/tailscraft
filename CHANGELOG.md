@@ -12,6 +12,7 @@
 - Added AICraftScriptLangPlus AI planning, including natural-language requests, `FIND_BLOCK`, `EXPLORE`, `MINE`, `STOP`, and failure-retry chains.
 - Added inventory-aware planning: the AI receives item names and counts, and `SELECT_ITEM` can safely choose a matching existing hotbar item.
 - Active copilot actions now show the world behind an input-blocking status overlay with a Stop button.
+- Manual copilot targets now default to the player's current position instead of `0,64,0`, preventing immediate completion when the overlay opens.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.

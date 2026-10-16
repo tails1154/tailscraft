@@ -36,7 +36,7 @@ public final class AICopilotController {
 		script = null; targetX = x; targetY = y; targetZ = z; recalc = 0; phase = 1; status = "Pathfinding";
 	}
 
-	public static void start() { active = true; looking = false; recalc = 0; phase = 1; }
+	public static void start() { active = true; looking = false; recalc = 0; phase = 1; status = "Pathfinding to target"; }
 
 	public static void runScript(List<AICraftScriptLangPlus.Step> steps) {
 		if (steps == null || steps.isEmpty()) { stop(); return; }

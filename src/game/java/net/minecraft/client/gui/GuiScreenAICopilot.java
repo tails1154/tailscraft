@@ -29,9 +29,12 @@ public class GuiScreenAICopilot extends GuiScreen {
 		xField = new GuiTextField(0, fontRendererObj, left, 62, 96, 20);
 		yField = new GuiTextField(1, fontRendererObj, left + 102, 62, 96, 20);
 		zField = new GuiTextField(2, fontRendererObj, left + 204, 62, 96, 20);
-		xField.setText("0");
-		yField.setText("64");
-		zField.setText("0");
+		int playerX = mc.player == null ? 0 : (int) Math.floor(mc.player.posX);
+		int playerY = mc.player == null ? 64 : (int) Math.floor(mc.player.posY);
+		int playerZ = mc.player == null ? 0 : (int) Math.floor(mc.player.posZ);
+		xField.setText(Integer.toString(playerX));
+		yField.setText(Integer.toString(playerY));
+		zField.setText(Integer.toString(playerZ));
 		xField.setMaxStringLength(8);
 		yField.setMaxStringLength(8);
 		zField.setMaxStringLength(8);
