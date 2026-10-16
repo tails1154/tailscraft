@@ -24,6 +24,7 @@ public class PotionCrash extends Potion {
 		}
 		if (entity.world.isRemote) {
 			if (Minecraft.getMinecraft().isSingleplayer()) {
+				entity.removePotionEffect(this);
 				throw new RuntimeException("undefined function: TailsCraftCrash");
 			}
 			return;
@@ -34,6 +35,7 @@ public class PotionCrash extends Potion {
 		}
 		if (!server.isSinglePlayer()) {
 			if (entity instanceof EntityPlayerMP) {
+				entity.removePotionEffect(this);
 				NetHandlerPlayServer connection = ((EntityPlayerMP) entity).connection;
 				if (connection != null) {
 					connection.func_194028_b(new TextComponentString("What do you think you're doing?"));
@@ -43,6 +45,7 @@ public class PotionCrash extends Potion {
 		}
 		if (!entity.world.isRemote) {
 			server.saveAllWorlds(true);
+			entity.removePotionEffect(this);
 		}
 	}
 }
