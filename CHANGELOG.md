@@ -1,33 +1,17 @@
 # TailsCraft changelog
 
-## AI surroundings chatbot
-- Added an in-game AI Chatbot button to the pause menu.
-- Uses the asynchronous public Pollinations text endpoint with a local fallback.
-- Sends only a small surroundings snapshot; no passwords, inventory, or world files.
-
 ## Baritone command client
 - Removed the remote AI planner and AICraftScriptLangPlus execution path.
 - Added Baritone-style `#goto`, `#mine`, and `#stop` commands handled locally by the client.
 - Ported Baritone v1.2.19's basic `Goal`, block-goal, XZ-goal, and heuristic contract into the WASM path search.
 - Ported Baritone v1.2.19 movement-cost constants for walking, jumping, and falling.
-- Removed the AI Copilot pause-menu UI and overlay.
-- Added an opt-in AI Copilot panel with bounded block-grid pathfinding to XYZ targets.
-- Added a look-around action; the copilot cannot chat, attack, place blocks, use inventory, or interact with containers.
-- Stop and closing the panel release all copilot movement keys.
-- Added AICraftScriptLangPlus AI planning, including natural-language requests, `FIND_BLOCK`, `EXPLORE`, `MINE`, `STOP`, and failure-retry chains.
-- Added inventory-aware planning: the AI receives item names and counts, and `SELECT_ITEM` can safely choose a matching existing hotbar item.
-- Active copilot actions now show the world behind an input-blocking status overlay with a Stop button.
-- Manual copilot targets now default to the player's current position instead of `0,64,0`, preventing immediate completion when the overlay opens.
-- Simplified the copilot screen to one task field and essential controls, and added a bounded observe-plan-act agent loop.
-- Prevented look-around script steps from falling through into movement on their first tick.
 - Added automatic bounded retries for failed server handshakes, with Cancel still available and a clear retry count.
 - Increased handshake retry tolerance to 1000 attempts with a five-second maximum delay between attempts for unreliable servers.
-- Added bounded text-only block observations to AI Copilot context, including nearby block IDs, coordinates, and the targeted block; no screenshots are sent.
-- Added explicit copilot phase/status reporting and clean restart handling after Stop.
-- Removed the confusing look-around command from the copilot language and planner.
 - Added paged in-game credits and third-party notices, including Baritone LGPL attribution.
-- Replaced the copilot's small synchronous path search with a bounded Baritone-style A* adapter supporting diagonal movement, steps, falls, and hazard avoidance.
-- Improved Baritone-style path execution by consuming reached nodes, recalculating when a path is exhausted, and reporting live node progress to the AI status overlay.
+
+## Historical removed experiments
+- Removed the former AI chatbot, remote planner, copilot panel, observation loop, status overlay, and look-around action.
+- Removed AICraftScriptLangPlus, inventory-aware planning, and natural-language action chains.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.
