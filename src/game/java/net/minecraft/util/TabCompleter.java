@@ -2,9 +2,7 @@ package net.minecraft.util;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -24,8 +22,7 @@ public abstract class TabCompleter {
 	private boolean popupVisible;
 	private String requestedPrefix;
 	private boolean automaticRequest;
-	private static Object cachedConnection;
-	private static final Map<String, List<String>> completionCache = new HashMap<String, List<String>>();
+	private List<String> rootCompletions;
 
 	public TabCompleter(GuiTextField textFieldIn, boolean hasTargetBlockIn) {
 		this.textField = textFieldIn;
@@ -49,9 +46,9 @@ public abstract class TabCompleter {
 			this.completions.clear();
 			this.completionIdx = 0;
 			String s = this.textField.getText().substring(0, this.textField.getCursorPosition());
-			List<String> cached = this.getCachedCompletions(s);
-			if (cached != null) {
-				this.completions.addAll(cached);
+			List<String> filteredRoot = this.getRootCompletions(s);
+			if (filteredRoot != null) {
+				this.completions.addAll(filteredRoot);
 				if ("/".equals(s)) {
 					this.popupVisible = !this.completions.isEmpty();
 					return;
@@ -80,7 +77,6 @@ public abstract class TabCompleter {
 
 	private void requestCompletions(String prefix) {
 		if (prefix.length() >= 1) {
-			this.resetCacheIfConnectionChanged();
 			this.requestedPrefix = prefix;
 			Minecraft.getMinecraft().player.connection
 					.sendPacket(new CPacketTabComplete(prefix, this.getTargetBlockPos(), this.hasTargetBlock));
@@ -97,7 +93,6 @@ public abstract class TabCompleter {
 	 */
 	public void setCompletions(String... newCompl) {
 		if (this.requestedCompletions) {
-			this.resetCacheIfConnectionChanged();
 			this.requestedCompletions = false;
 			boolean automaticRequest = this.automaticRequest;
 			this.automaticRequest = false;
@@ -109,10 +104,9 @@ public abstract class TabCompleter {
 					this.completions.add(s);
 				}
 			}
-			List<String> cached = new ArrayList<String>(this.completions);
 			boolean rootRequest = "/".equals(this.requestedPrefix);
 			if (rootRequest) {
-				this.completionCache.put("/", cached);
+				this.rootCompletions = new ArrayList<String>(this.completions);
 			}
 
 			String s1 = this.textField.getText().substring(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false));
@@ -136,13 +130,11 @@ public abstract class TabCompleter {
 		}
 	}
 
-	private List<String> getCachedCompletions(String prefix) {
-		this.resetCacheIfConnectionChanged();
+	private List<String> getRootCompletions(String prefix) {
 		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0) {
-			List<String> root = this.completionCache.get("/");
-			if (root != null) {
+			if (this.rootCompletions != null) {
 				List<String> filtered = new ArrayList<String>();
-				for (String completion : root) {
+				for (String completion : this.rootCompletions) {
 					if (completion.regionMatches(true, 0, prefix, 0, prefix.length())) {
 						filtered.add(completion);
 					}
@@ -150,7 +142,7 @@ public abstract class TabCompleter {
 				return filtered;
 			}
 		}
-		return this.completionCache.get(prefix);
+		return null;
 	}
 
 	/** Refreshes the visible command list from the cached root command index. */
@@ -162,8 +154,8 @@ public abstract class TabCompleter {
 			this.requestCompletions(prefix);
 			return;
 		}
-		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0 && this.completionCache.containsKey("/")) {
-			List<String> filtered = this.getCachedCompletions(prefix);
+		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0 && this.rootCompletions != null) {
+			List<String> filtered = this.getRootCompletions(prefix);
 			this.completions.clear();
 			this.completions.addAll(filtered);
 			this.completionIdx = 0;
@@ -172,15 +164,6 @@ public abstract class TabCompleter {
 		} else {
 			this.popupVisible = false;
 			this.didComplete = false;
-		}
-	}
-
-	private void resetCacheIfConnectionChanged() {
-		Minecraft minecraft = Minecraft.getMinecraft();
-		Object connection = minecraft.player == null ? null : minecraft.player.connection;
-		if (connection != this.cachedConnection) {
-			this.completionCache.clear();
-			this.cachedConnection = connection;
 		}
 	}
 
