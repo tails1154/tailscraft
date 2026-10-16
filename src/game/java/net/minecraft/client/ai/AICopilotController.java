@@ -91,6 +91,14 @@ public final class AICopilotController {
 			targetForBlock(world, objective); phase = 1; status = "Pathfinding to " + step.argument;
 		} else if (step.type == AICraftScriptLangPlus.Type.EXPLORE) {
 			chooseExplore(player); phase = 1; status = "Exploring";
+		} else if (step.type == AICraftScriptLangPlus.Type.SELECT_ITEM) {
+			if (!selectHotbarItem(player, step.argument)) {
+				status = "Could not find " + step.argument + " in the hotbar";
+				stop();
+				return;
+			}
+			status = "Selected " + player.inventory.getCurrentItem().getDisplayName();
+			++scriptIndex; phase = 0;
 		} else if (step.type == AICraftScriptLangPlus.Type.MINE) {
 			if (objective == null) { ++scriptIndex; return; }
 			targetForBlock(world, objective); phase = 1; status = "Pathfinding to mine " + step.argument;
@@ -134,6 +142,17 @@ public final class AICopilotController {
 	}
 
 	private static boolean nearTarget(EntityPlayerSP player) { return Math.abs(player.posX - targetX) < 1.2D && Math.abs(player.posY - targetY) < 2.0D && Math.abs(player.posZ - targetZ) < 1.2D; }
+	private static boolean selectHotbarItem(EntityPlayerSP player, String wanted) {
+		String needle = wanted == null ? "" : wanted.toLowerCase();
+		for (int slot = 0; slot < 9; ++slot) {
+			net.minecraft.item.ItemStack stack = player.inventory.mainInventory.get(slot);
+			if (stack != null && !stack.func_190926_b() && stack.getDisplayName().toLowerCase().indexOf(needle) >= 0) {
+				player.inventory.currentItem = slot;
+				return true;
+			}
+		}
+		return false;
+	}
 	private static Block blockFor(String name) { return "diamond_ore".equals(name) || "diamond".equals(name) ? Blocks.DIAMOND_ORE : null; }
 
 	private static BlockPos findBlock(World world, EntityPlayerSP player, Block wanted) {

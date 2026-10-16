@@ -10,6 +10,8 @@
 - Added a look-around action; the copilot cannot chat, attack, place blocks, use inventory, or interact with containers.
 - Stop and closing the panel release all copilot movement keys.
 - Added AICraftScriptLangPlus AI planning, including natural-language requests, `FIND_BLOCK`, `EXPLORE`, `MINE`, `STOP`, and failure-retry chains.
+- Added inventory-aware planning: the AI receives item names and counts, and `SELECT_ITEM` can safely choose a matching existing hotbar item.
+- Active copilot actions now show the world behind an input-blocking status overlay with a Stop button.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.

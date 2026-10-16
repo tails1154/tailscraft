@@ -50,6 +50,7 @@ public class GuiScreenAICopilot extends GuiScreen {
 				AICopilotController.setTarget(Integer.parseInt(xField.getText().trim()), Integer.parseInt(yField.getText().trim()), Integer.parseInt(zField.getText().trim()));
 				AICopilotController.start();
 				status = "Pathfinding to " + xField.getText() + ", " + yField.getText() + ", " + zField.getText();
+				mc.displayGuiScreen(new GuiScreenAICopilotOverlay());
 			} catch (NumberFormatException ex) {
 				status = "Enter integer XYZ coordinates";
 			}
@@ -59,6 +60,7 @@ public class GuiScreenAICopilot extends GuiScreen {
 		} else if (button.id == 5) {
 			AICopilotController.lookAround();
 			status = "Looking around";
+			mc.displayGuiScreen(new GuiScreenAICopilotOverlay());
 		} else if (button.id == 7) {
 			String request = commandField.getText().trim();
 			if (request.length() == 0) {
@@ -68,7 +70,11 @@ public class GuiScreenAICopilot extends GuiScreen {
 				AICraftAIPlanner.plan(request, context(), script -> {
 					java.util.List<AICraftScriptLangPlus.Step> steps = AICraftScriptLangPlus.parse(script);
 					if (steps.isEmpty()) status = "AI: I need a concrete task, such as 'mine diamonds'.";
-					else { AICopilotController.runScript(steps); status = "AI plan accepted: " + script; }
+					else {
+						AICopilotController.runScript(steps);
+						status = "AI plan accepted: " + script;
+						if (AICopilotController.isActive()) mc.displayGuiScreen(new GuiScreenAICopilotOverlay());
+					}
 				});
 			}
 		} else if (button.id == 6) {
@@ -89,8 +95,16 @@ public class GuiScreenAICopilot extends GuiScreen {
 
 	private String context() {
 		if (mc.player == null) return "no world loaded";
+		StringBuilder items = new StringBuilder();
+		for (int i = 0; i < mc.player.inventory.mainInventory.size(); ++i) {
+			net.minecraft.item.ItemStack stack = mc.player.inventory.mainInventory.get(i);
+			if (stack != null && !stack.func_190926_b()) {
+				if (items.length() > 0) items.append(", ");
+				items.append(i < 9 ? "hotbar:" : "inventory:").append(stack.getDisplayName()).append(" x").append(stack.func_190916_E());
+			}
+		}
 		return "player position=" + (int) mc.player.posX + "," + (int) mc.player.posY + "," + (int) mc.player.posZ
-				+ " dimension=" + mc.player.dimension;
+				+ " dimension=" + mc.player.dimension + " items=" + items.toString();
 	}
 
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
