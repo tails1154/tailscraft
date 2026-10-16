@@ -277,6 +277,29 @@ public class PacketBuffer extends ByteBuf {
 			int k = this.readShort();
 			ItemStack itemstack = new ItemStack(Item.getItemById(i), j, k);
 			itemstack.setTagCompound(this.readNBTTagCompoundFromBuffer());
+
+			// The vanilla 1.12 wire format has no IDs for TailsCraft's lantern and
+			// chain blocks. The server plugin sends them as barrier/iron-fence stacks
+			// with a display name, so decode those compatibility stacks back into the
+			// actual client items before inventory, rendering, or placement code sees
+			// them. This keeps vanilla servers and old clients compatible without
+			// making the client treat the blocks as barriers.
+			if (itemstack.hasDisplayName()) {
+				String name = itemstack.getDisplayName();
+				Item decodedItem = null;
+				if ("Lantern".equalsIgnoreCase(name)) {
+					decodedItem = Items.LANTERN;
+				} else if ("Soul Lantern".equalsIgnoreCase(name)) {
+					decodedItem = Items.SOUL_LANTERN;
+				} else if ("Chain".equalsIgnoreCase(name)) {
+					decodedItem = Items.CHAIN;
+				}
+				if (decodedItem != null) {
+					ItemStack decoded = new ItemStack(decodedItem, j, k);
+					decoded.setTagCompound(itemstack.getTagCompound());
+					itemstack = decoded;
+				}
+			}
 			return itemstack;
 		}
 	}
