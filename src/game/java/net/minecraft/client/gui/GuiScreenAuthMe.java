@@ -9,6 +9,7 @@ public class GuiScreenAuthMe extends GuiScreen {
 	private final boolean register;
 	private GuiTextField password;
 	private GuiTextField confirmation;
+	private GuiCheckBox rememberCheckbox;
 	private String error;
 	private boolean rememberMe;
 
@@ -25,7 +26,7 @@ public class GuiScreenAuthMe extends GuiScreen {
 
 	public void initGui() {
 		int left = width / 2 - 100;
-		int top = height / 2 - (register ? 64 : 45);
+		int top = height / 2 - (register ? 68 : 50);
 		password = new GuiTextField(0, fontRendererObj, left, top + 24, 200, 20);
 		password.setMaxStringLength(64);
 		password.setPasswordMode(true);
@@ -36,17 +37,16 @@ public class GuiScreenAuthMe extends GuiScreen {
 			confirmation.setMaxStringLength(64);
 			confirmation.setPasswordMode(true);
 		}
-		int buttonY = top + (register ? 100 : 62);
+		int buttonY = top + (register ? 114 : 76);
 		buttonList.add(new GuiButton(0, left, buttonY, 98, 20, register ? "Register" : "Login"));
 		buttonList.add(new GuiButton(1, left + 102, buttonY, 98, 20, "Cancel"));
-		buttonList.add(new GuiButton(2, left, buttonY - 24, 200, 20,
-				"Remember me: " + (rememberMe ? "ON" : "OFF")));
+		rememberCheckbox = new GuiCheckBox(2, left, buttonY - 26, "Remember me", rememberMe);
+		buttonList.add(rememberCheckbox);
 	}
 
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.id == 2) {
-			rememberMe = !rememberMe;
-			button.displayString = "Remember me: " + (rememberMe ? "ON" : "OFF");
+			rememberMe = rememberCheckbox.isChecked();
 			return;
 		}
 		if (button.id == 1 || button.displayString.equals("Cancel")) {
@@ -92,7 +92,7 @@ public class GuiScreenAuthMe extends GuiScreen {
 
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		drawDefaultBackground();
-		int top = height / 2 - (register ? 64 : 45);
+		int top = height / 2 - (register ? 68 : 50);
 		drawCenteredString(fontRendererObj, register ? "Server Registration" : "Server Login", width / 2, top, 0xFFFFFF);
 		drawCenteredString(fontRendererObj, "AuthMe", width / 2, top - 14, 0xAAAAAA);
 		drawString(fontRendererObj, "Password", width / 2 - 100, top + 14, 0xFFFFFF);
@@ -101,7 +101,7 @@ public class GuiScreenAuthMe extends GuiScreen {
 			drawString(fontRendererObj, "Confirm password", width / 2 - 100, top + 52, 0xFFFFFF);
 			confirmation.drawTextBox();
 		}
-		if (error != null) drawCenteredString(fontRendererObj, error, width / 2, top + (register ? 126 : 88), 0xFF5555);
+		if (error != null) drawCenteredString(fontRendererObj, error, width / 2, top + (register ? 142 : 104), 0xFF5555);
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 }

@@ -13,7 +13,6 @@ import java.util.Map;
 import net.lax1dude.eaglercraft.ClientUUIDLoadingCache;
 import net.lax1dude.eaglercraft.EaglercraftRandom;
 import net.lax1dude.eaglercraft.EaglercraftUUID;
-import net.lax1dude.eaglercraft.EagRuntime;
 import net.lax1dude.eaglercraft.minecraft.EaglerFolderResourcePack;
 import net.lax1dude.eaglercraft.notifications.ServerNotificationManager;
 import net.lax1dude.eaglercraft.profile.ServerCapeCache;
@@ -24,7 +23,6 @@ import net.lax1dude.eaglercraft.socket.protocol.pkt.GameMessagePacket;
 import net.lax1dude.eaglercraft.webview.WebViewOverlayController;
 
 import java.util.Map.Entry;
-import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.block.Block;
@@ -935,7 +933,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 			String chat = unformatted.toLowerCase(Locale.ROOT);
 			if (chat.contains("successful login!")) {
 				if (authMeRememberMe && authMeRememberPassword != null && authMeRememberPassword.length() > 0) {
-					EagRuntime.setStorage(authMeStorageKey(), authMeRememberPassword.getBytes(StandardCharsets.UTF_8));
+					AuthMeStorage.save(currentServerAddress(), authMeRememberPassword);
 				}
 				authMeRememberMe = false;
 				authMeRememberPassword = null;
@@ -963,22 +961,20 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	public void setAuthMeRememberMe(String password, boolean remember) {
 		authMeRememberMe = remember;
 		authMeRememberPassword = remember ? password : null;
-		if (!remember) EagRuntime.setStorage(authMeStorageKey(), new byte[0]);
+		if (!remember) AuthMeStorage.forget(currentServerAddress());
 	}
 
 	public boolean hasRememberedAuthMePassword() {
 		return getRememberedAuthMePassword() != null;
 	}
 
-	private String authMeStorageKey() {
-		String server = gameController.getCurrentServerData() == null ? "unknown"
+	private String currentServerAddress() {
+		return gameController.getCurrentServerData() == null ? "unknown"
 				: gameController.getCurrentServerData().serverIP;
-		return "tailscraft_authme_" + server.replaceAll("[^A-Za-z0-9_.-]", "_");
 	}
 
 	private String getRememberedAuthMePassword() {
-		byte[] stored = EagRuntime.getStorage(authMeStorageKey());
-		return stored == null || stored.length == 0 ? null : new String(stored, StandardCharsets.UTF_8);
+		return AuthMeStorage.get(currentServerAddress());
 	}
 
 	/**
