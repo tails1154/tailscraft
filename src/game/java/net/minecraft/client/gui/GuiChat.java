@@ -105,11 +105,14 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 	 * on the key), keyCode (lwjgl Keyboard key code)
 	 */
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
-		this.tabCompleter.resetRequested();
-
 		if (keyCode == 15) {
 			this.tabCompleter.complete();
+		} else if (this.tabCompleter.handleNavigation(keyCode)) {
+			return;
+		} else if (keyCode == 1 && this.tabCompleter.hideSuggestions()) {
+			return;
 		} else {
+			this.tabCompleter.resetRequested();
 			this.tabCompleter.resetDidComplete();
 		}
 
@@ -222,6 +225,7 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 	 */
 	public void drawScreen0(int mouseX, int mouseY, float partialTicks) {
 		drawRect(2, this.height - 14, this.width - 2, this.height - 2, Integer.MIN_VALUE);
+		this.tabCompleter.drawSuggestions(this.fontRendererObj, 4, this.height - 15, this.width - 8);
 		this.inputField.drawTextBox();
 		ITextComponent itextcomponent = this.mc.ingameGUI.getChatGUI().getChatComponent(Mouse.getX(), Mouse.getY());
 

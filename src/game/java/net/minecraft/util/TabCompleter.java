@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.network.play.client.CPacketTabComplete;
 import net.minecraft.util.math.BlockPos;
@@ -16,6 +18,7 @@ public abstract class TabCompleter {
 	protected boolean requestedCompletions;
 	protected int completionIdx;
 	protected List<String> completions = Lists.<String>newArrayList();
+	private boolean popupVisible;
 
 	public TabCompleter(GuiTextField textFieldIn, boolean hasTargetBlockIn) {
 		this.textField = textFieldIn;
@@ -28,31 +31,33 @@ public abstract class TabCompleter {
 	 * method gets called again (via setCompletions).
 	 */
 	public void complete() {
-		if (this.didComplete) {
-			this.textField.deleteFromCursor(0);
-			this.textField
-					.deleteFromCursor(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false)
-							- this.textField.getCursorPosition());
-
-			if (this.completionIdx >= this.completions.size()) {
-				this.completionIdx = 0;
-			}
-		} else {
+		if (this.didComplete && !this.completions.isEmpty()) {
+			this.completionIdx = (this.completionIdx + 1) % this.completions.size();
+			this.replaceCurrentWord(this.completions.get(this.completionIdx));
+			this.popupVisible = true;
+			return;
+		}
+		if (!this.requestedCompletions) {
 			int i = this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false);
 			this.completions.clear();
 			this.completionIdx = 0;
 			String s = this.textField.getText().substring(0, this.textField.getCursorPosition());
 			this.requestCompletions(s);
 
-			if (this.completions.isEmpty()) {
-				return;
-			}
-
+			if (this.completions.isEmpty()) return;
 			this.didComplete = true;
 			this.textField.deleteFromCursor(i - this.textField.getCursorPosition());
 		}
+		if (!this.completions.isEmpty()) {
+			this.replaceCurrentWord(this.completions.get(this.completionIdx));
+			this.popupVisible = true;
+		}
+	}
 
-		this.textField.writeText(this.completions.get(this.completionIdx++));
+	private void replaceCurrentWord(String value) {
+		this.textField.deleteFromCursor(0);
+		this.textField.deleteFromCursor(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false) - this.textField.getCursorPosition());
+		this.textField.writeText(value);
 	}
 
 	private void requestCompletions(String prefix) {
@@ -72,6 +77,7 @@ public abstract class TabCompleter {
 	 */
 	public void setCompletions(String... newCompl) {
 		if (this.requestedCompletions) {
+			this.requestedCompletions = false;
 			this.didComplete = false;
 			this.completions.clear();
 
@@ -81,8 +87,7 @@ public abstract class TabCompleter {
 				}
 			}
 
-			String s1 = this.textField.getText()
-					.substring(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false));
+			String s1 = this.textField.getText().substring(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false));
 			String s2 = org.apache.commons.lang3.StringUtils.getCommonPrefix(newCompl);
 
 			if (!s2.isEmpty() && !s1.equalsIgnoreCase(s2)) {
@@ -91,10 +96,47 @@ public abstract class TabCompleter {
 						this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false)
 								- this.textField.getCursorPosition());
 				this.textField.writeText(s2);
-			} else if (!this.completions.isEmpty()) {
-				this.didComplete = true;
-				this.complete();
 			}
+			if (!this.completions.isEmpty()) {
+				this.didComplete = true;
+				this.completionIdx = 0;
+				this.replaceCurrentWord(this.completions.get(0));
+				this.popupVisible = true;
+			}
+		}
+	}
+
+	public boolean isPopupVisible() { return this.popupVisible && !this.completions.isEmpty(); }
+
+	public boolean handleNavigation(int keyCode) {
+		if (!isPopupVisible()) return false;
+		if (keyCode == 200) this.completionIdx = (this.completionIdx + this.completions.size() - 1) % this.completions.size();
+		else if (keyCode == 208) this.completionIdx = (this.completionIdx + 1) % this.completions.size();
+		else return false;
+		this.replaceCurrentWord(this.completions.get(this.completionIdx));
+		return true;
+	}
+
+	public boolean hideSuggestions() {
+		if (!isPopupVisible()) return false;
+		this.popupVisible = false;
+		this.didComplete = false;
+		return true;
+	}
+
+	public void drawSuggestions(FontRenderer font, int x, int bottom, int maxWidth) {
+		if (!isPopupVisible()) return;
+		int visible = Math.min(8, this.completions.size());
+		int first = Math.max(0, Math.min(this.completionIdx - visible + 1, this.completions.size() - visible));
+		int width = 20;
+		for (int i = first; i < first + visible; ++i) width = Math.max(width, Math.min(maxWidth, font.getStringWidth(this.completions.get(i)) + 8));
+		int top = bottom - visible * 12 - 4;
+		Gui.drawRect(x, top, x + width, bottom, 0xE0000000);
+		for (int row = 0; row < visible; ++row) {
+			int index = first + row;
+			int y = top + 2 + row * 12;
+			if (index == this.completionIdx) Gui.drawRect(x + 1, y - 1, x + width - 1, y + 11, 0xFF555555);
+			font.drawStringWithShadow(this.completions.get(index), x + 4, y, 0xFFFFFFFF);
 		}
 	}
 
@@ -103,9 +145,11 @@ public abstract class TabCompleter {
 	 */
 	public void resetDidComplete() {
 		this.didComplete = false;
+		this.popupVisible = false;
 	}
 
 	public void resetRequested() {
 		this.requestedCompletions = false;
+		this.popupVisible = false;
 	}
 }
