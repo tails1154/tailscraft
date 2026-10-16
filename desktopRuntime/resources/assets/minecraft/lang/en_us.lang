@@ -403,6 +403,7 @@ options.sensitivity.max=HYPERSPEED!!!
 options.renderDistance=Render Distance
 options.tailscraft.lightingBypass=Lighting Bypass
 options.tailscraft.msPaintMode=MS Paint Mode
+options.tailscraft.realisticMode=REALISTIC MODE
 options.viewBobbing=View Bobbing
 options.ao=Smooth Lighting
 options.ao.off=OFF

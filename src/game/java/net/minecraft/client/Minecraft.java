@@ -466,6 +466,8 @@ public class Minecraft implements IThreadListener {
 				this.gameSettings);
 		if (this.gameSettings.msPaintMode) {
 			this.setMsPaintMode(true);
+		} else if (this.gameSettings.realisticMode) {
+			this.setRealisticMode(true);
 		}
 		this.mcResourceManager = new SimpleReloadableResourceManager(this.metadataSerializer_);
 		this.mcLanguageManager = new LanguageManager(this.metadataSerializer_, this.gameSettings.language);
@@ -2209,6 +2211,7 @@ public class Minecraft implements IThreadListener {
 	}
 
 	private static final String MS_PAINT_PACK_URL = "https://cdn.modrinth.com/data/OlXbJrCZ/versions/kqrtgIxV/ms%20paintcraft.zip";
+	private static final String REALISTIC_PACK_NAME = "REALISTIC MODE";
 
 	/** Applies the MS Paint pack to the normal local pack store and selects it. */
 	private void applyMsPaintPack(byte[] bytes) {
@@ -2269,6 +2272,55 @@ public class Minecraft implements IThreadListener {
 				return;
 			}
 			this.addScheduledTask(() -> this.applyMsPaintPack(bytes));
+		});
+	}
+
+	/** Loads the bundled 128x TailsCraft realistic pack. */
+	public void setRealisticMode(final boolean enabled) {
+		if (!enabled) {
+			List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
+			for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntries()) {
+				if (!REALISTIC_PACK_NAME.equalsIgnoreCase(entry.getResourcePackName())) {
+					selected.add(entry);
+				}
+			}
+			this.mcResourcePackRepository.setRepositories(selected);
+			this.gameSettings.resourcePacks.remove(REALISTIC_PACK_NAME);
+			this.scheduleResourcesRefresh();
+			return;
+		}
+
+		byte[] bundled = null;
+		try {
+			bundled = EagRuntime.getRequiredResourceBytes("/assets/tailscraft/realistic-128.zip");
+		} catch (Throwable ignored) {
+			// The mode is only available in builds containing the bundled pack.
+		}
+		if (bundled == null) {
+			this.gameSettings.realisticMode = false;
+			this.gameSettings.saveOptions();
+			return;
+		}
+		final byte[] bundledPack = bundled;
+		this.addScheduledTask(() -> {
+			try {
+				EaglerFolderResourcePack.importResourcePack("realistic-128.zip",
+						EaglerFolderResourcePack.RESOURCE_PACKS, bundledPack);
+				this.mcResourcePackRepository.updateRepositoryEntriesAll();
+				List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
+				for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntriesAll()) {
+					if (REALISTIC_PACK_NAME.equalsIgnoreCase(entry.getResourcePackName())) {
+						selected.add(entry);
+					}
+				}
+				this.mcResourcePackRepository.setRepositories(selected);
+				this.gameSettings.resourcePacks.clear();
+				this.gameSettings.resourcePacks.add(REALISTIC_PACK_NAME);
+				this.scheduleResourcesRefresh();
+			} catch (Throwable t) {
+				this.gameSettings.realisticMode = false;
+				this.gameSettings.saveOptions();
+			}
 		});
 	}
 

@@ -193,6 +193,7 @@ public class GameSettings {
 	public boolean rainSnow = false;
 	public boolean lightingBypass = true;
 	public boolean msPaintMode = false;
+	public boolean realisticMode = false;
 	
 	public boolean customItemsOF = true;
 
@@ -511,8 +512,27 @@ public class GameSettings {
 
 		if (settingsOption == GameSettings.Options.MS_PAINT_MODE) {
 			this.msPaintMode = !this.msPaintMode;
+			if (this.msPaintMode) {
+				this.realisticMode = false;
+				if (this.mc != null) {
+					this.mc.setRealisticMode(false);
+				}
+			}
 			if (this.mc != null) {
 				this.mc.setMsPaintMode(this.msPaintMode);
+			}
+		}
+
+		if (settingsOption == GameSettings.Options.REALISTIC_MODE) {
+			this.realisticMode = !this.realisticMode;
+			if (this.realisticMode) {
+				this.msPaintMode = false;
+				if (this.mc != null) {
+					this.mc.setMsPaintMode(false);
+				}
+			}
+			if (this.mc != null) {
+				this.mc.setRealisticMode(this.realisticMode);
 			}
 		}
 
@@ -599,6 +619,8 @@ public class GameSettings {
 			return this.lightingBypass;
 		case MS_PAINT_MODE:
 			return this.msPaintMode;
+		case REALISTIC_MODE:
+			return this.realisticMode;
 		default:
 			return false;
 		}
@@ -755,6 +777,10 @@ public class GameSettings {
 
 					if ("msPaintMode".equals(s1)) {
 						this.msPaintMode = "true".equals(s2);
+					}
+
+					if ("realisticMode".equals(s1)) {
+						this.realisticMode = "true".equals(s2);
 					}
 
 					if ("saturation".equals(s1)) {
@@ -1104,6 +1130,7 @@ public class GameSettings {
 			printwriter.println("gamma:" + this.gammaSetting);
 		printwriter.println("lightingBypass:" + this.lightingBypass);
 		printwriter.println("msPaintMode:" + this.msPaintMode);
+		printwriter.println("realisticMode:" + this.realisticMode);
 			printwriter.println("saturation:" + this.saturation);
 			printwriter.println("renderDistance:" + this.renderDistanceChunks);
 			printwriter.println("guiScale:" + this.guiScale);
@@ -1303,7 +1330,8 @@ public class GameSettings {
 		RAIN_SNOW("options.enableRain", false, true),
 		OF_CUSTOM_ITEMS("options.customItemsOF", false, true),
 		LIGHTING_BYPASS("options.tailscraft.lightingBypass", false, true),
-		MS_PAINT_MODE("options.tailscraft.msPaintMode", false, true);
+		MS_PAINT_MODE("options.tailscraft.msPaintMode", false, true),
+		REALISTIC_MODE("options.tailscraft.realisticMode", false, true);
 
 		// NARRATOR("options.narrator", false, false),
 		private final boolean enumFloat;

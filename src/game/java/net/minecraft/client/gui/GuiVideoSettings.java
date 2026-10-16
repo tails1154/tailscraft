@@ -21,7 +21,7 @@ public class GuiVideoSettings extends GuiScreen {
 			GameSettings.Options.ENTITY_SHADOWS, GameSettings.Options.FOG, GameSettings.Options.RAIN_SNOW, GameSettings.Options.FNAW_SKINS,
 			GameSettings.Options.HUD_FPS, GameSettings.Options.HUD_COORDS, GameSettings.Options.CHUNK_UPDATES, GameSettings.Options.CHUNK_FIX,
 			GameSettings.Options.OF_CUSTOM_ITEMS, GameSettings.Options.LIGHTING_BYPASS,
-			GameSettings.Options.MS_PAINT_MODE };
+			GameSettings.Options.MS_PAINT_MODE, GameSettings.Options.REALISTIC_MODE };
 
 	public GuiVideoSettings(GuiScreen parentScreenIn, GameSettings gameSettingsIn) {
 		this.parentGuiScreen = parentScreenIn;

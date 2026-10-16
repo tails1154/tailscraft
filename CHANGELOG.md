@@ -29,6 +29,9 @@ for context and are not part of the current client.
   for older/custom builds.
 - Credit: MS Paint Mode bundles the “MS Paintcraft” resource pack from
   Modrinth: https://modrinth.com/resourcepack/mspaintcraft
+- Added Video Settings -> REALISTIC MODE with a bundled 128x TailsCraft
+  texture pack covering core overworld, Nether, End, utility blocks, menus,
+  inventory panels, resource-pack screens, widgets, and icons.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved
