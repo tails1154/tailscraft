@@ -39,6 +39,7 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 	
 	private GuiButton exitButton;
 	private GuiButtonNotifBell notifBellButton;
+	private boolean slashAutocompleteUsed;
 
 	public GuiChat() {
 	}
@@ -70,6 +71,7 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 		this.inputField.setCanLoseFocus(false);
 		this.tabCompleter = new GuiChat.ChatTabCompleter(this.inputField);
 		if (this.inputField.getText().startsWith("/")) {
+			this.slashAutocompleteUsed = true;
 			this.tabCompleter.complete();
 		}
 	}
@@ -133,7 +135,8 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 			} else {
 				String textBefore = this.inputField.getText();
 				this.inputField.textboxKeyTyped(typedChar, keyCode);
-				if (textBefore.isEmpty() && this.inputField.getText().equals("/")) {
+				if (!this.slashAutocompleteUsed && textBefore.isEmpty() && this.inputField.getText().equals("/")) {
+					this.slashAutocompleteUsed = true;
 					this.tabCompleter.complete();
 				}
 				this.tabCompleter.updateSuggestions();
