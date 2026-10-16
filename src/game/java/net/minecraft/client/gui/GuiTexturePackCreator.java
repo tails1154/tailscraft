@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.CRC32;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.ZipEntry;
@@ -41,6 +43,9 @@ public class GuiTexturePackCreator extends GuiScreen {
 
 	private final GuiScreen parent;
 	private final List<TextureEntry> entries = new ArrayList<TextureEntry>();
+	private final Map<String, ImageData> editedTextures = new HashMap<String, ImageData>();
+	private final List<ImageData> undoStack = new ArrayList<ImageData>();
+	private final List<ImageData> redoStack = new ArrayList<ImageData>();
 	private TextureList textureList;
 	private GuiTextField packName;
 	private ImageData image;
@@ -48,6 +53,7 @@ public class GuiTexturePackCreator extends GuiScreen {
 	private int selectedColor = PALETTE[0];
 	private boolean importing;
 	private boolean dirty;
+	private boolean paintGesture;
 	private int canvasX, canvasY, canvasScale;
 
 	public GuiTexturePackCreator(GuiScreen parent) {
@@ -64,6 +70,8 @@ public class GuiTexturePackCreator extends GuiScreen {
 		buttonList.add(new GuiButton(2, width / 2 - 190, height - 28, 90, 20, "Import texture"));
 		buttonList.add(new GuiButton(3, width / 2 - 45, height - 28, 90, 20, "Export pack"));
 		buttonList.add(new GuiButton(4, width / 2 + 100, height - 28, 90, 20, "Clear canvas"));
+		buttonList.add(new GuiButton(5, width / 2 - 190, height - 56, 42, 20, "Undo"));
+		buttonList.add(new GuiButton(6, width / 2 - 145, height - 56, 42, 20, "Redo"));
 		for (int i = 0; i < PALETTE.length; ++i) {
 			GuiButton b = new GuiButton(20 + i, width / 2 + 20 + (i % 5) * 22, height - 56 + (i / 5) * 22, 20, 20, "");
 			buttonList.add(b);
@@ -80,6 +88,13 @@ public class GuiTexturePackCreator extends GuiScreen {
 
 	private void loadTexture(String path) {
 		selectedPath = path;
+		ImageData edited = editedTextures.get(path);
+		if (edited != null) {
+			image = edited;
+			undoStack.clear();
+			redoStack.clear();
+			return;
+		}
 		try (IResource resource = mc.getResourceManager().getResource(new ResourceLocation(path))) {
 			image = ImageData.loadImageFile(readAll(resource.getInputStream()));
 		} catch (Throwable t) {
@@ -88,7 +103,8 @@ public class GuiTexturePackCreator extends GuiScreen {
 		if (image == null || image.width <= 0 || image.height <= 0 || image.width > 128 || image.height > 128) {
 			image = new ImageData(16, 16, true);
 		}
-		dirty = false;
+		undoStack.clear();
+		redoStack.clear();
 	}
 
 	private static byte[] readAll(InputStream in) throws IOException {
@@ -108,8 +124,9 @@ public class GuiTexturePackCreator extends GuiScreen {
 			try {
 				ImageData imported = ImageData.loadImageFile(result.fileData, ImageData.getMimeFromType(result.fileName));
 				if (imported != null && imported.width <= 128 && imported.height <= 128) {
+					recordUndo();
 					image = imported;
-					dirty = true;
+					markEdited();
 				}
 			} catch (Throwable ignored) { }
 		}
@@ -120,8 +137,43 @@ public class GuiTexturePackCreator extends GuiScreen {
 		if (button.id == 0) mc.displayGuiScreen(parent);
 		else if (button.id == 2) { importing = true; EagRuntime.displayFileChooser("image/png,image/jpeg", "png,jpg,jpeg"); }
 		else if (button.id == 3) exportPack();
-		else if (button.id == 4) { image = new ImageData(image.width, image.height, true); dirty = true; }
+		else if (button.id == 4) { recordUndo(); image = new ImageData(image.width, image.height, true); markEdited(); }
+		else if (button.id == 5) undo();
+		else if (button.id == 6) redo();
 		else if (button.id >= 20 && button.id < 20 + PALETTE.length) selectedColor = PALETTE[button.id - 20];
+	}
+
+	private void markEdited() {
+		editedTextures.put(selectedPath, image);
+		dirty = true;
+	}
+
+	private void recordUndo() {
+		if (image != null) {
+			undoStack.add(copyImage(image));
+			if (undoStack.size() > 32) undoStack.remove(0);
+			redoStack.clear();
+		}
+	}
+
+	private void undo() {
+		if (undoStack.isEmpty()) return;
+		redoStack.add(copyImage(image));
+		image = undoStack.remove(undoStack.size() - 1);
+		markEdited();
+	}
+
+	private void redo() {
+		if (redoStack.isEmpty()) return;
+		undoStack.add(copyImage(image));
+		image = redoStack.remove(redoStack.size() - 1);
+		markEdited();
+	}
+
+	private static ImageData copyImage(ImageData source) {
+		int[] pixels = new int[source.pixels.length];
+		System.arraycopy(source.pixels, 0, pixels, 0, pixels.length);
+		return new ImageData(source.width, source.height, pixels, source.alpha);
 	}
 
 	private void exportPack() {
@@ -131,9 +183,13 @@ public class GuiTexturePackCreator extends GuiScreen {
 			zip.putNextEntry(new ZipEntry("pack.mcmeta"));
 			zip.write(("{\"pack\":{\"pack_format\":3,\"description\":\"" + escape(packName.getText()) + "\"}}").getBytes(StandardCharsets.UTF_8));
 			zip.closeEntry();
-			zip.putNextEntry(new ZipEntry("assets/minecraft/" + selectedPath));
-			zip.write(encodePng(image));
-			zip.closeEntry();
+			Map<String, ImageData> exportTextures = new HashMap<String, ImageData>(editedTextures);
+			if (exportTextures.isEmpty()) exportTextures.put(selectedPath, image);
+			for (Map.Entry<String, ImageData> texture : exportTextures.entrySet()) {
+				zip.putNextEntry(new ZipEntry("assets/minecraft/" + texture.getKey()));
+				zip.write(encodePng(texture.getValue()));
+				zip.closeEntry();
+			}
 			zip.finish();
 			zip.close();
 			EagRuntime.downloadFileWithName(packName.getText().trim().replace(' ', '_') + ".zip", bytes.toByteArray());
@@ -171,14 +227,14 @@ public class GuiTexturePackCreator extends GuiScreen {
 	private void paint(int mouseX, int mouseY) {
 		if (image == null || mouseX < canvasX || mouseY < canvasY) return;
 		int px = (mouseX - canvasX) / canvasScale, py = (mouseY - canvasY) / canvasScale;
-		if (px >= 0 && py >= 0 && px < image.width && py < image.height) { image.pixels[py * image.width + px] = selectedColor; dirty = true; }
+		if (px >= 0 && py >= 0 && px < image.width && py < image.height) { image.pixels[py * image.width + px] = selectedColor; markEdited(); }
 	}
 
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 		packName.mouseClicked(mouseX, mouseY, mouseButton);
-		if (mouseButton == 0) paint(mouseX, mouseY);
+		if (mouseButton == 0 && isOnCanvas(mouseX, mouseY)) { recordUndo(); paintGesture = true; paint(mouseX, mouseY); }
 	}
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
@@ -187,6 +243,12 @@ public class GuiTexturePackCreator extends GuiScreen {
 	}
 	@Override
 	protected void mouseClickMove(int mouseX, int mouseY, int button, long time) { super.mouseClickMove(mouseX, mouseY, button, time); if (button == 0) paint(mouseX, mouseY); }
+	@Override
+	protected void mouseReleased(int mouseX, int mouseY, int state) { super.mouseReleased(mouseX, mouseY, state); paintGesture = false; }
+
+	private boolean isOnCanvas(int mouseX, int mouseY) {
+		return image != null && mouseX >= canvasX && mouseY >= canvasY && mouseX < canvasX + image.width * canvasScale && mouseY < canvasY + image.height * canvasScale;
+	}
 
 	@Override
 	public void handleMouseInput() throws IOException { super.handleMouseInput(); textureList.handleMouseInput(); }
