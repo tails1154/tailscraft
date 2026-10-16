@@ -18,7 +18,6 @@ import net.minecraft.world.World;
 /**
  * Bounded A* search using the ported Baritone 1.12.2 goal contract.
  *
- * This is an independent compatibility implementation based on the movement
  * The movement world adapter is TailsCraft-specific because the original
  * Forge/mixin runtime cannot run in TeaVM. Baritone attribution and LGPL-3.0
  * notice are in the TailsCraft credits and third-party notices.
@@ -63,8 +62,9 @@ public final class BaritonePathfinder {
 					long key = key(nx, ny, nz);
 					if (closed.contains(key)) continue;
 					Node next = known.get(key);
-					double moveCost = diagonal ? 1.414D : 1.0D;
-					moveCost += Math.abs(dy) * 0.75D;
+					double moveCost = (diagonal ? Math.sqrt(2.0D) : 1.0D) * BaritoneActionCosts.WALK_ONE_BLOCK_COST;
+					if (dy > 0) moveCost += BaritoneActionCosts.JUMP_ONE_BLOCK_COST;
+					if (dy < 0) moveCost += BaritoneActionCosts.fallCost(-dy) + BaritoneActionCosts.CENTER_AFTER_FALL_COST;
 					double tentative = current.g + moveCost;
 					if (next == null) {
 						next = new Node(nx, ny, nz);
