@@ -1,0 +1,4 @@
+{
+  "parent": "block/template_lantern",
+  "textures": { "lantern": "blocks/lantern" }
+}

@@ -1113,20 +1113,11 @@ public class Item {
 		registerItem(452, "iron_nugget",
 				(new Item()).setUnlocalizedName("ironNugget").setCreativeTab(CreativeTabs.MATERIALS));
 		registerItem(453, "knowledge_book", (new ItemKnowledgeBook()).setUnlocalizedName("knowledgeBook"));
-		registerItem(454, new ResourceLocation("tailscraft:wooden_spear"),
-				new ItemSpear(ToolMaterial.WOOD, 59, 1.0F, -2.0F, 0.70F, 14, "wooden"));
-		registerItem(455, new ResourceLocation("tailscraft:stone_spear"),
-				new ItemSpear(ToolMaterial.STONE, 131, 2.0F, -1.33F, 0.82F, 14, "stone"));
-		registerItem(456, new ResourceLocation("tailscraft:copper_spear"),
-				new ItemSpear(ToolMaterial.STONE, 190, 2.0F, -1.18F, 0.82F, 13, "copper"));
-		registerItem(457, new ResourceLocation("tailscraft:iron_spear"),
-				new ItemSpear(ToolMaterial.IRON, 250, 3.0F, -1.05F, 0.95F, 14, "iron"));
-		registerItem(458, new ResourceLocation("tailscraft:golden_spear"),
-				new ItemSpear(ToolMaterial.GOLD, 32, 1.0F, -1.00F, 0.70F, 8, "golden"));
-		registerItem(459, new ResourceLocation("tailscraft:diamond_spear"),
-				new ItemSpear(ToolMaterial.DIAMOND, 1561, 4.0F, -0.95F, 1.075F, 10, "diamond"));
-		registerItem(460, new ResourceLocation("tailscraft:netherite_spear"),
-				new ItemSpear(ToolMaterial.DIAMOND, 2031, 5.0F, -0.87F, 1.20F, 8, "netherite"));
+		registerItem(461, new ResourceLocation("tailscraft:lantern"),
+				new ItemLantern(Blocks.BARRIER, "lantern"));
+		registerItem(462, new ResourceLocation("tailscraft:soul_lantern"),
+				new ItemLantern(Blocks.BARRIER, "soul_lantern"));
+		registerItem(463, new ResourceLocation("tailscraft:chain"), new ItemChain(Blocks.IRON_BARS));
 		registerItem(2256, "record_13", (new ItemRecord("13", SoundEvents.RECORD_13)).setUnlocalizedName("record"));
 		registerItem(2257, "record_cat", (new ItemRecord("cat", SoundEvents.RECORD_CAT)).setUnlocalizedName("record"));
 		registerItem(2258, "record_blocks",

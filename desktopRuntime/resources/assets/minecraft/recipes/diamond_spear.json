@@ -1,6 +1,0 @@
-{
-  "type": "crafting_shaped",
-  "pattern": ["X", "X", "#"],
-  "key": {"#": {"item": "minecraft:stick"}, "X": {"item": "minecraft:diamond"}},
-  "result": {"item": "tailscraft:diamond_spear"}
-}

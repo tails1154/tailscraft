@@ -45,7 +45,6 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemElytra;
-import net.minecraft.item.ItemSpear;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemWritableBook;
 import net.minecraft.item.ItemWrittenBook;
@@ -1658,12 +1657,6 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer, ITickable {
 						.sendPacket(new SPacketHeldItemChange(this.playerEntity.inventory.currentItem));
 			} catch (Exception exception) {
 				LOGGER.error("Couldn't pick item", (Throwable) exception);
-			}
-		} else if ("TC|Grapple".equals(s)) {
-			try {
-				ItemSpear.handleGrapplePacket(this.playerEntity, packetIn.getBufferData());
-			} catch (Exception exception) {
-				LOGGER.warn("Couldn't handle TailsCraft grapple packet", exception);
 			}
 		} else if ("EAG|MyUpdCert-1.8".equals(s)) {
 			//do nothing

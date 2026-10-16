@@ -169,30 +169,26 @@ public final class ItemStack {
 		if (this.field_190928_g) {
 			return Item.getItemFromBlock(Blocks.AIR);
 		}
-		if (this.item instanceof ItemSword && isTailsCraftSpear()) {
-			return Items.getSpearForMaterial(this.stackTagCompound != null
-					? this.stackTagCompound.getInteger("TailsCraftSpearMaterial") : spearMaterialFromName());
+		if (this.item instanceof ItemBlock && isTailsCraftLantern()) {
+			return Items.getLanternForVariant(this.stackTagCompound != null
+					? this.stackTagCompound.getInteger("TailsCraftLanternVariant") : lanternVariantFromName());
 		}
+		if (this.item instanceof ItemBlock && isTailsCraftChain()) return Items.CHAIN;
 		return this.item;
 	}
 
-	private boolean isTailsCraftSpear() {
-		if (this.stackTagCompound != null && this.stackTagCompound.getBoolean("TailsCraftSpear")) {
-			return true;
-		}
-		return this.hasDisplayName() && (this.getDisplayName().toLowerCase().contains(" spear")
-				|| this.getDisplayName().toLowerCase().contains(" grappling hook"));
+	private boolean isTailsCraftLantern() {
+		if (this.stackTagCompound != null && this.stackTagCompound.getBoolean("TailsCraftLantern")) return true;
+		return this.hasDisplayName() && this.getDisplayName().toLowerCase().contains(" lantern");
 	}
 
-	private int spearMaterialFromName() {
-		String name = this.getDisplayName().toLowerCase();
-		if (name.contains("wooden") || name.contains("wood spear")) return 0;
-		if (name.contains("stone")) return 1;
-		if (name.contains("copper")) return 2;
-		if (name.contains("gold")) return 4;
-		if (name.contains("diamond")) return 5;
-		if (name.contains("netherite")) return 6;
-		return 3;
+	private int lanternVariantFromName() {
+		return this.getDisplayName().toLowerCase().contains("soul") ? 1 : 0;
+	}
+
+	private boolean isTailsCraftChain() {
+		if (this.stackTagCompound != null && this.stackTagCompound.getBoolean("TailsCraftChain")) return true;
+		return this.hasDisplayName() && this.getDisplayName().toLowerCase().contains("chain");
 	}
 
 	/**

@@ -632,3 +632,10 @@
  * limitations under the License.
  
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ TailsCraft additions
+ ~~~~~~~~~~~~~~~~~~~~
+
+ Lantern textures:
+ - Minecraft Java Edition 26.2 assets, Mojang Studios
+ - Used in TailsCraft with a credits notice

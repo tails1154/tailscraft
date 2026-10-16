@@ -15,7 +15,6 @@ import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSpear;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
@@ -145,9 +144,6 @@ public class EntityFishHook extends Entity {
 		} else if (this.world.isRemote || !this.func_190625_o()) {
 			if (this.inGround) {
 				++this.ticksInGround;
-				if (!this.world.isRemote && this.isGrapplingHook()) {
-					ItemSpear.pull(this.angler, this.posX, this.posY, this.posZ);
-				}
 
 				if (this.ticksInGround >= 1200) {
 					this.setDead();
@@ -204,9 +200,6 @@ public class EntityFishHook extends Entity {
 							this.posY = this.caughtEntity.getEntityBoundingBox().minY + d2 * 0.8D;
 							this.posZ = this.caughtEntity.posZ;
 							this.setPosition(this.posX, this.posY, this.posZ);
-							if (!this.world.isRemote && this.isGrapplingHook()) {
-								ItemSpear.pull(this.angler, this.posX, this.posY, this.posZ);
-							}
 						}
 					}
 
@@ -247,8 +240,8 @@ public class EntityFishHook extends Entity {
 	private boolean func_190625_o() {
 		ItemStack itemstack = this.angler.getHeldItemMainhand();
 		ItemStack itemstack1 = this.angler.getHeldItemOffhand();
-		boolean flag = itemstack.getItem() == Items.FISHING_ROD || itemstack.getItem() instanceof ItemSpear;
-		boolean flag1 = itemstack1.getItem() == Items.FISHING_ROD || itemstack1.getItem() instanceof ItemSpear;
+				boolean flag = itemstack.getItem() == Items.FISHING_ROD;
+				boolean flag1 = itemstack1.getItem() == Items.FISHING_ROD;
 
 		if (!this.angler.isDead && this.angler.isEntityAlive() && (flag || flag1)
 				&& this.getDistanceSqToEntity(this.angler) <= 1024.0D) {
@@ -451,10 +444,6 @@ public class EntityFishHook extends Entity {
 
 	public int handleHookRetraction() {
 		if (!this.world.isRemote && this.angler != null) {
-			if (this.isGrapplingHook()) {
-				this.setDead();
-				return 1;
-			}
 			int i = 0;
 
 			if (this.caughtEntity != null) {
@@ -543,12 +532,6 @@ public class EntityFishHook extends Entity {
 
 	public EntityPlayer func_190619_l() {
 		return this.angler;
-	}
-
-	private boolean isGrapplingHook() {
-		return this.angler != null
-				&& (this.angler.getHeldItemMainhand().getItem() instanceof ItemSpear
-						|| this.angler.getHeldItemOffhand().getItem() instanceof ItemSpear);
 	}
 
 	static enum State {

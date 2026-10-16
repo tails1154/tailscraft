@@ -938,13 +938,9 @@ public class RenderItem implements IResourceManagerReloadListener {
 		this.registerItem(Items.EGG, "egg");
 		this.registerItem(Items.COMPASS, "compass");
 		this.registerItem(Items.FISHING_ROD, "fishing_rod");
-		this.registerItem(Items.WOODEN_SPEAR, "tailscraft:wooden_spear");
-		this.registerItem(Items.STONE_SPEAR, "tailscraft:stone_spear");
-		this.registerItem(Items.COPPER_SPEAR, "tailscraft:copper_spear");
-		this.registerItem(Items.IRON_SPEAR, "tailscraft:iron_spear");
-		this.registerItem(Items.GOLDEN_SPEAR, "tailscraft:golden_spear");
-		this.registerItem(Items.DIAMOND_SPEAR, "tailscraft:diamond_spear");
-		this.registerItem(Items.NETHERITE_SPEAR, "tailscraft:netherite_spear");
+		this.registerItem(Items.LANTERN, "tailscraft:lantern");
+		this.registerItem(Items.SOUL_LANTERN, "tailscraft:soul_lantern");
+		this.registerItem(Items.CHAIN, "tailscraft:chain");
 		this.registerItem(Items.CLOCK, "clock");
 		this.registerItem(Items.GLOWSTONE_DUST, "glowstone_dust");
 		this.registerItem(Items.FISH, ItemFishFood.FishType.COD.getMetadata(), "cod");

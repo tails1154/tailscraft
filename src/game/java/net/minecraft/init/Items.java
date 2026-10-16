@@ -9,7 +9,8 @@ import net.minecraft.item.ItemFishingRod;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemPotion;
 import net.minecraft.item.ItemShears;
-import net.minecraft.item.ItemSpear;
+import net.minecraft.item.ItemLantern;
+import net.minecraft.item.ItemChain;
 import net.minecraft.util.ResourceLocation;
 
 public class Items {
@@ -223,13 +224,13 @@ public class Items {
 	public static final Item SHULKER_SHELL;
 	public static final Item IRON_NUGGET;
 	public static final Item KNOWLEDGE_BOOK;
-	public static final ItemSpear WOODEN_SPEAR;
-	public static final ItemSpear STONE_SPEAR;
-	public static final ItemSpear COPPER_SPEAR;
-	public static final ItemSpear IRON_SPEAR;
-	public static final ItemSpear GOLDEN_SPEAR;
-	public static final ItemSpear DIAMOND_SPEAR;
-	public static final ItemSpear NETHERITE_SPEAR;
+	public static final ItemLantern LANTERN;
+	public static final ItemLantern SOUL_LANTERN;
+	public static final ItemChain CHAIN;
+
+	public static ItemLantern getLanternForVariant(int variant) {
+		return (variant & 1) != 0 ? SOUL_LANTERN : LANTERN;
+	}
 
 	private static Item getRegisteredItem(String name) {
 		Item item = Item.REGISTRY.getObject(new ResourceLocation(name));
@@ -238,19 +239,6 @@ public class Items {
 			throw new IllegalStateException("Invalid Item requested: " + name);
 		} else {
 			return item;
-		}
-	}
-
-	public static ItemSpear getSpearForMaterial(int material) {
-		switch (material) {
-		case 0: return WOODEN_SPEAR;
-		case 1: return STONE_SPEAR;
-		case 2: return COPPER_SPEAR;
-		case 3: return IRON_SPEAR;
-		case 4: return GOLDEN_SPEAR;
-		case 5: return DIAMOND_SPEAR;
-		case 6: return NETHERITE_SPEAR;
-		default: return IRON_SPEAR;
 		}
 	}
 
@@ -468,13 +456,9 @@ public class Items {
 			SHULKER_SHELL = getRegisteredItem("shulker_shell");
 			IRON_NUGGET = getRegisteredItem("iron_nugget");
 			KNOWLEDGE_BOOK = getRegisteredItem("knowledge_book");
-			WOODEN_SPEAR = (ItemSpear) getRegisteredItem("tailscraft:wooden_spear");
-			STONE_SPEAR = (ItemSpear) getRegisteredItem("tailscraft:stone_spear");
-			COPPER_SPEAR = (ItemSpear) getRegisteredItem("tailscraft:copper_spear");
-			IRON_SPEAR = (ItemSpear) getRegisteredItem("tailscraft:iron_spear");
-			GOLDEN_SPEAR = (ItemSpear) getRegisteredItem("tailscraft:golden_spear");
-			DIAMOND_SPEAR = (ItemSpear) getRegisteredItem("tailscraft:diamond_spear");
-			NETHERITE_SPEAR = (ItemSpear) getRegisteredItem("tailscraft:netherite_spear");
+			LANTERN = (ItemLantern) getRegisteredItem("tailscraft:lantern");
+			SOUL_LANTERN = (ItemLantern) getRegisteredItem("tailscraft:soul_lantern");
+			CHAIN = (ItemChain) getRegisteredItem("tailscraft:chain");
 		}
 	}
 }

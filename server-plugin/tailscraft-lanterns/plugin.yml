@@ -1,0 +1,17 @@
+name: TailsCraftLanterns
+version: 1.0.0
+main: com.tailscraft.lanterns.TailsCraftLanternsPlugin
+api-version: 1.12
+commands:
+  lantern:
+    description: Give yourself a TailsCraft lantern
+    usage: /lantern [soul]
+    permission: tailscraft.lanterns
+  chain:
+    description: Give yourself a TailsCraft chain
+    usage: /chain
+    permission: tailscraft.lanterns
+permissions:
+  tailscraft.lanterns:
+    default: op
+    description: Use the /lantern command
