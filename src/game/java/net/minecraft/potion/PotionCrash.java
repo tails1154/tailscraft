@@ -33,7 +33,7 @@ public class PotionCrash extends Potion {
 		if (server == null) {
 			return;
 		}
-		if (!server.isSinglePlayer()) {
+		if (server.getServerOwner() == null) {
 			if (entity instanceof EntityPlayerMP) {
 				entity.removePotionEffect(this);
 				NetHandlerPlayServer connection = ((EntityPlayerMP) entity).connection;
