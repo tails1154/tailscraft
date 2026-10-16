@@ -58,6 +58,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	private final List<ImageData> redoStack = new ArrayList<ImageData>();
 	private TextureList textureList;
 	private GuiTextField packName;
+	private GuiTextField hexColor;
 	private ImageData image;
 	private String selectedPath;
 	private int selectedColor = PALETTE[0];
@@ -81,10 +82,13 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		buttonList.clear();
 		packName = new GuiTextField(20, fontRendererObj, width / 2 - 70, 8, 140, 20);
 		packName.setText("My TailsCraft Pack");
+		hexColor = new GuiTextField(21, fontRendererObj, width / 2 + 80, 8, 92, 20);
+		hexColor.setText(formatHex(selectedColor));
 		buttonList.add(new GuiButton(107, 8, 8, 80, 20, "Save project"));
 		buttonList.add(new GuiButton(108, 92, 8, 80, 20, "Load project"));
 		buttonList.add(new GuiButton(9, 176, 8, 80, 20, "New texture"));
 		buttonList.add(new GuiButton(10, 260, 8, 80, 20, "Duplicate"));
+		buttonList.add(new GuiButton(11, width / 2 + 175, 8, 58, 20, "Set color"));
 		buttonList.add(new GuiButton(109, width - 86, 8, 78, 20, "New project"));
 		buttonList.add(new GuiButton(0, 8, height - 28, 70, 20, I18n.format("gui.back")));
 		buttonList.add(new GuiButton(2, width / 2 - 190, height - 28, 90, 20, "Import texture"));
@@ -200,13 +204,37 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		else if (button.id == 108) loadProject();
 		else if (button.id == 9) createTexture(false);
 		else if (button.id == 10) createTexture(true);
+		else if (button.id == 11) applyHexColor();
 		else if (button.id == 109) mc.displayGuiScreen(new GuiYesNo(this, "Start a new texture project?", "Unsaved edits will be cleared.", "Start over", "Cancel", 109));
 		else if (button.id >= 40 && button.id <= 45) tool = button.id - 40;
 		else if (button.id >= 50 && button.id <= 52) brushSize = 1 << (button.id - 50);
 		else if (button.id == 60) zoomOffset = Math.max(-4, zoomOffset - 1);
 		else if (button.id == 61) zoomOffset = Math.min(8, zoomOffset + 1);
 		else if (button.id == 62) { grid = !grid; button.displayString = grid ? "Grid: on" : "Grid: off"; }
-		else if (button.id >= 20 && button.id < 20 + PALETTE.length) selectedColor = PALETTE[button.id - 20];
+		else if (button.id >= 20 && button.id < 20 + PALETTE.length) {
+			selectedColor = PALETTE[button.id - 20];
+			hexColor.setText(formatHex(selectedColor));
+		}
+	}
+
+	private void applyHexColor() {
+		try {
+			String value = hexColor.getText().trim();
+			if (value.startsWith("#")) value = value.substring(1);
+			if (value.length() == 6) value = "FF" + value;
+			if (value.length() != 8) throw new NumberFormatException();
+			selectedColor = (int) Long.parseLong(value, 16);
+			hexColor.setText(formatHex(selectedColor));
+		} catch (Throwable ignored) {
+			hexColor.setText(formatHex(selectedColor));
+			EagRuntime.showPopup("Use #RRGGBB or #AARRGGBB for a color.");
+		}
+	}
+
+	private static String formatHex(int color) {
+		String value = Integer.toHexString(color).toUpperCase();
+		while (value.length() < 8) value = "0" + value;
+		return "#" + value;
 	}
 
 	@Override
@@ -428,6 +456,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 		packName.mouseClicked(mouseX, mouseY, mouseButton);
+		hexColor.mouseClicked(mouseX, mouseY, mouseButton);
 		if ((mouseButton == 0 || mouseButton == 1) && isOnCanvas(mouseX, mouseY)) {
 			recordUndo(); paintGesture = true;
 			gestureX = (mouseX - canvasX) / canvasScale;
@@ -440,6 +469,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
 		if (packName.textboxKeyTyped(typedChar, keyCode)) return;
+		if (hexColor.textboxKeyTyped(typedChar, keyCode)) return;
 		super.keyTyped(typedChar, keyCode);
 	}
 	@Override
@@ -471,6 +501,8 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		drawDefaultBackground();
 		drawCenteredString(fontRendererObj, "Texture Pack Creator 9000", width / 2, 2, 0xFFFFFF);
 		packName.drawTextBox();
+		hexColor.drawTextBox();
+		drawString(fontRendererObj, "Color", width / 2 + 80, 30, 0xAAAAAA);
 		drawString(fontRendererObj, "Texture: " + selectedPath, 224, 38, 0xCCCCCC);
 		drawString(fontRendererObj, "Tool: " + (tool == 0 ? "Pencil" : tool == 1 ? "Eraser" : tool == 2 ? "Fill" : tool == 3 ? "Picker" : tool == 4 ? "Line" : "Rectangle") + "  Brush: " + brushSize + "px", 224, height - 70, 0xAAAAAA);
 		if (image != null) {
