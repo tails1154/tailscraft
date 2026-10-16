@@ -111,6 +111,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		buttonList.add(new GuiButton(50, width / 2 - 95, height - 82, 30, 20, "1px"));
 		buttonList.add(new GuiButton(51, width / 2 - 62, height - 82, 30, 20, "2px"));
 		buttonList.add(new GuiButton(52, width / 2 - 29, height - 82, 30, 20, "4px"));
+		buttonList.add(new GuiButton(53, width / 2 + 4, height - 82, 30, 20, "8px"));
 		buttonList.add(new GuiButton(60, width / 2 + 100, height - 82, 48, 20, "Zoom -"));
 		buttonList.add(new GuiButton(61, width / 2 + 151, height - 82, 48, 20, "Zoom +"));
 		buttonList.add(new GuiButton(62, width / 2 + 202, height - 82, 48, 20, "Grid: on"));
@@ -225,7 +226,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		else if (button.id == 11) applyHexColor();
 		else if (button.id == 109) mc.displayGuiScreen(new GuiYesNo(this, "Start a new texture project?", "Unsaved edits will be cleared.", "Start over", "Cancel", 109));
 		else if (button.id >= 40 && button.id <= 45) tool = button.id - 40;
-		else if (button.id >= 50 && button.id <= 52) brushSize = 1 << (button.id - 50);
+		else if (button.id >= 50 && button.id <= 53) brushSize = 1 << (button.id - 50);
 		else if (button.id == 60) zoomOffset = Math.max(-4, zoomOffset - 1);
 		else if (button.id == 61) zoomOffset = Math.min(8, zoomOffset + 1);
 		else if (button.id == 62) { grid = !grid; button.displayString = grid ? "Grid: on" : "Grid: off"; }
