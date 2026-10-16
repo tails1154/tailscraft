@@ -14,6 +14,8 @@ public final class BaritoneActionCosts {
 	public static final double FALL_1_25_BLOCKS_COST = distanceToTicks(1.25D);
 	public static final double FALL_0_25_BLOCKS_COST = distanceToTicks(0.25D);
 	public static final double JUMP_ONE_BLOCK_COST = FALL_1_25_BLOCKS_COST - FALL_0_25_BLOCKS_COST;
+	public static final double BREAK_ONE_BLOCK_COST = 30.0D;
+	public static final double PLACE_ONE_BLOCK_COST = WALK_ONE_BLOCK_COST;
 
 	private BaritoneActionCosts() { }
 

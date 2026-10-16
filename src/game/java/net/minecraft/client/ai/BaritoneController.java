@@ -1,15 +1,22 @@
 package net.minecraft.client.ai;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 /**
@@ -23,11 +30,14 @@ public final class BaritoneController {
 	private static boolean mining;
 	private static int targetX, targetY, targetZ;
 	private static Block mineBlock;
+	private static List<Block> mineBlocks = Collections.emptyList();
 	private static BlockPos mineTarget;
 	private static BaritoneGoal pathGoal;
 	private static List<BlockPos> path = Collections.emptyList();
 	private static int recalc;
 	private static String status = "Stopped";
+	private static boolean allowBreak;
+	private static boolean allowPlace;
 
 	private BaritoneController() { }
 
@@ -40,21 +50,37 @@ public final class BaritoneController {
 			message("Baritone: stopped");
 			return true;
 		}
+		if ("set".equals(command)) {
+			if (args.length != 3 || !("allowBreak".equalsIgnoreCase(args[1]) || "allowPlace".equalsIgnoreCase(args[1]))) { message("Usage: #set allowBreak|allowPlace true|false"); return true; }
+			boolean value = "true".equalsIgnoreCase(args[2]) || "on".equalsIgnoreCase(args[2]);
+			if ("allowBreak".equalsIgnoreCase(args[1])) allowBreak = value; else allowPlace = value;
+			message("Baritone: " + args[1] + " = " + value);
+			return true;
+		}
 		if ("goto".equals(command)) {
 			if (args.length != 3 && args.length != 4) { message("Usage: #goto <x> [y] <z>"); return true; }
 			try {
-				int x = Integer.parseInt(args[1]);
-				int y = args.length == 4 ? Integer.parseInt(args[2]) : (Minecraft.getMinecraft().player == null ? 64 : (int)Math.floor(Minecraft.getMinecraft().player.posY));
-				int z = Integer.parseInt(args[args.length - 1]);
+				int x;
+				EntityPlayerSP player = Minecraft.getMinecraft().player;
+				int originX = player == null ? 0 : (int)Math.floor(player.posX);
+				int originY = player == null ? 64 : (int)Math.floor(player.posY);
+				int originZ = player == null ? 0 : (int)Math.floor(player.posZ);
+				int y = args.length == 4 ? parseCoordinate(args[2], originY) : originY;
+				int z = parseCoordinate(args[args.length - 1], originZ);
+				x = parseCoordinate(args[1], originX);
 				startGoto(x, y, z, args.length == 3);
-			} catch (NumberFormatException ex) { message("Usage: #goto <x> [y] <z>"); }
+			} catch (NumberFormatException ex) { message("Usage: #goto <x> [y] <z> (coordinates may use ~)"); }
 			return true;
 		}
 		if ("mine".equals(command)) {
-			if (args.length != 2) { message("Usage: #mine <block>"); return true; }
-			Block block = Block.REGISTRY.getObject(new ResourceLocation(args[1].toLowerCase()));
-			if (block == null) { message("Baritone: unknown block " + args[1]); return true; }
-			startMine(block, args[1].toLowerCase());
+			if (args.length < 2) { message("Usage: #mine <block> [block ...]"); return true; }
+			List<Block> blocks = new ArrayList<Block>();
+			for (int i = 1; i < args.length; ++i) {
+				Block block = Block.getBlockFromName(args[i].toLowerCase());
+				if (block == null) { message("Baritone: unknown block " + args[i]); return true; }
+				blocks.add(block);
+			}
+			startMine(blocks);
 			return true;
 		}
 		message("Baritone commands: #goto <x> [y] <z>, #mine <block>, #stop");
@@ -62,16 +88,16 @@ public final class BaritoneController {
 	}
 
 	private static void startGoto(int x, int y, int z, boolean xzOnly) {
-		active = true; mining = false; mineBlock = null; mineTarget = null;
+		active = true; mining = false; mineBlock = null; mineBlocks = Collections.emptyList(); mineTarget = null;
 		targetX = x; targetY = y; targetZ = z; pathGoal = xzOnly ? new BaritoneGoal.XZ(x, z) : new BaritoneGoal.Block(x, y, z);
 		path = Collections.emptyList(); recalc = 0;
 		status = "Going to " + x + " " + y + " " + z;
 		message("Baritone: " + status);
 	}
 
-	private static void startMine(Block block, String name) {
-		active = true; mining = true; mineBlock = block; mineTarget = null; pathGoal = null; path = Collections.emptyList(); recalc = 0;
-		status = "Searching for " + name;
+	private static void startMine(List<Block> blocks) {
+		active = true; mining = true; mineBlock = null; mineBlocks = blocks; mineTarget = null; pathGoal = null; path = Collections.emptyList(); recalc = 0;
+		status = "Searching for " + blockNames(blocks);
 		message("Baritone: " + status);
 	}
 
@@ -82,8 +108,8 @@ public final class BaritoneController {
 		if (player == null || world == null) { releaseKeys(mc); return; }
 		if (mining) {
 			if (mineTarget == null || world.getBlockState(mineTarget).getBlock() != mineBlock) {
-				mineTarget = findBlock(world, player, mineBlock);
-				if (mineTarget == null) { status = "No loaded " + blockName(mineBlock) + " found"; releaseKeys(mc); return; }
+				mineTarget = findBlock(world, player, mineBlocks);
+				if (mineTarget == null) { status = "No loaded target blocks found"; releaseKeys(mc); return; }
 				targetForBlock(world, mineTarget);
 				path = Collections.emptyList(); recalc = 0; status = "Going to " + blockName(mineBlock);
 			}
@@ -98,12 +124,13 @@ public final class BaritoneController {
 	private static void moveTo(Minecraft mc, EntityPlayerSP player, World world) {
 		if (++recalc >= 10 || path.isEmpty()) {
 			if (pathGoal == null) pathGoal = new BaritoneGoal.Block(targetX, targetY, targetZ);
-			path = BaritonePathfinder.findPath(world, new BlockPos(player), pathGoal);
+				path = BaritonePathfinder.findPath(world, new BlockPos(player), pathGoal, allowBreak, allowPlace);
 			recalc = 0;
 		}
 		while (!path.isEmpty() && isNear(player, path.get(0))) path.remove(0);
 		if (path.isEmpty() && !nearTarget(player)) { status = "No path found"; releaseKeys(mc); return; }
 		BlockPos next = path.isEmpty() ? new BlockPos(targetX, targetY, targetZ) : path.get(0);
+		if (handleObstacle(mc, player, world, next)) return;
 		float yaw = (float)(Math.atan2(-(next.getX() + 0.5D - player.posX), next.getZ() + 0.5D - player.posZ) * 180.0D / Math.PI);
 		player.rotationYaw = yaw; player.prevRotationYaw = yaw;
 		KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), true);
@@ -120,6 +147,25 @@ public final class BaritoneController {
 		status = "Mining " + blockName(mineBlock);
 	}
 
+	private static boolean handleObstacle(Minecraft mc, EntityPlayerSP player, World world, BlockPos next) {
+		BlockPos feet = next;
+		BlockPos head = next.up();
+		if (allowBreak && !world.isAirBlock(feet)) { face(player, feet); mc.playerController.clickBlock(feet, EnumFacing.UP); status = "Breaking " + blockName(world.getBlockState(feet).getBlock()); releaseMovement(mc); return true; }
+		if (allowBreak && !world.isAirBlock(head)) { face(player, head); mc.playerController.clickBlock(head, EnumFacing.UP); status = "Breaking " + blockName(world.getBlockState(head).getBlock()); releaseMovement(mc); return true; }
+		if (allowPlace && world.isAirBlock(next.down()) && world instanceof WorldClient) {
+			ItemStack stack = findPlaceableBlock(player);
+			if (stack != null) {
+				face(player, next.down());
+				mc.playerController.processRightClickBlock(player, (WorldClient)world, next.down(), EnumFacing.UP, new Vec3d(next.getX() + .5D, next.getY() - .01D, next.getZ() + .5D), EnumHand.MAIN_HAND);
+				status = "Placing support"; releaseMovement(mc); return true;
+			}
+		}
+		return false;
+	}
+	private static void face(EntityPlayerSP player, BlockPos pos) { float yaw = (float)(Math.atan2(-(pos.getX() + .5D - player.posX), pos.getZ() + .5D - player.posZ) * 180.0D / Math.PI); player.rotationYaw = yaw; player.prevRotationYaw = yaw; }
+	private static void releaseMovement(Minecraft mc) { KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false); }
+	private static ItemStack findPlaceableBlock(EntityPlayerSP player) { for (int i = 0; i < 9; ++i) { ItemStack stack = player.inventory.mainInventory.get(i); if (stack != null && !stack.func_190926_b() && stack.getItem() instanceof ItemBlock) { player.inventory.currentItem = i; return stack; } } return null; }
+
 	private static void targetForBlock(World world, BlockPos block) {
 		for (int i = 0; i < 4; ++i) {
 			int x = block.getX() + (i == 0 ? 1 : i == 1 ? -1 : 0);
@@ -130,14 +176,15 @@ public final class BaritoneController {
 		pathGoal = new BaritoneGoal.Block(targetX, targetY, targetZ);
 	}
 
-	private static BlockPos findBlock(World world, EntityPlayerSP player, Block wanted) {
+	private static BlockPos findBlock(World world, EntityPlayerSP player, List<Block> wanted) {
 		int px = (int)Math.floor(player.posX), py = (int)Math.floor(player.posY), pz = (int)Math.floor(player.posZ);
 		BlockPos best = null; double distance = Double.MAX_VALUE;
 		for (int x = px - 24; x <= px + 24; ++x) for (int z = pz - 24; z <= pz + 24; ++z) {
 			if (world.getChunkProvider().getLoadedChunk(x >> 4, z >> 4) == null) continue;
 			for (int y = Math.max(0, py - 48); y <= Math.min(255, py + 16); ++y) {
 				BlockPos pos = new BlockPos(x, y, z);
-				if (world.getBlockState(pos).getBlock() == wanted && player.getDistanceSq(pos) < distance) { distance = player.getDistanceSq(pos); best = pos; }
+				Block found = world.getBlockState(pos).getBlock();
+				if (wanted.contains(found) && player.getDistanceSq(pos) < distance) { distance = player.getDistanceSq(pos); best = pos; mineBlock = found; }
 			}
 		}
 		return best;
@@ -151,8 +198,14 @@ public final class BaritoneController {
 	private static boolean isNear(EntityPlayerSP player, BlockPos pos) { return Math.abs(player.posX - (pos.getX() + .5D)) < .8D && Math.abs(player.posY - pos.getY()) < 1.5D && Math.abs(player.posZ - (pos.getZ() + .5D)) < .8D; }
 	private static boolean canStand(World world, int x, int y, int z) { BlockPos p = new BlockPos(x, y, z); return world.isAirBlock(p) && world.isAirBlock(p.up()) && !world.isAirBlock(p.down()); }
 	private static String blockName(Block block) { ResourceLocation id = Block.REGISTRY.getNameForObject(block); return id == null ? "block" : id.toString(); }
+	private static String blockNames(List<Block> blocks) { StringBuilder result = new StringBuilder(); for (Block block : blocks) { if (result.length() > 0) result.append(", "); result.append(blockName(block)); } return result.toString(); }
+	private static int parseCoordinate(String value, int origin) {
+		if (!value.startsWith("~")) return Integer.parseInt(value);
+		if (value.length() == 1) return origin;
+		return origin + Integer.parseInt(value.substring(1));
+	}
 	public static String getStatus() { return status; }
-	public static void stop() { active = false; mining = false; path = Collections.emptyList(); pathGoal = null; mineTarget = null; releaseKeys(Minecraft.getMinecraft()); status = "Stopped"; }
+	public static void stop() { active = false; mining = false; mineBlocks = Collections.emptyList(); path = Collections.emptyList(); pathGoal = null; mineTarget = null; releaseKeys(Minecraft.getMinecraft()); status = "Stopped"; }
 	private static void releaseKeys(Minecraft mc) { if (mc == null) return; KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false); }
 	private static void message(String text) { Minecraft mc = Minecraft.getMinecraft(); if (mc != null && mc.ingameGUI != null) mc.ingameGUI.getChatGUI().printChatMessage(new net.minecraft.util.text.TextComponentString(text)); }
 }
