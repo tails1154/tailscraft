@@ -1313,6 +1313,7 @@ public class Minecraft implements IThreadListener {
 	 */
 	public void runTick() throws IOException {
 		TailsConnectFriends.update();
+		net.minecraft.client.ai.AICopilotController.tick(this);
 		if (this.rightClickDelayTimer > 0) {
 			--this.rightClickDelayTimer;
 		}

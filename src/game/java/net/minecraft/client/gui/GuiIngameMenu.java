@@ -87,7 +87,8 @@ public class GuiIngameMenu extends GuiScreen {
 				ReplayManager.isRecording() ? "Stop Video" : "Replay Mode", PauseMenuCustomizeState.icon_serverInfo_L,
 				PauseMenuCustomizeState.icon_serverInfo_L_aspect, PauseMenuCustomizeState.icon_serverInfo_R,
 				PauseMenuCustomizeState.icon_serverInfo_R_aspect));
-		this.buttonList.add(new GuiButton(13, this.width / 2 - 100, this.height / 4 + 120 - 16, 200, 20, "AI Chatbot"));
+		this.buttonList.add(new GuiButton(13, this.width / 2 - 100, this.height / 4 + 120 - 16, 98, 20, "AI Chatbot"));
+		this.buttonList.add(new GuiButton(14, this.width / 2 + 2, this.height / 4 + 120 - 16, 98, 20, "AI Copilot"));
 		
 		if (!hasSentAutoSave) {
 			hasSentAutoSave = true;
@@ -185,6 +186,9 @@ public class GuiIngameMenu extends GuiScreen {
 			break;
 		case 13:
 			this.mc.displayGuiScreen(new GuiScreenAIChat(this));
+			break;
+		case 14:
+			this.mc.displayGuiScreen(new GuiScreenAICopilot(this));
 			break;
 		}
 	}
