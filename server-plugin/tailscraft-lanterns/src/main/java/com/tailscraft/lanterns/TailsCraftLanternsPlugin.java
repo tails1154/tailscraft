@@ -28,9 +28,22 @@ public final class TailsCraftLanternsPlugin extends JavaPlugin implements Listen
         String name = ChatColor.stripColor(item.getItemMeta().getDisplayName());
         byte data = (byte) ("Soul Lantern".equalsIgnoreCase(name) ? 1 : 0);
         if (event.getBlockAgainst().getY() > event.getBlockPlaced().getY()) data |= 2;
-        if ("Lantern".equalsIgnoreCase(name) || "Soul Lantern".equalsIgnoreCase(name))
-            event.getBlockPlaced().setTypeIdAndData(253, data, false);
-        else if ("Chain".equalsIgnoreCase(name)) event.getBlockPlaced().setTypeIdAndData(254, (byte) 0, false);
+        final int blockId;
+        if ("Lantern".equalsIgnoreCase(name) || "Soul Lantern".equalsIgnoreCase(name)) {
+            blockId = 253;
+        } else if ("Chain".equalsIgnoreCase(name)) {
+            blockId = 254;
+            data = 0;
+        } else {
+            return;
+        }
+
+        // Bukkit has already performed the normal placement by this point. Apply
+        // the compatibility block one tick later so the server's placement
+        // packet cannot overwrite the custom client block with the placeholder.
+        final byte finalData = data;
+        getServer().getScheduler().runTask(this, () ->
+                event.getBlockPlaced().setTypeIdAndData(blockId, finalData, true));
     }
 
     @Override
