@@ -4727,5 +4727,10 @@
       "ambient/weather/rain4"
     ],
     "subtitle": "subtitles.weather.rain"
+  },
+  "tailscraft.connecting": {
+    "sounds": [
+      "connecting"
+    ]
   }
 }

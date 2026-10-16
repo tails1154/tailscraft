@@ -20,6 +20,8 @@ import net.lax1dude.eaglercraft.socket.protocol.GamePluginMessageConstants;
 import net.lax1dude.eaglercraft.socket.protocol.GamePluginMessageProtocol;
 import net.lax1dude.eaglercraft.socket.protocol.client.GameProtocolMessageController;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.ISound;
+import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiDisconnected;
 import net.minecraft.client.gui.GuiScreen;
@@ -28,6 +30,8 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.network.EnumConnectionState;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.client.CPacketCustomPayload;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.text.TextComponentString;
 
 /**+
@@ -65,6 +69,7 @@ public class GuiConnecting extends GuiScreen {
 	private long connectionStartedAt;
 	private String connectionPhase = "Preparing connection";
 	private String connectionDetail = "Waiting for the client networking layer";
+	private PositionedSoundRecord connectingSound;
 
 	public GuiConnecting(GuiScreen parGuiScreen, Minecraft mcIn, ServerData parServerData) {
 		this(parGuiScreen, mcIn, parServerData, false);
@@ -145,6 +150,11 @@ public class GuiConnecting extends GuiScreen {
 	 */
 	public void updateScreen() {
 		++timer;
+		if (connectingSound == null) {
+			connectingSound = new PositionedSoundRecord(new ResourceLocation("tailscraft.connecting"),
+					SoundCategory.MASTER, 1.0F, 1.0F, true, 0, ISound.AttenuationType.NONE, 0.0F, 0.0F, 0.0F);
+			mc.getSoundHandler().playSound(connectingSound);
+		}
 		if (timer > 1) {
 			if (this.currentAddress == null) {
 				this.connectionPhase = "Rate limited";
@@ -343,6 +353,14 @@ public class GuiConnecting extends GuiScreen {
 				}
 			}
 		}
+	}
+
+	public void onGuiClosed() {
+		if (connectingSound != null) {
+			mc.getSoundHandler().stopSound(connectingSound);
+			connectingSound = null;
+		}
+		super.onGuiClosed();
 	}
 
 	public boolean canCloseGui() {
