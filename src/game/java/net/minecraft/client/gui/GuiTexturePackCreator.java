@@ -302,7 +302,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 			}
 			zip.finish();
 			zip.close();
-			EagRuntime.downloadFileWithName(packName.getText().trim().replace(' ', '_') + ".zip", bytes.toByteArray());
+			EagRuntime.downloadFileWithName(sanitizeFilename(packName.getText()) + ".zip", bytes.toByteArray());
 			dirty = false;
 		} catch (Throwable t) {
 			EagRuntime.showPopup("Could not export texture pack: " + t.getClass().getSimpleName());
@@ -368,6 +368,16 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	}
 
 	private static String escape(String s) { return s.replace("\\", "\\\\").replace("\"", "\\\""); }
+
+	private static String sanitizeFilename(String value) {
+		String name = value == null ? "" : value.trim().replace(' ', '_');
+		StringBuilder out = new StringBuilder();
+		for (int i = 0; i < name.length(); ++i) {
+			char c = name.charAt(i);
+			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-') out.append(c);
+		}
+		return out.length() == 0 ? "TailsCraft_Texture_Pack" : out.toString();
+	}
 
 	private static byte[] encodePng(ImageData data) throws IOException {
 		ByteArrayOutputStream raw = new ByteArrayOutputStream();
@@ -510,7 +520,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 			canvasX = width / 2 - 90; canvasY = 58;
 			for (int y = 0; y < image.height; ++y) for (int x = 0; x < image.width; ++x) {
 				int c = image.pixels[y * image.width + x];
-				if ((c >>> 24) == 0) c = 0xFF555555;
+				if ((c >>> 24) == 0) c = ((x + y) & 1) == 0 ? 0xFFAAAAAA : 0xFF666666;
 				drawRect(canvasX + x * canvasScale, canvasY + y * canvasScale, canvasX + (x + 1) * canvasScale, canvasY + (y + 1) * canvasScale, c);
 			}
 			if (grid && canvasScale >= 3) {
@@ -564,7 +574,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 					int sourceX = px * preview.width / thumbWidth;
 					int sourceY = py * preview.height / thumbHeight;
 					int color = preview.pixels[sourceY * preview.width + sourceX];
-					if ((color >>> 24) == 0) color = 0xFF555555;
+					if ((color >>> 24) == 0) color = ((px + py) & 1) == 0 ? 0xFFAAAAAA : 0xFF666666;
 					owner.drawRect(x + 2 + px, y + 2 + py, x + 3 + px, y + 3 + py, color);
 				}
 			}
