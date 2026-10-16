@@ -69,7 +69,7 @@ public class GuiConnecting extends GuiScreen {
 	private long connectionStartedAt;
 	private int handshakeRetries;
 	private long retryAt;
-	private static final int MAX_HANDSHAKE_RETRIES = 3;
+	private static final int MAX_HANDSHAKE_RETRIES = 1000;
 	private String connectionPhase = "Preparing connection";
 	private String connectionDetail = "Waiting for the client networking layer";
 	private PositionedSoundRecord connectingSound;
@@ -378,7 +378,7 @@ public class GuiConnecting extends GuiScreen {
 		webSocket = null;
 		networkManager = null;
 		hasOpened = false;
-		retryAt = System.currentTimeMillis() + handshakeRetries * 1000L;
+		retryAt = System.currentTimeMillis() + Math.min(handshakeRetries, 5) * 1000L;
 		connectionStartedAt = System.currentTimeMillis();
 		connectionPhase = "Retrying handshake";
 		connectionDetail = "Opening a fresh transport after handshake failure";

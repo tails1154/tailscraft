@@ -16,8 +16,10 @@
 - Simplified the copilot screen to one task field and essential controls, and added a bounded observe-plan-act agent loop.
 - Prevented look-around script steps from falling through into movement on their first tick.
 - Added automatic bounded retries for failed server handshakes, with Cancel still available and a clear retry count.
+- Increased handshake retry tolerance to 1000 attempts with a five-second maximum delay between attempts for unreliable servers.
 - Added bounded text-only block observations to AI Copilot context, including nearby block IDs, coordinates, and the targeted block; no screenshots are sent.
 - Added explicit copilot phase/status reporting and clean restart handling after Stop.
+- Removed the confusing look-around command from the copilot language and planner.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.

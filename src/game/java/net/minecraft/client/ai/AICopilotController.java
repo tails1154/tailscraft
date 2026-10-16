@@ -19,8 +19,6 @@ import net.minecraft.world.World;
 public final class AICopilotController {
 	private static boolean active;
 	private static int targetX, targetY, targetZ;
-	private static boolean looking;
-	private static int lookTicks;
 	private static int recalc;
 	private static List<Node> path = Collections.emptyList();
 	private static List<AICraftScriptLangPlus.Step> script;
@@ -36,19 +34,18 @@ public final class AICopilotController {
 		script = null; targetX = x; targetY = y; targetZ = z; recalc = 0; phase = 1; status = "Pathfinding";
 	}
 
-	public static void start() { active = true; looking = false; recalc = 0; phase = 1; status = "Pathfinding to target"; }
+	public static void start() { active = true; recalc = 0; phase = 1; status = "Pathfinding to target"; }
 
 	public static void runScript(List<AICraftScriptLangPlus.Step> steps) {
 		if (steps == null || steps.isEmpty()) { stop(); return; }
 		if (steps.size() == 1 && steps.get(0).type == AICraftScriptLangPlus.Type.STOP) { active = false; status = "AI: I could not turn that request into a safe action."; releaseKeys(); return; }
-		script = steps; scriptIndex = 0; objective = null; phase = 0; active = true; looking = false; status = "Running AICraftScriptLangPlus";
+		script = steps; scriptIndex = 0; objective = null; phase = 0; active = true; status = "Running AICraftScriptLangPlus";
 	}
 
 	public static void stop() {
-		active = false; looking = false; script = null; objective = null; path = Collections.emptyList(); phase = 0; status = "Stopped"; releaseKeys();
+		active = false; script = null; objective = null; path = Collections.emptyList(); phase = 0; status = "Stopped"; releaseKeys();
 	}
 
-	public static void lookAround() { script = null; active = true; looking = true; lookTicks = 0; status = "Looking around"; releaseKeys(); }
 	public static boolean isActive() { return active; }
 	public static String getStatus() { return status; }
 
@@ -56,17 +53,7 @@ public final class AICopilotController {
 		if (!active) return;
 		EntityPlayerSP player = mc.player; World world = mc.world;
 		if (player == null || world == null) { releaseKeys(); return; }
-		if (looking) {
-			releaseKeys(); player.rotationYaw += 6.0F; player.prevRotationYaw = player.rotationYaw;
-			if (++lookTicks >= 60) {
-				looking = false;
-				if (script != null) { ++scriptIndex; phase = 0; status = "Finished looking around"; }
-				else stop();
-			}
-			return;
-		}
 		if (script != null && phase == 0) prepareScriptStep(world, player);
-		if (looking) return;
 		if (script != null && phase == 3) { executeMining(mc, player, world); return; }
 		if (script != null && phase == 4) {
 			if (nearTarget(player)) { objective = null; phase = 0; path = Collections.emptyList(); recalc = 0; return; }
@@ -96,8 +83,6 @@ public final class AICopilotController {
 			targetForBlock(world, objective); phase = 1; status = "Pathfinding to " + step.argument;
 		} else if (step.type == AICraftScriptLangPlus.Type.EXPLORE) {
 			chooseExplore(player); phase = 1; status = "Exploring";
-		} else if (step.type == AICraftScriptLangPlus.Type.LOOK_AROUND) {
-			looking = true; lookTicks = 0; status = "Looking around";
 		} else if (step.type == AICraftScriptLangPlus.Type.SELECT_ITEM) {
 			if (!selectHotbarItem(player, step.argument)) {
 				status = "Could not find " + step.argument + " in the hotbar";
