@@ -930,6 +930,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	public void handleChat(SPacketChat packetIn) {
 		if (!isIntegratedServer && packetIn.getChatComponent() != null) {
 			String unformatted = packetIn.getChatComponent().getUnformattedText();
+			net.minecraft.client.gui.CCTVOutputState.record(unformatted);
 			String chat = unformatted.toLowerCase(Locale.ROOT);
 			if (chat.contains("successful login!")) {
 				if (authMeRememberMe && authMeRememberPassword != null && authMeRememberPassword.length() > 0) {
