@@ -9,6 +9,7 @@
 - Added an opt-in AI Copilot panel with bounded block-grid pathfinding to XYZ targets.
 - Added a look-around action; the copilot cannot chat, attack, place blocks, use inventory, or interact with containers.
 - Stop and closing the panel release all copilot movement keys.
+- Added AICraftScriptLangPlus AI planning, including natural-language requests, `FIND_BLOCK`, `EXPLORE`, `MINE`, `STOP`, and failure-retry chains.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.
