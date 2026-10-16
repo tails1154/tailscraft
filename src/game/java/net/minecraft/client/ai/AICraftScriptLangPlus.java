@@ -5,7 +5,7 @@ import java.util.List;
 
 /** Tiny, deliberately constrained command language produced by the AI planner. */
 public final class AICraftScriptLangPlus {
-	public enum Type { FIND_BLOCK, EXPLORE, SELECT_ITEM, MINE, STOP }
+	public enum Type { FIND_BLOCK, EXPLORE, LOOK_AROUND, SELECT_ITEM, MINE, STOP }
 
 	public static final class Step {
 		public final Type type;
@@ -28,6 +28,7 @@ public final class AICraftScriptLangPlus {
 				continue;
 			}
 			if (token.startsWith("FIND_BLOCK ")) steps.add(new Step(Type.FIND_BLOCK, token.substring(11).trim().toLowerCase()));
+			else if (token.startsWith("LOOK_AROUND")) steps.add(new Step(Type.LOOK_AROUND, ""));
 			else if (token.startsWith("SELECT_ITEM ")) steps.add(new Step(Type.SELECT_ITEM, token.substring(12).trim().toLowerCase()));
 			else if (token.startsWith("MINE ")) steps.add(new Step(Type.MINE, token.substring(5).trim().toLowerCase()));
 			else if (token.startsWith("EXPLORE")) steps.add(new Step(Type.EXPLORE, ""));

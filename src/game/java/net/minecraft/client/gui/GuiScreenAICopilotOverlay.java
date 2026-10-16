@@ -17,6 +17,7 @@ public class GuiScreenAICopilotOverlay extends GuiScreen {
 
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.id == 0) {
+			net.minecraft.client.ai.AICopilotAgent.stop();
 			AICopilotController.stop();
 			mc.displayGuiScreen((GuiScreen) null);
 		}
@@ -24,7 +25,7 @@ public class GuiScreenAICopilotOverlay extends GuiScreen {
 
 	public void updateScreen() {
 		super.updateScreen();
-		if (!AICopilotController.isActive()) mc.displayGuiScreen((GuiScreen) null);
+		if (!net.minecraft.client.ai.AICopilotAgent.isActive() && !AICopilotController.isActive()) mc.displayGuiScreen((GuiScreen) null);
 	}
 
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {

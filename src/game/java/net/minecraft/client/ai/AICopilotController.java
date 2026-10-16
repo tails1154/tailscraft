@@ -58,7 +58,11 @@ public final class AICopilotController {
 		if (player == null || world == null) { releaseKeys(); return; }
 		if (looking) {
 			releaseKeys(); player.rotationYaw += 6.0F; player.prevRotationYaw = player.rotationYaw;
-			if (++lookTicks >= 60) stop();
+			if (++lookTicks >= 60) {
+				looking = false;
+				if (script != null) { ++scriptIndex; phase = 0; status = "Finished looking around"; }
+				else stop();
+			}
 			return;
 		}
 		if (script != null && phase == 0) prepareScriptStep(world, player);
@@ -91,6 +95,8 @@ public final class AICopilotController {
 			targetForBlock(world, objective); phase = 1; status = "Pathfinding to " + step.argument;
 		} else if (step.type == AICraftScriptLangPlus.Type.EXPLORE) {
 			chooseExplore(player); phase = 1; status = "Exploring";
+		} else if (step.type == AICraftScriptLangPlus.Type.LOOK_AROUND) {
+			looking = true; lookTicks = 0; status = "Looking around";
 		} else if (step.type == AICraftScriptLangPlus.Type.SELECT_ITEM) {
 			if (!selectHotbarItem(player, step.argument)) {
 				status = "Could not find " + step.argument + " in the hotbar";

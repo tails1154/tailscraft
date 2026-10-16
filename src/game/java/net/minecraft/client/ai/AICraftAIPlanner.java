@@ -14,7 +14,7 @@ public final class AICraftAIPlanner {
 
 	public static void plan(String request, String context, Consumer<String> callback) {
 		String prompt = "You are the TailsCraft command planner. Return ONLY one AICraftScriptLangPlus script, no prose. "
-				+ "Allowed syntax: SELECT_ITEM item_name; FIND_BLOCK block_name; IF FAIL: EXPLORE until FIND_BLOCK block_name; MINE block_name; STOP. "
+				+ "Allowed syntax: LOOK_AROUND; SELECT_ITEM item_name; FIND_BLOCK block_name; IF FAIL: EXPLORE until FIND_BLOCK block_name; MINE block_name; STOP. "
 				+ "SELECT_ITEM may only choose an item already present in the player's hotbar. Do not output commands for chat, combat, containers, crafting, or block placement. "
 				+ "User request: " + request + " Context: " + context;
 		try {
@@ -31,7 +31,7 @@ public final class AICraftAIPlanner {
 	private static String fallback(String request) {
 		String lower = request == null ? "" : request.toLowerCase();
 		if (lower.indexOf("diamond") >= 0) return "SELECT_ITEM pickaxe;FIND_BLOCK diamond_ore;IF FAIL: EXPLORE until FIND_BLOCK diamond_ore;MINE diamond_ore;STOP";
-		if (lower.indexOf("look") >= 0 || lower.indexOf("look around") >= 0) return "EXPLORE;STOP";
+		if (lower.indexOf("look") >= 0) return "LOOK_AROUND;STOP";
 		return "STOP";
 	}
 }
