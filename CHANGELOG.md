@@ -8,6 +8,7 @@
 ## Baritone command client
 - Removed the remote AI planner and AICraftScriptLangPlus execution path.
 - Added Baritone-style `#goto`, `#mine`, and `#stop` commands handled locally by the client.
+- Ported Baritone v1.2.19's basic `Goal`, block-goal, XZ-goal, and heuristic contract into the WASM path search.
 - Removed the AI Copilot pause-menu UI and overlay.
 - Added an opt-in AI Copilot panel with bounded block-grid pathfinding to XYZ targets.
 - Added a look-around action; the copilot cannot chat, attack, place blocks, use inventory, or interact with containers.

@@ -16,12 +16,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 /**
- * Bounded Baritone-style A* movement search adapted for TailsCraft 1.12.2.
+ * Bounded A* search using the ported Baritone 1.12.2 goal contract.
  *
  * This is an independent compatibility implementation based on the movement
- * and cost-search concepts in Baritone, not a binary copy of its newer
- * Minecraft implementation. Baritone attribution and LGPL-3.0 notice are in
- * the TailsCraft credits and third-party notices.
+ * The movement world adapter is TailsCraft-specific because the original
+ * Forge/mixin runtime cannot run in TeaVM. Baritone attribution and LGPL-3.0
+ * notice are in the TailsCraft credits and third-party notices.
  */
 public final class BaritonePathfinder {
 	private static final int MAX_NODES = 4096;
@@ -30,10 +30,14 @@ public final class BaritonePathfinder {
 	private BaritonePathfinder() { }
 
 	public static List<BlockPos> findPath(World world, BlockPos start, BlockPos target) {
-		if (world == null || start == null || target == null) return Collections.emptyList();
+		return findPath(world, start, new BaritoneGoal.Block(target.getX(), target.getY(), target.getZ()));
+	}
+
+	public static List<BlockPos> findPath(World world, BlockPos start, BaritoneGoal goal) {
+		if (world == null || start == null || goal == null) return Collections.emptyList();
 		Node origin = new Node(start.getX(), start.getY(), start.getZ());
 		origin.g = 0.0D;
-		origin.f = heuristic(origin, target);
+		origin.f = goal.heuristic(origin.x, origin.y, origin.z);
 		PriorityQueue<Node> open = new PriorityQueue<Node>(Comparator.comparingDouble(node -> node.f));
 		Map<Long, Node> known = new HashMap<Long, Node>();
 		Set<Long> closed = new HashSet<Long>();
@@ -43,7 +47,7 @@ public final class BaritonePathfinder {
 		while (!open.isEmpty() && expanded++ < MAX_NODES) {
 			Node current = open.poll();
 			if (!closed.add(current.key())) continue;
-			if (Math.abs(current.x - target.getX()) <= 1 && Math.abs(current.y - target.getY()) <= 1 && Math.abs(current.z - target.getZ()) <= 1) {
+			if (goal.isInGoal(current.x, current.y, current.z)) {
 				return buildPath(current);
 			}
 			for (int dx = -1; dx <= 1; ++dx) for (int dz = -1; dz <= 1; ++dz) {
@@ -69,7 +73,7 @@ public final class BaritonePathfinder {
 					if (tentative < next.g) {
 						next.parent = current;
 						next.g = tentative;
-						next.f = tentative + heuristic(next, target);
+						next.f = tentative + goal.heuristic(next.x, next.y, next.z);
 						open.add(next);
 					}
 				}
@@ -94,10 +98,6 @@ public final class BaritonePathfinder {
 		return feet == Blocks.FIRE || feet == Blocks.LAVA || feet == Blocks.FLOWING_LAVA
 				|| support == Blocks.FIRE || support == Blocks.LAVA || support == Blocks.FLOWING_LAVA
 				|| support == Blocks.CACTUS;
-	}
-
-	private static double heuristic(Node node, BlockPos target) {
-		return Math.abs(node.x - target.getX()) + Math.abs(node.y - target.getY()) + Math.abs(node.z - target.getZ());
 	}
 
 	private static List<BlockPos> buildPath(Node end) {
