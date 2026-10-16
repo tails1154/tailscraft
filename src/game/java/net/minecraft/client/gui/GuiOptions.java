@@ -22,7 +22,7 @@ import net.minecraft.world.EnumDifficulty;
 
 public class GuiOptions extends GuiScreen {
 	private static final GameSettings.Options[] SCREEN_OPTIONS = new GameSettings.Options[] {
-			GameSettings.Options.FOV, GameSettings.Options.LIGHTING_BYPASS };
+			GameSettings.Options.FOV };
 	private final GuiScreen lastScreen;
 
 	/** Reference to the GameSettings object. */
