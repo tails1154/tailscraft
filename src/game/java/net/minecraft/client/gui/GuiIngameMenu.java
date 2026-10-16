@@ -48,6 +48,7 @@ public class GuiIngameMenu extends GuiScreen {
 		this.buttonList.add(new GuiButtonWithStupidIcons(4, this.width / 2 - 100, this.height / 4 + 24 + -16, I18n.format("menu.returnToGame"), PauseMenuCustomizeState.icon_backToGame_L,
 				PauseMenuCustomizeState.icon_backToGame_L_aspect, PauseMenuCustomizeState.icon_backToGame_R,
 				PauseMenuCustomizeState.icon_backToGame_R_aspect));
+		this.buttonList.add(new GuiButton(10, this.width / 2 + 2, this.height / 4 + 24 + -16, 98, 20, "CCTV"));
 		
 		this.buttonList.add(new GuiButtonWithStupidIcons(0, this.width / 2 - 100, this.height / 4 + 96 + -16, 98, 20,
 				I18n.format("menu.options"), PauseMenuCustomizeState.icon_options_L,
@@ -118,6 +119,9 @@ public class GuiIngameMenu extends GuiScreen {
 		case 4:
 			this.mc.displayGuiScreen((GuiScreen) null);
 			this.mc.setIngameFocus();
+			break;
+		case 10:
+			this.mc.displayGuiScreen(new GuiScreenCCTV(this));
 			break;
 
 		case 5:
