@@ -42,6 +42,7 @@ public final class BaritoneController {
 	private static BlockPos gotoTarget;
 	private static Goal pathGoal;
 	private static List<BlockPos> path = Collections.emptyList();
+	private static BaritonePathfinder.Search pathSearch;
 	private static int recalc;
 	private static String status = "Stopped";
 	/* Baritone 1.2.19 defaults both traversal settings to enabled. */
@@ -127,13 +128,13 @@ public final class BaritoneController {
 		active = true; mining = false; goingToBlock = false; gotoBlock = null; gotoTarget = null; mineBlock = null; mineBlocks = Collections.emptyList(); mineTarget = null; mineLimit = 0;
 		resetSearch();
 		targetX = x; targetY = y; targetZ = z; pathGoal = xzOnly ? new GoalXZ(x, z) : new GoalBlock(x, y, z);
-		path = Collections.emptyList(); recalc = 0;
+		path = Collections.emptyList(); pathSearch = null; recalc = 10;
 		status = "Going to " + x + " " + y + " " + z;
 		message("Baritone: " + status);
 	}
 
 	private static void startGotoBlock(Block block) {
-		active = true; mining = false; goingToBlock = true; gotoBlock = block; gotoTarget = null; mineBlock = null; mineBlocks = Collections.emptyList(); mineTarget = null; mineLimit = 0; pathGoal = null; path = Collections.emptyList(); recalc = 0;
+		active = true; mining = false; goingToBlock = true; gotoBlock = block; gotoTarget = null; mineBlock = null; mineBlocks = Collections.emptyList(); mineTarget = null; mineLimit = 0; pathGoal = null; path = Collections.emptyList(); pathSearch = null; recalc = 10;
 		searchBlocks = Collections.singletonList(block);
 		resetSearch();
 		status = "Searching for " + blockName(block);
@@ -141,7 +142,7 @@ public final class BaritoneController {
 	}
 
 	private static void startMine(List<Block> blocks, int limit) {
-		active = true; mining = true; goingToBlock = false; gotoBlock = null; gotoTarget = null; mineBlock = null; mineBlocks = blocks; mineTarget = null; mineLimit = limit; pathGoal = null; path = Collections.emptyList(); recalc = 0;
+		active = true; mining = true; goingToBlock = false; gotoBlock = null; gotoTarget = null; mineBlock = null; mineBlocks = blocks; mineTarget = null; mineLimit = limit; pathGoal = null; path = Collections.emptyList(); pathSearch = null; recalc = 10;
 		searchBlocks = blocks;
 		resetSearch();
 		status = "Searching for " + blockNames(blocks);
@@ -169,7 +170,7 @@ public final class BaritoneController {
 					return;
 				}
 				targetForBlock(world, mineTarget);
-				path = Collections.emptyList(); recalc = 0; status = "Going to " + blockName(mineBlock);
+				path = Collections.emptyList(); pathSearch = null; recalc = 10; status = "Going to " + blockName(mineBlock);
 			}
 			if (!nearTarget(player)) { moveTo(mc, player, world); return; }
 			faceAndMine(mc, player, mineTarget);
@@ -186,7 +187,7 @@ public final class BaritoneController {
 					return;
 				}
 				targetForBlock(world, gotoTarget);
-				path = Collections.emptyList(); recalc = 0; status = "Going to " + blockName(gotoBlock);
+				path = Collections.emptyList(); pathSearch = null; recalc = 10; status = "Going to " + blockName(gotoBlock);
 			}
 			if (nearTarget(player)) { stop(); message("Baritone: destination reached"); return; }
 			moveTo(mc, player, world);
@@ -197,13 +198,23 @@ public final class BaritoneController {
 	}
 
 	private static void moveTo(Minecraft mc, EntityPlayerSP player, World world) {
-		if (++recalc >= 10 || path.isEmpty()) {
+		if (pathSearch == null && path.isEmpty() && recalc >= 10) {
 			if (pathGoal == null) pathGoal = new GoalBlock(targetX, targetY, targetZ);
-			path = BaritonePathfinder.findPath(world, new BlockPos(player), pathGoal, allowBreak, allowPlace);
+			pathSearch = BaritonePathfinder.createSearch(world, new BlockPos(player), pathGoal, allowBreak, allowPlace);
 			recalc = 0;
 		}
+		if (pathSearch != null && !pathSearch.isDone()) {
+			pathSearch.step(128);
+			status = "Calculating path (" + pathSearch.getExpanded() + " nodes)";
+			releaseMovement(mc);
+			return;
+		}
+		if (pathSearch != null && pathSearch.isDone()) {
+			path = pathSearch.getPath();
+			pathSearch = null;
+		}
 		while (!path.isEmpty() && isNear(player, path.get(0))) path.remove(0);
-		if (path.isEmpty() && !nearTarget(player)) { status = "No path found"; releaseKeys(mc); return; }
+		if (path.isEmpty() && !nearTarget(player)) { status = "No path found"; releaseKeys(mc); ++recalc; return; }
 		BlockPos next = path.isEmpty() ? new BlockPos(targetX, targetY, targetZ) : path.get(0);
 		if (handleObstacle(mc, player, world, next)) return;
 		float yaw = (float)(Math.atan2(-(next.getX() + 0.5D - player.posX), next.getZ() + 0.5D - player.posZ) * 180.0D / Math.PI);
@@ -249,6 +260,7 @@ public final class BaritoneController {
 		}
 		targetX = block.getX(); targetY = block.getY(); targetZ = block.getZ();
 		pathGoal = new GoalBlock(targetX, targetY, targetZ);
+		pathSearch = null;
 	}
 
 	private static BlockPos findBlock(World world, EntityPlayerSP player) {
@@ -311,7 +323,7 @@ public final class BaritoneController {
 		return origin + Integer.parseInt(value.substring(1));
 	}
 	public static String getStatus() { return status; }
-	public static void stop() { active = false; mining = false; goingToBlock = false; mineBlocks = Collections.emptyList(); searchBlocks = Collections.emptyList(); path = Collections.emptyList(); pathGoal = null; mineTarget = null; gotoTarget = null; gotoBlock = null; mineLimit = 0; resetSearch(); releaseKeys(Minecraft.getMinecraft()); status = "Stopped"; }
+	public static void stop() { active = false; mining = false; goingToBlock = false; mineBlocks = Collections.emptyList(); searchBlocks = Collections.emptyList(); path = Collections.emptyList(); pathSearch = null; pathGoal = null; mineTarget = null; gotoTarget = null; gotoBlock = null; mineLimit = 0; resetSearch(); releaseKeys(Minecraft.getMinecraft()); status = "Stopped"; }
 	private static void releaseKeys(Minecraft mc) { if (mc == null) return; KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false); }
 	private static void message(String text) { Minecraft mc = Minecraft.getMinecraft(); if (mc != null && mc.ingameGUI != null) mc.ingameGUI.getChatGUI().printChatMessage(new net.minecraft.util.text.TextComponentString(text)); }
 }

@@ -39,55 +39,14 @@ public final class BaritonePathfinder {
 	}
 
 	public static List<BlockPos> findPath(World world, BlockPos start, Goal goal, boolean allowBreak, boolean allowPlace) {
-		if (world == null || start == null || goal == null) return Collections.emptyList();
-		Node origin = new Node(start.getX(), start.getY(), start.getZ());
-		origin.g = 0.0D;
-		origin.f = goal.heuristic(origin.x, origin.y, origin.z);
-		PriorityQueue<Node> open = new PriorityQueue<Node>(Comparator.comparingDouble(node -> node.f));
-		Map<Long, Node> known = new HashMap<Long, Node>();
-		Set<Long> closed = new HashSet<Long>();
-		open.add(origin);
-		known.put(origin.key(), origin);
-		int expanded = 0;
-		while (!open.isEmpty() && expanded++ < MAX_NODES) {
-			Node current = open.poll();
-			if (!closed.add(current.key())) continue;
-			if (goal.isInGoal(current.x, current.y, current.z)) {
-				return buildPath(current);
-			}
-			for (int dx = -1; dx <= 1; ++dx) for (int dz = -1; dz <= 1; ++dz) {
-				if (dx == 0 && dz == 0) continue;
-				boolean diagonal = dx != 0 && dz != 0;
-				if (diagonal && (!canStand(world, current.x + dx, current.y, current.z, allowBreak, allowPlace) || !canStand(world, current.x, current.y, current.z + dz, allowBreak, allowPlace))) continue;
-				for (int dy = 1; dy >= -3; --dy) {
-					int nx = current.x + dx, ny = current.y + dy, nz = current.z + dz;
-					if (Math.abs(nx - start.getX()) > HORIZONTAL_RADIUS || Math.abs(nz - start.getZ()) > HORIZONTAL_RADIUS) continue;
-					if (!isLoaded(world, nx, nz) || !canStand(world, nx, ny, nz, allowBreak, allowPlace)) continue;
-					if (dy > 0 && !canStand(world, nx, current.y, nz, allowBreak, allowPlace)) continue;
-					if (isHazard(world, nx, ny, nz)) continue;
-					long key = key(nx, ny, nz);
-					if (closed.contains(key)) continue;
-					Node next = known.get(key);
-					double moveCost = (diagonal ? Math.sqrt(2.0D) : 1.0D) * BaritoneActionCosts.WALK_ONE_BLOCK_COST;
-					if (dy > 0) moveCost += BaritoneActionCosts.JUMP_ONE_BLOCK_COST;
-					if (dy < 0) moveCost += BaritoneActionCosts.fallCost(-dy) + BaritoneActionCosts.CENTER_AFTER_FALL_COST;
-					if (allowBreak) moveCost += breakCost(world, nx, ny, nz);
-					if (allowPlace && world.isAirBlock(new BlockPos(nx, ny - 1, nz))) moveCost += BaritoneActionCosts.PLACE_ONE_BLOCK_COST;
-					double tentative = current.g + moveCost;
-					if (next == null) {
-						next = new Node(nx, ny, nz);
-						known.put(key, next);
-					}
-					if (tentative < next.g) {
-						next.parent = current;
-						next.g = tentative;
-						next.f = tentative + goal.heuristic(next.x, next.y, next.z);
-						open.add(next);
-					}
-				}
-			}
-		}
-		return Collections.emptyList();
+		Search search = createSearch(world, start, goal, allowBreak, allowPlace);
+		if (search == null) return Collections.emptyList();
+		while (!search.isDone()) search.step(MAX_NODES);
+		return search.getPath();
+	}
+
+	public static Search createSearch(World world, BlockPos start, Goal goal, boolean allowBreak, boolean allowPlace) {
+		return world == null || start == null || goal == null ? null : new Search(world, start, goal, allowBreak, allowPlace);
 	}
 
 	private static boolean isLoaded(World world, int x, int z) {
@@ -129,5 +88,70 @@ public final class BaritonePathfinder {
 		Node parent;
 		Node(int x, int y, int z) { this.x = x; this.y = y; this.z = z; }
 		long key() { return BaritonePathfinder.key(x, y, z); }
+	}
+
+	/** Incremental A* search so path calculation does not block the client tick. */
+	public static final class Search {
+		private final World world;
+		private final BlockPos start;
+		private final Goal goal;
+		private final boolean allowBreak, allowPlace;
+		private final PriorityQueue<Node> open = new PriorityQueue<Node>(Comparator.comparingDouble(node -> node.f));
+		private final Map<Long, Node> known = new HashMap<Long, Node>();
+		private final Set<Long> closed = new HashSet<Long>();
+		private List<BlockPos> path = Collections.emptyList();
+		private int expanded;
+		private boolean done;
+
+		private Search(World world, BlockPos start, Goal goal, boolean allowBreak, boolean allowPlace) {
+			this.world = world; this.start = start; this.goal = goal;
+			this.allowBreak = allowBreak; this.allowPlace = allowPlace;
+			Node origin = new Node(start.getX(), start.getY(), start.getZ());
+			origin.g = 0.0D; origin.f = goal.heuristic(origin.x, origin.y, origin.z);
+			open.add(origin); known.put(origin.key(), origin);
+		}
+
+		public boolean isDone() { return done; }
+		public int getExpanded() { return expanded; }
+		public List<BlockPos> getPath() { return path; }
+
+		public void step(int budget) {
+			if (done) return;
+			int remaining = Math.max(1, budget);
+			while (!open.isEmpty() && remaining-- > 0 && expanded++ < MAX_NODES) {
+				Node current = open.poll();
+				if (!closed.add(current.key())) continue;
+				if (goal.isInGoal(current.x, current.y, current.z)) {
+					path = buildPath(current); done = true; return;
+				}
+				for (int dx = -1; dx <= 1; ++dx) for (int dz = -1; dz <= 1; ++dz) {
+					if (dx == 0 && dz == 0) continue;
+					boolean diagonal = dx != 0 && dz != 0;
+					if (diagonal && (!canStand(world, current.x + dx, current.y, current.z, allowBreak, allowPlace) || !canStand(world, current.x, current.y, current.z + dz, allowBreak, allowPlace))) continue;
+					for (int dy = 1; dy >= -3; --dy) {
+						int nx = current.x + dx, ny = current.y + dy, nz = current.z + dz;
+						if (Math.abs(nx - start.getX()) > HORIZONTAL_RADIUS || Math.abs(nz - start.getZ()) > HORIZONTAL_RADIUS) continue;
+						if (!isLoaded(world, nx, nz) || !canStand(world, nx, ny, nz, allowBreak, allowPlace)) continue;
+						if (dy > 0 && !canStand(world, nx, current.y, nz, allowBreak, allowPlace)) continue;
+						if (isHazard(world, nx, ny, nz)) continue;
+						long key = key(nx, ny, nz);
+						if (closed.contains(key)) continue;
+						Node next = known.get(key);
+						double moveCost = (diagonal ? Math.sqrt(2.0D) : 1.0D) * BaritoneActionCosts.WALK_ONE_BLOCK_COST;
+						if (dy > 0) moveCost += BaritoneActionCosts.JUMP_ONE_BLOCK_COST;
+						if (dy < 0) moveCost += BaritoneActionCosts.fallCost(-dy) + BaritoneActionCosts.CENTER_AFTER_FALL_COST;
+						if (allowBreak) moveCost += breakCost(world, nx, ny, nz);
+						if (allowPlace && world.isAirBlock(new BlockPos(nx, ny - 1, nz))) moveCost += BaritoneActionCosts.PLACE_ONE_BLOCK_COST;
+						double tentative = current.g + moveCost;
+						if (next == null) { next = new Node(nx, ny, nz); known.put(key, next); }
+						if (tentative < next.g) {
+							next.parent = current; next.g = tentative;
+							next.f = tentative + goal.heuristic(next.x, next.y, next.z); open.add(next);
+						}
+					}
+				}
+			}
+			if (open.isEmpty() || expanded >= MAX_NODES) { path = Collections.emptyList(); done = true; }
+		}
 	}
 }
