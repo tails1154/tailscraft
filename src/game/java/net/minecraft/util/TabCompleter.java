@@ -52,6 +52,10 @@ public abstract class TabCompleter {
 			List<String> cached = this.getCachedCompletions(s);
 			if (cached != null) {
 				this.completions.addAll(cached);
+				if ("/".equals(s)) {
+					this.popupVisible = !this.completions.isEmpty();
+					return;
+				}
 			} else {
 				this.requestCompletions(s);
 			}
