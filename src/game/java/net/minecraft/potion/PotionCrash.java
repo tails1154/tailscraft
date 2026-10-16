@@ -1,7 +1,5 @@
 package net.minecraft.potion;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -38,10 +36,8 @@ public class PotionCrash extends Potion {
 		}
 		if (!entity.world.isRemote) {
 			server.saveAllWorlds(true);
-		} else if (entity == Minecraft.getMinecraft().player && Minecraft.getMinecraft().isSingleplayer()) {
-			Minecraft.getMinecraft().crashed(CrashReport.makeCrashReport(
-					new RuntimeException("Potion of Crashing activated after saving the world"),
-					"Drank a Potion of Crashing"));
+		} else if (entity.world.isRemote) {
+			throw new RuntimeException("undefined function: TailsCraftCrash");
 		}
 	}
 }
