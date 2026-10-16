@@ -64,7 +64,6 @@ import net.minecraft.client.renderer.debug.DebugRendererNeighborsUpdate;
 import net.minecraft.client.renderer.debug.DebugRendererPathfinding;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.GameSettings;
-import net.minecraft.client.cameras.SecurityCameraClient;
 import net.minecraft.client.util.RecipeBookClient;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -875,7 +874,6 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * reason for termination
 	 */
 	public void onDisconnect(ITextComponent reason) {
-		SecurityCameraClient.stop();
 		authMeLoginPending = false;
 		Minecraft.getMinecraft().getRenderManager().setEnableFNAWSkins(this.gameController.gameSettings.enableFNAWSkins);
 		if (this.gameController.world != null) {
@@ -1783,9 +1781,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	 * the identifier of the default server resourcepack for the client to load.
 	 */
 	public void handleCustomPayload(SPacketCustomPayload packetIn) {
-		if ("TC|Cameras".equals(packetIn.getChannelName())) {
-			try { SecurityCameraClient.handlePacket(packetIn.getBufferData()); } catch (IOException ignored) { }
-		} else if (EXTENDED_CHUNK_CHANNEL.equals(packetIn.getChannelName())) {
+		if (EXTENDED_CHUNK_CHANNEL.equals(packetIn.getChannelName())) {
 			handleExtendedChunk(packetIn.getBufferData());
 		} else if ("MC|TrList".equals(packetIn.getChannelName())) {
 			PacketBuffer packetbuffer = packetIn.getBufferData();
