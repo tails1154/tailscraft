@@ -59,6 +59,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	private TextureList textureList;
 	private GuiTextField packName;
 	private GuiTextField hexColor;
+	private GuiTextField textureSearch;
 	private ImageData image;
 	private String selectedPath;
 	private int selectedColor = PALETTE[0];
@@ -84,6 +85,8 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		packName.setText("My TailsCraft Pack");
 		hexColor = new GuiTextField(21, fontRendererObj, width / 2 + 80, 8, 92, 20);
 		hexColor.setText(formatHex(selectedColor));
+		textureSearch = new GuiTextField(22, fontRendererObj, 80, height - 28, 130, 20);
+		textureSearch.setText("");
 		buttonList.add(new GuiButton(107, 8, 8, 80, 20, "Save project"));
 		buttonList.add(new GuiButton(108, 92, 8, 80, 20, "Load project"));
 		buttonList.add(new GuiButton(9, 176, 8, 80, 20, "New texture"));
@@ -119,7 +122,19 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	}
 
 	void selectTexture(int index) {
-		if (index >= 0 && index < entries.size()) loadTexture(entries.get(index).path);
+		TextureEntry entry = getVisibleEntry(index);
+		if (entry != null) loadTexture(entry.path);
+	}
+
+	private boolean matchesSearch(TextureEntry entry) {
+		String query = textureSearch == null ? "" : textureSearch.getText().trim().toLowerCase();
+		return query.length() == 0 || entry.path.toLowerCase().contains(query);
+	}
+
+	private TextureEntry getVisibleEntry(int index) {
+		int visible = 0;
+		for (TextureEntry entry : entries) if (matchesSearch(entry) && visible++ == index) return entry;
+		return null;
 	}
 
 	private void createTexture(boolean duplicate) {
@@ -467,6 +482,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 		packName.mouseClicked(mouseX, mouseY, mouseButton);
 		hexColor.mouseClicked(mouseX, mouseY, mouseButton);
+		textureSearch.mouseClicked(mouseX, mouseY, mouseButton);
 		if ((mouseButton == 0 || mouseButton == 1) && isOnCanvas(mouseX, mouseY)) {
 			recordUndo(); paintGesture = true;
 			gestureX = (mouseX - canvasX) / canvasScale;
@@ -480,6 +496,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
 		if (packName.textboxKeyTyped(typedChar, keyCode)) return;
 		if (hexColor.textboxKeyTyped(typedChar, keyCode)) return;
+		if (textureSearch.textboxKeyTyped(typedChar, keyCode)) return;
 		super.keyTyped(typedChar, keyCode);
 	}
 	@Override
@@ -512,6 +529,8 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		drawCenteredString(fontRendererObj, "Texture Pack Creator 9000", width / 2, 2, 0xFFFFFF);
 		packName.drawTextBox();
 		hexColor.drawTextBox();
+		textureSearch.drawTextBox();
+		if (textureSearch.getText().length() == 0) drawString(fontRendererObj, "Search textures", 84, height - 23, 0x777777);
 		drawString(fontRendererObj, "Color", width / 2 + 80, 30, 0xAAAAAA);
 		drawString(fontRendererObj, "Texture: " + selectedPath, 224, 38, 0xCCCCCC);
 		drawString(fontRendererObj, "Tool: " + (tool == 0 ? "Pencil" : tool == 1 ? "Eraser" : tool == 2 ? "Fill" : tool == 3 ? "Picker" : tool == 4 ? "Line" : "Rectangle") + "  Brush: " + brushSize + "px", 224, height - 70, 0xAAAAAA);
@@ -561,12 +580,20 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	private static class TextureList extends GuiSlot {
 		private final GuiTexturePackCreator owner;
 		TextureList(GuiTexturePackCreator owner, Minecraft mc, int width, int height, int top, int bottom, int slotHeight) { super(mc, width, height, top, bottom, slotHeight); this.owner = owner; }
-		protected int getSize() { return owner.entries.size(); }
+		protected int getSize() {
+			int count = 0;
+			for (TextureEntry entry : owner.entries) if (owner.matchesSearch(entry)) ++count;
+			return count;
+		}
 		protected void elementClicked(int slot, boolean dbl, int x, int y) { owner.selectTexture(slot); }
-		protected boolean isSelected(int slot) { return owner.selectedPath.equals(owner.entries.get(slot).path); }
+		protected boolean isSelected(int slot) {
+			TextureEntry entry = owner.getVisibleEntry(slot);
+			return entry != null && owner.selectedPath.equals(entry.path);
+		}
 		protected void drawBackground() { owner.drawDefaultBackground(); }
 		protected void func_192637_a(int slot, int x, int y, int h, int mouseX, int mouseY, float partial) {
-			TextureEntry entry = owner.entries.get(slot);
+			TextureEntry entry = owner.getVisibleEntry(slot);
+			if (entry == null) return;
 			ImageData preview = owner.getPreview(entry);
 			if (preview != null) {
 				int thumbWidth = Math.min(16, preview.width), thumbHeight = Math.min(16, preview.height);
