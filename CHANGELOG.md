@@ -6,6 +6,7 @@
 - Ported Baritone v1.2.19's basic `Goal`, block-goal, XZ-goal, and heuristic contract into the WASM path search.
 - Ported Baritone v1.2.19 movement-cost constants for walking, jumping, and falling.
 - Added `~` relative coordinates, multiple `#mine` targets, bare block-name/numeric-ID resolution, and local `#set allowBreak`/`#set allowPlace` controls.
+- Matched Baritone 1.2.19's default traversal behavior: breaking and placing are enabled unless disabled with `#set allowBreak false` or `#set allowPlace false`.
 - Added automatic bounded retries for failed server handshakes, with Cancel still available and a clear retry count.
 - Increased handshake retry tolerance to 1000 attempts with a five-second maximum delay between attempts for unreliable servers.
 - Added paged in-game credits and third-party notices, including Baritone LGPL attribution.

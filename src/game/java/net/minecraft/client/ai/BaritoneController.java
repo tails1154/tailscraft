@@ -36,8 +36,9 @@ public final class BaritoneController {
 	private static List<BlockPos> path = Collections.emptyList();
 	private static int recalc;
 	private static String status = "Stopped";
-	private static boolean allowBreak;
-	private static boolean allowPlace;
+	/* Baritone 1.2.19 defaults both traversal settings to enabled. */
+	private static boolean allowBreak = true;
+	private static boolean allowPlace = true;
 
 	private BaritoneController() { }
 
@@ -83,7 +84,7 @@ public final class BaritoneController {
 			startMine(blocks);
 			return true;
 		}
-		message("Baritone commands: #goto <x> [y] <z>, #mine <block>, #stop");
+		message("Baritone commands: #goto <x> [y] <z>, #mine <block> [block ...], #set allowBreak|allowPlace true|false, #stop");
 		return true;
 	}
 
@@ -124,7 +125,7 @@ public final class BaritoneController {
 	private static void moveTo(Minecraft mc, EntityPlayerSP player, World world) {
 		if (++recalc >= 10 || path.isEmpty()) {
 			if (pathGoal == null) pathGoal = new BaritoneGoal.Block(targetX, targetY, targetZ);
-				path = BaritonePathfinder.findPath(world, new BlockPos(player), pathGoal, allowBreak, allowPlace);
+			path = BaritonePathfinder.findPath(world, new BlockPos(player), pathGoal, allowBreak, allowPlace);
 			recalc = 0;
 		}
 		while (!path.isEmpty() && isNear(player, path.get(0))) path.remove(0);
