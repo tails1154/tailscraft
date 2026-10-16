@@ -154,13 +154,14 @@ public final class BaritoneController {
 		World world = mc.world;
 		if (player == null || world == null) { releaseKeys(mc); return; }
 		if (mining) {
-			if (mineTarget == null || world.getBlockState(mineTarget).getBlock() != mineBlock) {
-				if (mineTarget != null && mineLimit > 0 && world.getBlockState(mineTarget).getBlock() != mineBlock && --mineLimit == 0) {
+			boolean targetChanged = mineTarget != null && world.getBlockState(mineTarget).getBlock() != mineBlock;
+			if (mineTarget == null || targetChanged) {
+				if (targetChanged && mineLimit > 0 && --mineLimit == 0) {
 					stop();
 					message("Baritone: mining quota reached");
 					return;
 				}
-				resetSearch();
+				if (targetChanged) resetSearch();
 				mineTarget = findBlock(world, player);
 				if (mineTarget == null) {
 					status = searchFinished ? "No loaded target blocks found" : "Searching for " + blockNames(mineBlocks);
@@ -175,8 +176,9 @@ public final class BaritoneController {
 			return;
 		}
 		if (goingToBlock) {
-			if (gotoTarget == null || world.getBlockState(gotoTarget).getBlock() != gotoBlock) {
-				resetSearch();
+			boolean targetChanged = gotoTarget != null && world.getBlockState(gotoTarget).getBlock() != gotoBlock;
+			if (gotoTarget == null || targetChanged) {
+				if (targetChanged) resetSearch();
 				gotoTarget = findBlock(world, player);
 				if (gotoTarget == null) {
 					status = searchFinished ? "No loaded target blocks found" : "Searching for " + blockName(gotoBlock);
