@@ -22,8 +22,8 @@ public class GuiScreenTailsConnectFriends extends GuiScreen {
 		TailsConnectFriends.open(); page = Math.min(page, maxPage()); buttonList.clear();
 		int left = width / 2 - 150;
 		friendName = new GuiTextField(0, fontRendererObj, left + 112, 72, 96, 20); friendName.setMaxStringLength(24);
-		buttonList.add(new GuiButton(10, left, 48, 146, 20, "Requests"));
-		buttonList.add(new GuiButton(11, left + 154, 48, 146, 20, "Friends"));
+		buttonList.add(new GuiTab(10, left, 48, 146, "Requests", showingRequests));
+		buttonList.add(new GuiTab(11, left + 154, 48, 146, "Friends", !showingRequests));
 		buttonList.add(new GuiButton(1, left + 216, 72, 84, 20, "Add Friend"));
 		JSONArray entries = displayed();
 		for (int row = 0; row < pageSize(); row++) {
