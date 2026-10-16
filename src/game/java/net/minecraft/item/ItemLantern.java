@@ -6,10 +6,23 @@ import net.minecraft.util.NonNullList;
 
 /** Client-side item representation for lantern stacks sent by the 1.12 server. */
 public class ItemLantern extends ItemBlock {
+	private final String tailsCraftName;
+
 	public ItemLantern(Block block, String name) {
 		super(block);
+		tailsCraftName = name;
 		setUnlocalizedName(name);
 		setCreativeTab(CreativeTabs.DECORATIONS);
+	}
+
+	@Override
+	public String getUnlocalizedName() {
+		return "item." + tailsCraftName;
+	}
+
+	@Override
+	public String getUnlocalizedName(ItemStack stack) {
+		return getUnlocalizedName();
 	}
 
 	@Override
