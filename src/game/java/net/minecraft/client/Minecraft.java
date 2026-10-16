@@ -156,6 +156,7 @@ import net.minecraft.util.FrameTimer;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.MinecraftError;
 import net.lax1dude.eaglercraft.tailsconnect.TailsConnectFriends;
+import net.lax1dude.eaglercraft.replay.ReplayManager;
 import net.minecraft.util.MouseHelper;
 import net.minecraft.util.MovementInputFromOptions;
 import net.minecraft.util.NonNullList;
@@ -1306,6 +1307,7 @@ public class Minecraft implements IThreadListener {
 	 */
 	public void runTick() throws IOException {
 		TailsConnectFriends.update();
+		ReplayManager.tick(this);
 		if (this.rightClickDelayTimer > 0) {
 			--this.rightClickDelayTimer;
 		}

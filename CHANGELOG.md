@@ -11,9 +11,8 @@ for context and are not part of the current client.
 - Added TC4 friends and presence: friend cards, requests, online presence,
   join requests, approval dialogs, join progress, and automatic friends-service
   connection.
-- Added TC5 hosted-world flow backed by the headless integrated server daemon:
-  world selection, paged world cards, upload progress, direct hosting, clean
-  shutdown, reliable world channels/VFS, and EPW world export.
+- Added local singleplayer replay mode with pause-menu controls for recording,
+  stopping, and replaying the player camera.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved
@@ -42,6 +41,8 @@ for context and are not part of the current client.
 - Removed the spear/grappling-hook experiment and its orphaned registrations.
 - Removed the offensive splash text.
 - Removed world transfer after it caused client crashes.
+- Removed the broken “Host as TC5 Cloud World” control from the TailsConnect
+  menu; normal TailsConnect world hosting remains available.
 - Voice chat work was abandoned after repeated browser/API and disconnect
   instability; it is not an active feature.
 

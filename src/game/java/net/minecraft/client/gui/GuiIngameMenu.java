@@ -6,6 +6,7 @@ import net.lax1dude.eaglercraft.PauseMenuCustomizeState;
 import net.lax1dude.eaglercraft.minecraft.GuiButtonWithStupidIcons;
 import net.lax1dude.eaglercraft.notifications.GuiButtonNotifBell;
 import net.lax1dude.eaglercraft.notifications.GuiScreenNotifications;
+import net.lax1dude.eaglercraft.replay.ReplayManager;
 import net.lax1dude.eaglercraft.opengl.GlStateManager;
 import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
 import net.lax1dude.eaglercraft.EagRuntime;
@@ -78,6 +79,13 @@ public class GuiIngameMenu extends GuiScreen {
 		if (PauseMenuCustomizeState.serverInfoMode != PauseMenuCustomizeState.DISCORD_MODE_NONE) {
 			this.buttonList.add(new GuiButtonWithStupidIcons(9, this.width / 2 - 100, this.height / 4 + 72 + (byte)-16,
 					PauseMenuCustomizeState.serverInfoButtonText, PauseMenuCustomizeState.icon_serverInfo_L,
+					PauseMenuCustomizeState.icon_serverInfo_L_aspect, PauseMenuCustomizeState.icon_serverInfo_R,
+					PauseMenuCustomizeState.icon_serverInfo_R_aspect));
+		}
+
+		if (this.mc.isSingleplayer()) {
+			this.buttonList.add(new GuiButtonWithStupidIcons(12, this.width / 2 + 2, this.height / 4 + 72 - 16, 98, 20,
+					ReplayManager.isPlaying() ? "Stop Replay" : "Replay Mode", PauseMenuCustomizeState.icon_serverInfo_L,
 					PauseMenuCustomizeState.icon_serverInfo_L_aspect, PauseMenuCustomizeState.icon_serverInfo_R,
 					PauseMenuCustomizeState.icon_serverInfo_R_aspect));
 		}
@@ -168,6 +176,13 @@ public class GuiIngameMenu extends GuiScreen {
 			break;
 		case 11:
 			this.mc.displayGuiScreen(new GuiScreenNotifications(this));
+			break;
+		case 12:
+			if (ReplayManager.isPlaying()) {
+				ReplayManager.stopPlayback();
+			} else {
+				this.mc.displayGuiScreen(new GuiScreenReplay(this));
+			}
 			break;
 		}
 	}

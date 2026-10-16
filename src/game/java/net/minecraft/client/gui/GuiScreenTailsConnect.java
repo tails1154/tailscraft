@@ -3,8 +3,6 @@ package net.minecraft.client.gui;
 import java.io.IOException;
 import java.util.Arrays;
 import net.lax1dude.eaglercraft.tailsconnect.TailsConnectClient;
-import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
-import net.lax1dude.eaglercraft.sp.gui.GuiScreenIntegratedServerStartup;
 import net.minecraft.client.resources.I18n;
 
 /** Clear, compact TailsConnect room setup screen. */
@@ -37,11 +35,10 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		buttonList.add(new GuiButton(6, left, top + 104, 146, 20, playerLabel()));
 		buttonList.add(new GuiButton(8, left + 154, top + 104, 146, 20, publicLabel()));
 		buttonList.add(new GuiButton(4, left, top + 128, 300, 20, "Host World"));
-		buttonList.add(new GuiButton(11, left, top + 152, 300, 20, "Host as TC5 Cloud World"));
-		buttonList.add(new GuiButton(3, left, top + 176, 300, 20, "Find Match"));
-		buttonList.add(new GuiButton(10, left, top + 200, 300, 20, "Friends"));
-		buttonList.add(new GuiButton(0, left, top + 230, 146, 20, I18n.format("menu.tailsConnect.back")));
-		buttonList.add(new GuiButton(5, left + 154, top + 230, 146, 20, "Stop / Cancel"));
+		buttonList.add(new GuiButton(3, left, top + 152, 300, 20, "Find Match"));
+		buttonList.add(new GuiButton(10, left, top + 176, 300, 20, "Friends"));
+		buttonList.add(new GuiButton(0, left, top + 206, 146, 20, I18n.format("menu.tailsConnect.back")));
+		buttonList.add(new GuiButton(5, left + 154, top + 206, 146, 20, "Stop / Cancel"));
 	}
 
 	private String playerLabel() { return "Players: " + (players == 0 ? "Infinite" : players); }
@@ -64,11 +61,6 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		else if (b.id == 7) openWorldSearch();
 		else if (b.id == 3) TailsConnectClient.matchmaking("ecraft", players);
 		else if (b.id == 4) TailsConnectClient.host("ecraft", players);
-		else if (b.id == 11) {
-			GuiScreen selector = new GuiTailsConnectWorldSelection(this, players);
-			if (SingleplayerServerController.isIntegratedServerWorkerStarted()) mc.displayGuiScreen(selector);
-			else mc.displayGuiScreen(new GuiScreenIntegratedServerStartup(selector));
-		}
 		else if (b.id == 6) {
 			players = players == 2 ? 3 : players == 3 ? 4 : players == 4 ? 0 : 2;
 			b.displayString = playerLabel();
@@ -84,7 +76,6 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		case 6: return "Click to choose 2, 3, 4, or unlimited players when hosting.";
 		case 8: return "Public worlds appear in search; private worlds use a code only.";
 		case 4: return "Start your singleplayer world and let others join it.";
-		case 11: return "Upload one verified copy to TC5 storage, then share it through TailsConnect.";
 		case 3: return "Wait in the background until players are matched.";
 		case 5: return "Cancel matchmaking or disconnect from the current world.";
 		case 10: return "Manage your TC4 friends and friend requests.";
@@ -105,7 +96,7 @@ public class GuiScreenTailsConnect extends GuiScreen {
 		drawString(fontRendererObj, "Host a world", left, top + 91, 0xFFFFFF);
 		String detail = TailsConnectClient.getError();
 		if (detail == null && TailsConnectClient.getRoomCode() != null) detail = "Room: " + TailsConnectClient.getRoomCode();
-		if (detail != null) drawCenteredString(fontRendererObj, fontRendererObj.trimStringToWidth(detail, width - 16), width / 2, height - 18, 0x55FF55);
+		if (detail != null) drawCenteredString(fontRendererObj, fontRendererObj.trimStringToWidth(detail, width - 16), width / 2, height - 12, 0x55FF55);
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		for (GuiButton button : buttonList) if (button.hovered) {
 			String tooltip = tooltipFor(button);
