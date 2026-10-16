@@ -1270,7 +1270,8 @@ public class Block {
 				.setHardness(0.2F).setSoundType(SoundType.WOOD).setUnlocalizedName("mushroom"));
 		registerBlock(100, "red_mushroom_block", (new BlockHugeMushroom(Material.WOOD, MapColor.RED, block4))
 				.setHardness(0.2F).setSoundType(SoundType.WOOD).setUnlocalizedName("mushroom"));
-		registerBlock(101, "iron_bars", (new BlockChain()).setSoundType(SoundType.METAL).setUnlocalizedName("chain"));
+		registerBlock(101, "iron_bars", (new BlockPane(Material.IRON, true)).setHardness(5.0F).setResistance(10.0F)
+				.setSoundType(SoundType.METAL).setUnlocalizedName("fenceIron"));
 		registerBlock(102, "glass_pane", (new BlockPane(Material.GLASS, false)).setHardness(0.3F)
 				.setSoundType(SoundType.GLASS).setUnlocalizedName("thinGlass"));
 		Block block9 = (new BlockMelon()).setHardness(1.0F).setSoundType(SoundType.WOOD).setUnlocalizedName("melon");
@@ -1414,9 +1415,7 @@ public class Block {
 						block1.getDefaultState().withProperty(BlockPlanks.VARIANT, BlockPlanks.EnumType.DARK_OAK)))
 						.setUnlocalizedName("stairsWoodDarkOak"));
 		registerBlock(165, "slime", (new BlockSlime()).setUnlocalizedName("slime").setSoundType(SoundType.SLIME));
-		// TailsCraft lanterns use the otherwise server-invisible barrier slot as a
-		// backwards-compatible wire representation on 1.12 servers.
-		registerBlock(166, "barrier", (new BlockLantern()).setUnlocalizedName("lantern"));
+		registerBlock(166, "barrier", (new BlockBarrier()).setUnlocalizedName("barrier"));
 		registerBlock(167, "iron_trapdoor", (new BlockTrapDoor(Material.IRON)).setHardness(5.0F)
 				.setSoundType(SoundType.METAL).setUnlocalizedName("ironTrapdoor").disableStats());
 		registerBlock(168, "prismarine", (new BlockPrismarine()).setHardness(1.5F).setResistance(10.0F)
@@ -1579,6 +1578,8 @@ public class Block {
 				.setUnlocalizedName("concrete"));
 		registerBlock(252, "concrete_powder", (new BlockConcretePowder()).setHardness(0.5F).setSoundType(SoundType.SAND)
 				.setUnlocalizedName("concretePowder"));
+		registerBlock(253, "lantern", (new BlockLantern()).setUnlocalizedName("lantern"));
+		registerBlock(254, "soul_lantern", (new BlockLantern()).setUnlocalizedName("soulLantern"));
 		registerBlock(255, "structure_block", (new BlockStructure()).setBlockUnbreakable().setResistance(6000000.0F)
 				.setUnlocalizedName("structureBlock"));
 		REGISTRY.validateKey();

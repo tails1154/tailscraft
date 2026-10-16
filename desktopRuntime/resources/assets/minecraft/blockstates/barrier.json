@@ -1,6 +1,5 @@
 {
   "variants": {
-    "soul=false": { "model": "lantern" },
-    "soul=true": { "model": "soul_lantern" }
+    "normal": { "model": "barrier" }
   }
 }

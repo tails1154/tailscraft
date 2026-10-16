@@ -5,6 +5,9 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,7 +19,18 @@ import org.bukkit.plugin.java.JavaPlugin;
  * while older clients still receive a legal vanilla block. The item name is
  * intentionally stable so the client can resolve it without a new protocol.
  */
-public final class TailsCraftLanternsPlugin extends JavaPlugin {
+public final class TailsCraftLanternsPlugin extends JavaPlugin implements Listener {
+    @Override public void onEnable() { getServer().getPluginManager().registerEvents(this, this); }
+
+    @EventHandler
+    public void onLanternPlace(BlockPlaceEvent event) {
+        ItemStack item = event.getItemInHand();
+        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) return;
+        String name = ChatColor.stripColor(item.getItemMeta().getDisplayName());
+        if ("Lantern".equalsIgnoreCase(name)) event.getBlockPlaced().setTypeIdAndData(253, (byte) 0, false);
+        else if ("Soul Lantern".equalsIgnoreCase(name)) event.getBlockPlaced().setTypeIdAndData(254, (byte) 0, false);
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!command.getName().equalsIgnoreCase("lantern") && !command.getName().equalsIgnoreCase("chain")) return false;

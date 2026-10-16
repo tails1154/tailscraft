@@ -294,6 +294,8 @@ public class Blocks {
 	public static final Block CONCRETE;
 	public static final Block CONCRETE_POWDER;
 	public static final Block STRUCTURE_BLOCK;
+	public static final Block LANTERN;
+	public static final Block SOUL_LANTERN;
 
 	@Nullable
 
@@ -569,6 +571,8 @@ public class Blocks {
 			CONCRETE = getRegisteredBlock("concrete");
 			CONCRETE_POWDER = getRegisteredBlock("concrete_powder");
 			STRUCTURE_BLOCK = getRegisteredBlock("structure_block");
+			LANTERN = getRegisteredBlock("lantern");
+			SOUL_LANTERN = getRegisteredBlock("soul_lantern");
 			CACHE.clear();
 		}
 	}

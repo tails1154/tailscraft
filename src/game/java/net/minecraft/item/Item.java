@@ -1114,9 +1114,9 @@ public class Item {
 				(new Item()).setUnlocalizedName("ironNugget").setCreativeTab(CreativeTabs.MATERIALS));
 		registerItem(453, "knowledge_book", (new ItemKnowledgeBook()).setUnlocalizedName("knowledgeBook"));
 		registerItem(461, new ResourceLocation("tailscraft:lantern"),
-				new ItemLantern(Blocks.BARRIER, "lantern"));
+				new ItemLantern(Blocks.LANTERN, "lantern"));
 		registerItem(462, new ResourceLocation("tailscraft:soul_lantern"),
-				new ItemLantern(Blocks.BARRIER, "soul_lantern"));
+				new ItemLantern(Blocks.SOUL_LANTERN, "soul_lantern"));
 		registerItem(463, new ResourceLocation("tailscraft:chain"), new ItemChain(Blocks.IRON_BARS));
 		registerItem(2256, "record_13", (new ItemRecord("13", SoundEvents.RECORD_13)).setUnlocalizedName("record"));
 		registerItem(2257, "record_cat", (new ItemRecord("cat", SoundEvents.RECORD_CAT)).setUnlocalizedName("record"));
