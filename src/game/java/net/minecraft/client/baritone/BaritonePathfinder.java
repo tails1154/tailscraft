@@ -14,6 +14,8 @@ import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import baritone.api.pathing.goals.Goal;
+import baritone.api.pathing.goals.GoalBlock;
 
 /**
  * Bounded A* search using the ported Baritone 1.12.2 goal contract.
@@ -29,14 +31,14 @@ public final class BaritonePathfinder {
 	private BaritonePathfinder() { }
 
 	public static List<BlockPos> findPath(World world, BlockPos start, BlockPos target) {
-		return findPath(world, start, new BaritoneGoal.Block(target.getX(), target.getY(), target.getZ()), false, false);
+		return findPath(world, start, new GoalBlock(target.getX(), target.getY(), target.getZ()), false, false);
 	}
 
-	public static List<BlockPos> findPath(World world, BlockPos start, BaritoneGoal goal) {
+	public static List<BlockPos> findPath(World world, BlockPos start, Goal goal) {
 		return findPath(world, start, goal, false, false);
 	}
 
-	public static List<BlockPos> findPath(World world, BlockPos start, BaritoneGoal goal, boolean allowBreak, boolean allowPlace) {
+	public static List<BlockPos> findPath(World world, BlockPos start, Goal goal, boolean allowBreak, boolean allowPlace) {
 		if (world == null || start == null || goal == null) return Collections.emptyList();
 		Node origin = new Node(start.getX(), start.getY(), start.getZ());
 		origin.g = 0.0D;

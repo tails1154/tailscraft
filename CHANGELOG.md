@@ -8,6 +8,7 @@
 - Added `~` relative coordinates, multiple `#mine` targets, bare block-name/numeric-ID resolution, and local `#set allowBreak`/`#set allowPlace` controls.
 - Matched Baritone 1.2.19's default traversal behavior: breaking and placing are enabled unless disabled with `#set allowBreak false` or `#set allowPlace false`.
 - Added Baritone-style `#goto <block>` and optional `#mine <quantity> <block>...` commands, including quota completion messages.
+- Made block discovery incremental: `#mine` and `#goto <block>` scan 512 loaded positions per tick instead of freezing the game thread on a full-volume scan.
 - Added automatic bounded retries for failed server handshakes, with Cancel still available and a clear retry count.
 - Increased handshake retry tolerance to 1000 attempts with a five-second maximum delay between attempts for unreliable servers.
 - Added paged in-game credits and third-party notices, including Baritone LGPL attribution.
