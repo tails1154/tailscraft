@@ -190,6 +190,7 @@ public class GuiMainMenu extends GuiScreen {
 		this.buttonList.add(new GuiButtonLanguage(5, this.width / 2 - 124, j + 72 + 12));
 		this.buttonList.add(new GuiButton(15, this.width / 2 - 100, j + 108, 200, 20, "GitHub"));
 		this.buttonList.add(new GuiButton(16, this.width / 2 - 100, j + 132, 200, 20, "Changelog"));
+		this.buttonList.add(new GuiButton(17, this.width / 2 - 100, j + 156, 200, 20, I18n.format("menu.credits")));
 	}
 
 	/**
@@ -269,6 +270,10 @@ public class GuiMainMenu extends GuiScreen {
 
 		if (button.id == 16) {
 			this.mc.displayGuiScreen(new GuiScreenChangelog(this));
+		}
+
+		if (button.id == 17) {
+			this.mc.displayGuiScreen(new GuiScreenTailsCraftCredits(this));
 		}
 	}
 
