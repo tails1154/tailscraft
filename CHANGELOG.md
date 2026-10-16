@@ -5,6 +5,9 @@ for context and are not part of the current client.
 
 ## Current client
 
+- Replaced the `record.chirp` music disc audio and label with “Shiawase VIP
+  (Remix)” by razaplays, a remix of Dion Timmer’s “Shiawase VIP.”
+  Source: https://www.newgrounds.com/audio/listen/1296027
 - Restyled the update notice to match the game’s dark menu controls and added a
   `Later` button that remembers the dismissed update until a newer build exists.
 - Replaced the `record.wait` music disc audio and label with “Sonic Blaster”
