@@ -473,16 +473,9 @@ public class GuiMainMenu extends GuiScreen {
 		this.mc.getTextureManager().bindTexture(MINECRAFT_TITLE_TEXTURES);
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-		if ((double) this.updateCounter < 1.0E-4D) {
-			this.drawTexturedModalRect(j + 0, 30, 0, 0, 99, 44);
-			this.drawTexturedModalRect(j + 99, 30, 129, 0, 27, 44);
-			this.drawTexturedModalRect(j + 99 + 26, 30, 126, 0, 3, 44);
-			this.drawTexturedModalRect(j + 99 + 26 + 3, 30, 99, 0, 26, 44);
-			this.drawTexturedModalRect(j + 155, 30, 0, 45, 155, 44);
-		} else {
-			this.drawTexturedModalRect(j + 0, 30, 0, 0, 155, 44);
-			this.drawTexturedModalRect(j + 155, 30, 0, 45, 155, 44);
-		}
+		// TailsCraft uses a single-line logo. Draw the complete texture in one pass
+		// instead of the vanilla two-piece logo layout, which clips wider branding.
+		drawModalRectWithCustomSizedTexture(j + 27, 30, 0.0F, 0.0F, 220, 44, 256.0F, 256.0F);
 
 		this.mc.getTextureManager().bindTexture(field_194400_H);
 
