@@ -17,6 +17,7 @@
 - Replaced the Forge-dependent path search adapter with a dependency-free incremental A* core and a small Minecraft movement adapter.
 - Added the TailsCraft Pathfindinganator 9000 GUI, opened with Ctrl+K, then release and press P. Pathfinding no longer runs from chat commands.
 - Added visible in-world route lines for active paths.
+- Added GUI toggles for block breaking and support-block placement, and restricted the Ctrl+K/P launcher to active worlds.
 
 ## Historical removed experiments
 - Removed the former AI chatbot, remote planner, copilot panel, observation loop, status overlay, and look-around action.
