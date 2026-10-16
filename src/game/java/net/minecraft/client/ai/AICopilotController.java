@@ -66,6 +66,7 @@ public final class AICopilotController {
 			return;
 		}
 		if (script != null && phase == 0) prepareScriptStep(world, player);
+		if (looking) return;
 		if (script != null && phase == 3) { executeMining(mc, player, world); return; }
 		if (script != null && phase == 4) {
 			if (nearTarget(player)) { objective = null; phase = 0; path = Collections.emptyList(); recalc = 0; return; }
