@@ -111,6 +111,7 @@ public class GuiTexturePackCreator extends GuiScreen {
 		}
 		try (IResource resource = mc.getResourceManager().getResource(new ResourceLocation(path))) {
 			image = ImageData.loadImageFile(readAll(resource.getInputStream()));
+			if (image != null) image.swapRB();
 		} catch (Throwable t) {
 			image = new ImageData(16, 16, true);
 		}
@@ -138,6 +139,7 @@ public class GuiTexturePackCreator extends GuiScreen {
 			try {
 				ImageData imported = ImageData.loadImageFile(result.fileData, ImageData.getMimeFromType(result.fileName));
 				if (imported != null && imported.width <= 128 && imported.height <= 128) {
+					imported.swapRB();
 					recordUndo();
 					image = imported;
 					markEdited();
@@ -386,7 +388,25 @@ public class GuiTexturePackCreator extends GuiScreen {
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
 
-	private static class TextureEntry { final String path; TextureEntry(String path) { this.path = path; } }
+	private ImageData getPreview(TextureEntry entry) {
+		if (entry.preview != null) return entry.preview;
+		ImageData source = editedTextures.get(entry.path);
+		if (source == null) {
+			try (IResource resource = mc.getResourceManager().getResource(new ResourceLocation(entry.path))) {
+				source = ImageData.loadImageFile(readAll(resource.getInputStream()));
+				if (source != null) source.swapRB();
+			} catch (Throwable ignored) { }
+		}
+		if (source == null || source.width < 1 || source.height < 1) return null;
+		entry.preview = source;
+		return source;
+	}
+
+	private static class TextureEntry {
+		final String path;
+		ImageData preview;
+		TextureEntry(String path) { this.path = path; }
+	}
 	private static class TextureList extends GuiSlot {
 		private final GuiTexturePackCreator owner;
 		TextureList(GuiTexturePackCreator owner, Minecraft mc, int width, int height, int top, int bottom, int slotHeight) { super(mc, width, height, top, bottom, slotHeight); this.owner = owner; }
@@ -394,6 +414,21 @@ public class GuiTexturePackCreator extends GuiScreen {
 		protected void elementClicked(int slot, boolean dbl, int x, int y) { owner.selectTexture(slot); }
 		protected boolean isSelected(int slot) { return owner.selectedPath.equals(owner.entries.get(slot).path); }
 		protected void drawBackground() { owner.drawDefaultBackground(); }
-		protected void func_192637_a(int slot, int x, int y, int h, int mouseX, int mouseY, float partial) { owner.drawString(owner.fontRendererObj, owner.entries.get(slot).path.substring(owner.entries.get(slot).path.lastIndexOf('/') + 1), x + 2, y + 5, 0xFFFFFF); }
+		protected void func_192637_a(int slot, int x, int y, int h, int mouseX, int mouseY, float partial) {
+			TextureEntry entry = owner.entries.get(slot);
+			ImageData preview = owner.getPreview(entry);
+			if (preview != null) {
+				int max = Math.max(preview.width, preview.height);
+				int scale = Math.max(1, 16 / max);
+				int pw = Math.max(1, preview.width * scale), ph = Math.max(1, preview.height * scale);
+				for (int py = 0; py < preview.height; ++py) for (int px = 0; px < preview.width; ++px) {
+					int color = preview.pixels[py * preview.width + px];
+					if ((color >>> 24) == 0) color = 0xFF555555;
+					owner.drawRect(x + 2 + px * scale, y + 2 + py * scale,
+							x + 2 + Math.min(pw, (px + 1) * scale), y + 2 + Math.min(ph, (py + 1) * scale), color);
+				}
+			}
+			owner.drawString(owner.fontRendererObj, entry.path.substring(entry.path.lastIndexOf('/') + 1), x + 22, y + 5, 0xFFFFFF);
+		}
 	}
 }
