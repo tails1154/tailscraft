@@ -1,4 +1,4 @@
-package net.minecraft.client.ai;
+package net.minecraft.client.baritone;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,8 +22,9 @@ import net.minecraft.world.World;
 /**
  * Small Baritone command surface for the 1.12.2 client.
  *
- * This is intentionally command driven: there is no remote planner or AI
- * service. The command names and prefix follow Baritone (#goto, #mine, #stop).
+	 * This is intentionally command driven: it has no remote planner or
+	 * natural-language layer. The command names and prefix follow Baritone
+	 * (#goto, #mine, #stop).
  */
 public final class BaritoneController {
 	private static boolean active;

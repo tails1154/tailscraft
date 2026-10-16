@@ -1,4 +1,4 @@
-package net.minecraft.client.ai;
+package net.minecraft.client.baritone;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,4 +1,4 @@
-package net.minecraft.client.ai;
+package net.minecraft.client.baritone;
 
 /**
  * Port of the movement constants from Baritone v1.2.19's ActionCosts.
