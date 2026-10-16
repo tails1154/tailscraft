@@ -27,6 +27,8 @@ for context and are not part of the current client.
 - Added Video Settings -> MS Paint Mode, which loads the bundled
   1.12.x-compatible MS Paint resource pack locally, with a network fallback
   for older/custom builds.
+- Credit: MS Paint Mode bundles the “MS Paintcraft” resource pack from
+  Modrinth: https://modrinth.com/resourcepack/mspaintcraft
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved
