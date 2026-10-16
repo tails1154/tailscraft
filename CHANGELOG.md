@@ -20,6 +20,8 @@
 - Added GUI toggles for block breaking and support-block placement, and restricted the Ctrl+K/P launcher to active worlds.
 - Added a live top-right Pathfindinganator status display while navigation or mining is active.
 - Made support-placement planning depend on an actual placeable block in the hotbar, preventing impossible floating routes.
+- Added a real tabbed Pathfindinganator controller with Navigation, Mining, and Settings tabs.
+- Fixed automated turning so active pathfinding controls yaw, head rotation, body rotation, and pitch without mouse-look overwriting it.
 
 ## Historical removed experiments
 - Removed the former AI chatbot, remote planner, copilot panel, observation loop, status overlay, and look-around action.

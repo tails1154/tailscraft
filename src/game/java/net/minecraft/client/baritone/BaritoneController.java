@@ -234,8 +234,7 @@ public final class BaritoneController {
 		if (path.isEmpty() && !nearTarget(player)) { status = "No path found"; releaseKeys(mc); ++recalc; return; }
 		BlockPos next = path.isEmpty() ? new BlockPos(targetX, targetY, targetZ) : path.get(0);
 		if (handleObstacle(mc, player, world, next)) return;
-		float yaw = (float)(Math.atan2(-(next.getX() + 0.5D - player.posX), next.getZ() + 0.5D - player.posZ) * 180.0D / Math.PI);
-		player.rotationYaw = yaw; player.prevRotationYaw = yaw;
+		lookAt(player, next.getX() + 0.5D, player.posY, next.getZ() + 0.5D, false);
 		KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), true);
 		KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), true);
 		KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), player.isCollidedHorizontally || next.getY() > (int)Math.floor(player.posY));
@@ -244,8 +243,7 @@ public final class BaritoneController {
 
 	private static void faceAndMine(Minecraft mc, EntityPlayerSP player, BlockPos pos) {
 		releaseKeys(mc);
-		float yaw = (float)(Math.atan2(-(pos.getX() + 0.5D - player.posX), pos.getZ() + 0.5D - player.posZ) * 180.0D / Math.PI);
-		player.rotationYaw = yaw; player.prevRotationYaw = yaw;
+		lookAt(player, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
 		KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), true);
 		status = "Mining " + blockName(mineBlock);
 	}
@@ -265,7 +263,23 @@ public final class BaritoneController {
 		}
 		return false;
 	}
-	private static void face(EntityPlayerSP player, BlockPos pos) { float yaw = (float)(Math.atan2(-(pos.getX() + .5D - player.posX), pos.getZ() + .5D - player.posZ) * 180.0D / Math.PI); player.rotationYaw = yaw; player.prevRotationYaw = yaw; }
+	private static void face(EntityPlayerSP player, BlockPos pos) { lookAt(player, pos.getX() + .5D, pos.getY() + .5D, pos.getZ() + .5D, true); }
+	private static void lookAt(EntityPlayerSP player, double x, double y, double z, boolean pitch) {
+		double dx = x - player.posX;
+		double dz = z - player.posZ;
+		float yaw = (float)(Math.atan2(-dx, dz) * 180.0D / Math.PI);
+		float targetPitch = pitch ? (float)(-Math.atan2(y - (player.posY + player.getEyeHeight()), Math.sqrt(dx * dx + dz * dz)) * 180.0D / Math.PI) : player.rotationPitch;
+		player.rotationYaw = yaw;
+		player.prevRotationYaw = yaw;
+		player.rotationYawHead = yaw;
+		player.prevRotationYawHead = yaw;
+		player.renderYawOffset = yaw;
+		player.prevRenderYawOffset = yaw;
+		if (pitch) {
+			player.rotationPitch = targetPitch;
+			player.prevRotationPitch = targetPitch;
+		}
+	}
 	private static void releaseMovement(Minecraft mc) { KeyBinding.setKeyBindState(mc.gameSettings.keyBindForward.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), false); KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false); }
 	private static boolean hasPlaceableBlock(EntityPlayerSP player) { for (int i = 0; i < 9; ++i) { ItemStack stack = player.inventory.mainInventory.get(i); if (stack != null && !stack.func_190926_b() && stack.getItem() instanceof ItemBlock) return true; } return false; }
 	private static ItemStack findPlaceableBlock(EntityPlayerSP player) { for (int i = 0; i < 9; ++i) { ItemStack stack = player.inventory.mainInventory.get(i); if (stack != null && !stack.func_190926_b() && stack.getItem() instanceof ItemBlock) { player.inventory.currentItem = i; return stack; } } return null; }

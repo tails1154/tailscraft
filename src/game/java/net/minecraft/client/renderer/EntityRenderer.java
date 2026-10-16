@@ -900,7 +900,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
 			Mouse.setGrabbed(true);
 		}
 
-		if (this.mc.inGameHasFocus && flag) {
+		if (this.mc.inGameHasFocus && flag && !BaritoneController.isActive()) {
 			this.mc.mouseHelper.mouseXYChange();
 			this.mc.func_193032_ao().func_193299_a(this.mc.mouseHelper);
 			float f = this.mc.gameSettings.mouseSensitivity * 0.6F + 0.2F;
