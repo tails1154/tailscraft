@@ -15,6 +15,7 @@
 - Manual copilot targets now default to the player's current position instead of `0,64,0`, preventing immediate completion when the overlay opens.
 - Simplified the copilot screen to one task field and essential controls, and added a bounded observe-plan-act agent loop.
 - Prevented look-around script steps from falling through into movement on their first tick.
+- Added automatic bounded retries for failed server handshakes, with Cancel still available and a clear retry count.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.

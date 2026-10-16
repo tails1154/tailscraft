@@ -67,6 +67,9 @@ public class GuiConnecting extends GuiScreen {
 	private final GuiScreen previousGuiScreen;
 	private int timer = 0;
 	private long connectionStartedAt;
+	private int handshakeRetries;
+	private long retryAt;
+	private static final int MAX_HANDSHAKE_RETRIES = 3;
 	private String connectionPhase = "Preparing connection";
 	private String connectionDetail = "Waiting for the client networking layer";
 	private PositionedSoundRecord connectingSound;
@@ -141,6 +144,8 @@ public class GuiConnecting extends GuiScreen {
 		this.allowPlaintext = allowPlaintext;
 		this.allowCookies = allowCookies;
 		this.connectionStartedAt = System.currentTimeMillis();
+		this.handshakeRetries = 0;
+		this.retryAt = 0L;
 		this.connectionPhase = "Preparing connection";
 		this.connectionDetail = "Resolving the requested server address";
 	}
@@ -150,6 +155,14 @@ public class GuiConnecting extends GuiScreen {
 	 */
 	public void updateScreen() {
 		++timer;
+		if (retryAt != 0L) {
+			if (System.currentTimeMillis() < retryAt) {
+				this.connectionPhase = "Retrying handshake";
+				this.connectionDetail = "Retry " + (handshakeRetries + 1) + " of " + MAX_HANDSHAKE_RETRIES;
+				return;
+			}
+			retryAt = 0L;
+		}
 		if (connectingSound == null) {
 			connectingSound = new PositionedSoundRecord(new ResourceLocation("tailscraft.connecting"),
 					SoundCategory.MASTER, 1.0F, 1.0F, true, 0, ISound.AttenuationType.NONE, 0.0F, 0.0F, 0.0F);
@@ -212,11 +225,16 @@ public class GuiConnecting extends GuiScreen {
 						} else {
 							if (mc.currentScreen == this) {
 								checkRatelimit();
+								if (mc.currentScreen != this) return;
 								logger.info("Handshake Failure");
+								if (handshakeRetries < MAX_HANDSHAKE_RETRIES) {
+									++handshakeRetries;
+									retryConnection();
+									return;
+								}
 								mc.getSession().reset();
-								mc.displayGuiScreen(
-										new GuiDisconnected(previousGuiScreen, "connect.failed", new TextComponentString(
-												"Handshake Failure\n\nAre you sure this is an eagler 1.12 server?")));
+								mc.displayGuiScreen(new GuiDisconnected(previousGuiScreen, "connect.failed", new TextComponentString(
+										"Handshake Failure after " + MAX_HANDSHAKE_RETRIES + " retries\n\nAre you sure this is an eagler 1.12 server?")));
 							}
 							webSocket.close();
 							return;
@@ -353,6 +371,18 @@ public class GuiConnecting extends GuiScreen {
 				}
 			}
 		}
+	}
+
+	private void retryConnection() {
+		if (webSocket != null) webSocket.close();
+		webSocket = null;
+		networkManager = null;
+		hasOpened = false;
+		retryAt = System.currentTimeMillis() + handshakeRetries * 1000L;
+		connectionStartedAt = System.currentTimeMillis();
+		connectionPhase = "Retrying handshake";
+		connectionDetail = "Opening a fresh transport after handshake failure";
+		logger.info("Retrying handshake {}/{} for {}", handshakeRetries, MAX_HANDSHAKE_RETRIES, currentAddress);
 	}
 
 	public void onGuiClosed() {
