@@ -415,6 +415,7 @@ public final class BaritoneController {
 		return origin + Integer.parseInt(value.substring(1));
 	}
 	public static String getStatus() { return status; }
+	public static boolean isActive() { return active; }
 	public static boolean isAllowBreak() { return allowBreak; }
 	public static boolean isAllowPlace() { return allowPlace; }
 	public static void setAllowBreak(boolean value) { allowBreak = value; }
