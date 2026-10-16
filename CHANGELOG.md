@@ -11,7 +11,8 @@ for context and are not part of the current client.
 - Added TC4 friends and presence: friend cards, requests, online presence,
   join requests, approval dialogs, join progress, and automatic friends-service
   connection.
-- Added local singleplayer replay mode with pause-menu controls for recording
+- Added local replay mode with pause-menu controls in singleplayer and
+  multiplayer for recording
   the game canvas to a downloadable `.webm` video.
 - Replay recording is browser-local and does not retain player/world frames or
   upload anything to a server.

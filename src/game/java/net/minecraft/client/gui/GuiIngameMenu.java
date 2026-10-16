@@ -83,12 +83,10 @@ public class GuiIngameMenu extends GuiScreen {
 					PauseMenuCustomizeState.icon_serverInfo_R_aspect));
 		}
 
-		if (this.mc.isSingleplayer()) {
-			this.buttonList.add(new GuiButtonWithStupidIcons(12, this.width / 2 + 2, this.height / 4 + 72 - 16, 98, 20,
-					ReplayManager.isRecording() ? "Stop Video" : "Replay Mode", PauseMenuCustomizeState.icon_serverInfo_L,
-					PauseMenuCustomizeState.icon_serverInfo_L_aspect, PauseMenuCustomizeState.icon_serverInfo_R,
-					PauseMenuCustomizeState.icon_serverInfo_R_aspect));
-		}
+		this.buttonList.add(new GuiButtonWithStupidIcons(12, this.width / 2 + 2, this.height / 4 + 72 - 16, 98, 20,
+				ReplayManager.isRecording() ? "Stop Video" : "Replay Mode", PauseMenuCustomizeState.icon_serverInfo_L,
+				PauseMenuCustomizeState.icon_serverInfo_L_aspect, PauseMenuCustomizeState.icon_serverInfo_R,
+				PauseMenuCustomizeState.icon_serverInfo_R_aspect));
 		
 		if (!hasSentAutoSave) {
 			hasSentAutoSave = true;

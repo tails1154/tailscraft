@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.lax1dude.eaglercraft.internal.PlatformAudio;
 import org.teavm.jso.webaudio.MediaStream;
 
-/** Local, singleplayer-only browser video capture. It never sends replay data to a server. */
+	/** Local browser video capture. It never sends replay data to a server. */
 public final class ReplayManager {
 	private static boolean recording;
 
@@ -24,7 +24,7 @@ public final class ReplayManager {
 	}
 
 	public static boolean canUse(Minecraft mc) {
-		return mc != null && mc.isSingleplayer() && mc.world != null && mc.player != null;
+		return mc != null && mc.world != null && mc.player != null;
 	}
 
 	public static void startRecording(Minecraft mc) {
