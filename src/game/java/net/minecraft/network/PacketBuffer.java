@@ -29,6 +29,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
 
 /**
  * + This portion of EaglercraftX contains deobfuscated Minecraft 1.8 source
@@ -285,7 +286,7 @@ public class PacketBuffer extends ByteBuf {
 			// them. This keeps vanilla servers and old clients compatible without
 			// making the client treat the blocks as barriers.
 			if (itemstack.hasDisplayName()) {
-				String name = itemstack.getDisplayName();
+				String name = TextFormatting.getTextWithoutFormattingCodes(itemstack.getDisplayName()).trim();
 				Item decodedItem = null;
 				if ("Lantern".equalsIgnoreCase(name)) {
 					decodedItem = Items.LANTERN;
