@@ -72,6 +72,7 @@ import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.client.network.AuthMeStorage;
 import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -445,6 +446,7 @@ public class Minecraft implements IThreadListener {
 	 */
 	private void startGame() throws IOException {
 		Bootstrap.register();
+		AuthMeStorage.cleanupUnlistedLegacyPasswords();
 		this.dataFixer = DataFixesManager.createFixer();
 		this.gameSettings = new GameSettings(this);
 		this.field_191950_u = new CreativeSettings(this, this.mcDataDir);
