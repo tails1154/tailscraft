@@ -2,6 +2,7 @@ package net.minecraft.client.gui.recipebook;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collections;
 
 import net.lax1dude.eaglercraft.opengl.GlStateManager;
 import net.minecraft.client.Minecraft;
@@ -26,9 +27,13 @@ public class GuiButtonRecipeTab extends GuiButtonToggle {
 
 	public void func_193918_a(Minecraft p_193918_1_) {
 		RecipeBook recipebook = p_193918_1_.player.func_192035_E();
+		List<RecipeList> list = RecipeBookClient.field_194086_e.get(this.field_193921_u);
+		if (list == null) {
+			list = Collections.emptyList();
+		}
 		label21:
 
-		for (RecipeList recipelist : RecipeBookClient.field_194086_e.get(this.field_193921_u)) {
+		for (RecipeList recipelist : list) {
 			Iterator iterator = recipelist.func_194208_a(recipebook.func_192815_c()).iterator();
 
 			while (true) {
@@ -117,6 +122,9 @@ public class GuiButtonRecipeTab extends GuiButtonToggle {
 
 	public boolean func_193919_e() {
 		List<RecipeList> list = (List) RecipeBookClient.field_194086_e.get(this.field_193921_u);
+		if (list == null) {
+			list = Collections.emptyList();
+		}
 		this.visible = false;
 
 		for (RecipeList recipelist : list) {

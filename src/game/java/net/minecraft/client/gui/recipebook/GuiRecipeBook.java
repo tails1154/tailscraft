@@ -3,6 +3,7 @@ package net.minecraft.client.gui.recipebook;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -143,6 +144,9 @@ public class GuiRecipeBook extends Gui implements IRecipeUpdateListener {
 
 	private void func_193003_g(boolean p_193003_1_) {
 		List<RecipeList> list = (List<RecipeList>) RecipeBookClient.field_194086_e.get(this.field_191913_x.func_191764_e());
+		if (list == null) {
+			list = Collections.emptyList();
+		}
 		for (int i = 0, j = list.size(); i < j; ++i) {
 			RecipeList recipeList = list.get(i);
 			recipeList.func_194210_a(this.field_193965_u, this.field_193961_o.getWidth(),
