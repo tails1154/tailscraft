@@ -18,3 +18,4 @@ desktopRuntime/downloads/*
 desktopRuntime/screenshots/*
 tailsconnect-runtime/
 __pycache__/
+.cache/
