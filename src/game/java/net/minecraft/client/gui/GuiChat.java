@@ -69,6 +69,9 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 		this.inputField.setText(this.defaultInputFieldText);
 		this.inputField.setCanLoseFocus(false);
 		this.tabCompleter = new GuiChat.ChatTabCompleter(this.inputField);
+		if (this.inputField.getText().startsWith("/")) {
+			this.tabCompleter.complete();
+		}
 	}
 
 	/**
@@ -128,7 +131,11 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 			} else if (keyCode == 209) {
 				this.mc.ingameGUI.getChatGUI().scroll(-this.mc.ingameGUI.getChatGUI().getLineCount() + 1);
 			} else {
+				String textBefore = this.inputField.getText();
 				this.inputField.textboxKeyTyped(typedChar, keyCode);
+				if (textBefore.isEmpty() && this.inputField.getText().equals("/")) {
+					this.tabCompleter.complete();
+				}
 			}
 		} else {
 			String s = this.inputField.getText().trim();

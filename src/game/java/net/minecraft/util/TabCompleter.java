@@ -1,7 +1,10 @@
 package net.minecraft.util;
 
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -19,6 +22,9 @@ public abstract class TabCompleter {
 	protected int completionIdx;
 	protected List<String> completions = Lists.<String>newArrayList();
 	private boolean popupVisible;
+	private String requestedPrefix;
+	private static Object cachedConnection;
+	private static final Map<String, List<String>> completionCache = new HashMap<String, List<String>>();
 
 	public TabCompleter(GuiTextField textFieldIn, boolean hasTargetBlockIn) {
 		this.textField = textFieldIn;
@@ -42,7 +48,12 @@ public abstract class TabCompleter {
 			this.completions.clear();
 			this.completionIdx = 0;
 			String s = this.textField.getText().substring(0, this.textField.getCursorPosition());
-			this.requestCompletions(s);
+			List<String> cached = this.getCachedCompletions(s);
+			if (cached != null) {
+				this.completions.addAll(cached);
+			} else {
+				this.requestCompletions(s);
+			}
 
 			if (this.completions.isEmpty()) return;
 			this.didComplete = true;
@@ -62,6 +73,8 @@ public abstract class TabCompleter {
 
 	private void requestCompletions(String prefix) {
 		if (prefix.length() >= 1) {
+			this.resetCacheIfConnectionChanged();
+			this.requestedPrefix = prefix;
 			Minecraft.getMinecraft().player.connection
 					.sendPacket(new CPacketTabComplete(prefix, this.getTargetBlockPos(), this.hasTargetBlock));
 			this.requestedCompletions = true;
@@ -77,6 +90,7 @@ public abstract class TabCompleter {
 	 */
 	public void setCompletions(String... newCompl) {
 		if (this.requestedCompletions) {
+			this.resetCacheIfConnectionChanged();
 			this.requestedCompletions = false;
 			this.didComplete = false;
 			this.completions.clear();
@@ -86,6 +100,8 @@ public abstract class TabCompleter {
 					this.completions.add(s);
 				}
 			}
+			List<String> cached = new ArrayList<String>(this.completions);
+			this.completionCache.put(this.requestedPrefix, cached);
 
 			String s1 = this.textField.getText().substring(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false));
 			String s2 = org.apache.commons.lang3.StringUtils.getCommonPrefix(newCompl);
@@ -103,6 +119,20 @@ public abstract class TabCompleter {
 				this.replaceCurrentWord(this.completions.get(0));
 				this.popupVisible = true;
 			}
+		}
+	}
+
+	private List<String> getCachedCompletions(String prefix) {
+		this.resetCacheIfConnectionChanged();
+		return this.completionCache.get(prefix);
+	}
+
+	private void resetCacheIfConnectionChanged() {
+		Minecraft minecraft = Minecraft.getMinecraft();
+		Object connection = minecraft.player == null ? null : minecraft.player.connection;
+		if (connection != this.cachedConnection) {
+			this.completionCache.clear();
+			this.cachedConnection = connection;
 		}
 	}
 
