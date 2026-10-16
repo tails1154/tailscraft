@@ -11,9 +11,10 @@ public class GuiScreenSecurityCameras extends GuiScreen {
     private final GuiScreen parent;
     private int page;
     private int seenRevision = -1;
+    private int loadingTicks;
     private GuiTextField cameraName;
     public GuiScreenSecurityCameras(GuiScreen parent) { this.parent = parent; }
-    public void initGui() { buttonList.clear(); cameraName = new GuiTextField(20, fontRendererObj, width / 2 - 120, 38, 160, 14); cameraName.setMaxStringLength(32); SecurityCameraClient.open(); seenRevision = SecurityCameraClient.getRevision(); rebuild(); }
+    public void initGui() { buttonList.clear(); loadingTicks = 0; cameraName = new GuiTextField(20, fontRendererObj, width / 2 - 120, 38, 160, 14); cameraName.setMaxStringLength(32); SecurityCameraClient.open(); seenRevision = SecurityCameraClient.getRevision(); rebuild(); }
     private int maxPage() { return Math.max(0, (SecurityCameraClient.getCameras().size() - 1) / 3); }
     private void rebuild() {
         buttonList.clear(); List<Camera> cameras = SecurityCameraClient.getCameras(); int start = page * 3;
@@ -34,6 +35,7 @@ public class GuiScreenSecurityCameras extends GuiScreen {
     }
     public boolean doesGuiPauseGame() { return false; }
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        if (!SecurityCameraClient.isLoaded() && (++loadingTicks % 60) == 0) SecurityCameraClient.open();
         if (seenRevision != SecurityCameraClient.getRevision()) { seenRevision = SecurityCameraClient.getRevision(); page = Math.min(page, maxPage()); rebuild(); }
         drawDefaultBackground(); drawCenteredString(fontRendererObj, "Security Cameras", width / 2, 16, 0xFFFFFF);
         drawCenteredString(fontRendererObj, "Select a fixed camera viewpoint", width / 2, 20, 0xAAAAAA);
