@@ -20,7 +20,8 @@ public class GuiVideoSettings extends GuiScreen {
 			GameSettings.Options.ENABLE_VSYNC, GameSettings.Options.MIPMAP_LEVELS,
 			GameSettings.Options.ENTITY_SHADOWS, GameSettings.Options.FOG, GameSettings.Options.RAIN_SNOW, GameSettings.Options.FNAW_SKINS,
 			GameSettings.Options.HUD_FPS, GameSettings.Options.HUD_COORDS, GameSettings.Options.CHUNK_UPDATES, GameSettings.Options.CHUNK_FIX,
-			GameSettings.Options.OF_CUSTOM_ITEMS, GameSettings.Options.LIGHTING_BYPASS };
+			GameSettings.Options.OF_CUSTOM_ITEMS, GameSettings.Options.LIGHTING_BYPASS,
+			GameSettings.Options.MS_PAINT_MODE };
 
 	public GuiVideoSettings(GuiScreen parentScreenIn, GameSettings gameSettingsIn) {
 		this.parentGuiScreen = parentScreenIn;

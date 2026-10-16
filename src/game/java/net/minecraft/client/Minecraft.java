@@ -28,6 +28,7 @@ import net.lax1dude.eaglercraft.internal.EnumPlatformType;
 import net.lax1dude.eaglercraft.internal.PlatformRuntime;
 import net.lax1dude.eaglercraft.internal.vfs2.VFile2;
 import net.lax1dude.eaglercraft.minecraft.EaglerFontRenderer;
+import net.lax1dude.eaglercraft.minecraft.EaglerFolderResourcePack;
 import net.lax1dude.eaglercraft.notifications.ServerNotificationRenderer;
 import net.lax1dude.eaglercraft.opengl.WorldRenderer;
 import net.lax1dude.eaglercraft.profile.EaglerProfile;
@@ -463,6 +464,9 @@ public class Minecraft implements IThreadListener {
 		this.registerMetadataSerializers();
 		this.mcResourcePackRepository = new ResourcePackRepository(this.mcDefaultResourcePack, this.metadataSerializer_,
 				this.gameSettings);
+		if (this.gameSettings.msPaintMode) {
+			this.setMsPaintMode(true);
+		}
 		this.mcResourceManager = new SimpleReloadableResourceManager(this.metadataSerializer_);
 		this.mcLanguageManager = new LanguageManager(this.metadataSerializer_, this.gameSettings.language);
 		this.mcResourceManager.registerReloadListener(this.mcLanguageManager);
@@ -2201,6 +2205,70 @@ public class Minecraft implements IThreadListener {
 						I18n.format("resourcePack.load.pleaseWait"));
 				Minecraft.this.refreshResources();
 			}
+		});
+	}
+
+	private static final String MS_PAINT_PACK_URL = "https://cdn.modrinth.com/data/OlXbJrCZ/versions/kqrtgIxV/ms%20paintcraft.zip";
+
+	/** Applies the MS Paint pack to the normal local pack store and selects it. */
+	private void applyMsPaintPack(byte[] bytes) {
+		try {
+			EaglerFolderResourcePack.importResourcePack("ms paintcraft.zip",
+					EaglerFolderResourcePack.RESOURCE_PACKS, bytes);
+			this.mcResourcePackRepository.updateRepositoryEntriesAll();
+			List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
+			for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntriesAll()) {
+				if ("ms paintcraft".equalsIgnoreCase(entry.getResourcePackName())) {
+					selected.add(entry);
+				}
+			}
+			this.mcResourcePackRepository.setRepositories(selected);
+			this.gameSettings.resourcePacks.clear();
+			this.gameSettings.resourcePacks.add("ms paintcraft");
+			this.scheduleResourcesRefresh();
+		} catch (Throwable t) {
+			this.gameSettings.msPaintMode = false;
+			this.gameSettings.saveOptions();
+		}
+	}
+
+	/**
+	 * Loads the bundled 1.12.x MS Paint pack first. The URL remains a fallback for
+	 * older/custom builds that do not contain the embedded asset.
+	 */
+	public void setMsPaintMode(final boolean enabled) {
+		if (!enabled) {
+			List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
+			for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntries()) {
+				if (!"ms paintcraft".equalsIgnoreCase(entry.getResourcePackName())) {
+					selected.add(entry);
+				}
+			}
+			this.mcResourcePackRepository.setRepositories(selected);
+			this.gameSettings.resourcePacks.remove("ms paintcraft");
+			this.scheduleResourcesRefresh();
+			return;
+		}
+
+		byte[] bundled = null;
+		try {
+			bundled = EagRuntime.getRequiredResourceBytes("/assets/tailscraft/mspaintcraft.zip");
+		} catch (Throwable ignored) {
+			// Older/custom builds may not contain the bundled pack; use the fallback.
+		}
+		if (bundled != null) {
+			final byte[] bundledPack = bundled;
+			this.addScheduledTask(() -> this.applyMsPaintPack(bundledPack));
+			return;
+		}
+
+		PlatformRuntime.downloadRemoteURIByteArray(MS_PAINT_PACK_URL, true, bytes -> {
+			if (bytes == null) {
+				this.gameSettings.msPaintMode = false;
+				this.gameSettings.saveOptions();
+				return;
+			}
+			this.addScheduledTask(() -> this.applyMsPaintPack(bytes));
 		});
 	}
 

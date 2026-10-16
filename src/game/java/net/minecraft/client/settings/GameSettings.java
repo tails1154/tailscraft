@@ -192,6 +192,7 @@ public class GameSettings {
 	public boolean fog = false;
 	public boolean rainSnow = false;
 	public boolean lightingBypass = true;
+	public boolean msPaintMode = false;
 	
 	public boolean customItemsOF = true;
 
@@ -508,6 +509,13 @@ public class GameSettings {
 			}
 		}
 
+		if (settingsOption == GameSettings.Options.MS_PAINT_MODE) {
+			this.msPaintMode = !this.msPaintMode;
+			if (this.mc != null) {
+				this.mc.setMsPaintMode(this.msPaintMode);
+			}
+		}
+
 		this.saveOptions();
 	}
 
@@ -589,6 +597,8 @@ public class GameSettings {
 			return this.customItemsOF;
 		case LIGHTING_BYPASS:
 			return this.lightingBypass;
+		case MS_PAINT_MODE:
+			return this.msPaintMode;
 		default:
 			return false;
 		}
@@ -741,6 +751,10 @@ public class GameSettings {
 
 					if ("lightingBypass".equals(s1)) {
 						this.lightingBypass = "true".equals(s2);
+					}
+
+					if ("msPaintMode".equals(s1)) {
+						this.msPaintMode = "true".equals(s2);
 					}
 
 					if ("saturation".equals(s1)) {
@@ -1089,6 +1103,7 @@ public class GameSettings {
 			printwriter.println("fov:" + (this.fovSetting - 70.0F) / 40.0F);
 			printwriter.println("gamma:" + this.gammaSetting);
 		printwriter.println("lightingBypass:" + this.lightingBypass);
+		printwriter.println("msPaintMode:" + this.msPaintMode);
 			printwriter.println("saturation:" + this.saturation);
 			printwriter.println("renderDistance:" + this.renderDistanceChunks);
 			printwriter.println("guiScale:" + this.guiScale);
@@ -1287,7 +1302,8 @@ public class GameSettings {
 		FOG("options.fog", false, true),
 		RAIN_SNOW("options.enableRain", false, true),
 		OF_CUSTOM_ITEMS("options.customItemsOF", false, true),
-		LIGHTING_BYPASS("options.tailscraft.lightingBypass", false, true);
+		LIGHTING_BYPASS("options.tailscraft.lightingBypass", false, true),
+		MS_PAINT_MODE("options.tailscraft.msPaintMode", false, true);
 
 		// NARRATOR("options.narrator", false, false),
 		private final boolean enumFloat;

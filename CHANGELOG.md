@@ -24,6 +24,9 @@ for context and are not part of the current client.
   applying client light updates from light-emitting blocks.
 - Lighting Bypass defaults to ON for new game profiles and remembers an explicit
   player choice afterward.
+- Added Video Settings -> MS Paint Mode, which loads the bundled
+  1.12.x-compatible MS Paint resource pack locally, with a network fallback
+  for older/custom builds.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved

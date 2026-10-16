@@ -406,6 +406,7 @@ options.gamma=Brightness
 options.gamma.min=Moody
 options.gamma.max=Bright
 options.tailscraft.lightingBypass=Lighting Bypass
+options.tailscraft.msPaintMode=MS Paint Mode
 options.sensitivity=Sensitivity
 options.sensitivity.min=*yawn*
 options.sensitivity.max=HYPERSPEED!!!
