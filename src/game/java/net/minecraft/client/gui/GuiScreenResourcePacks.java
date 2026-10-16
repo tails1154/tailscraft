@@ -64,10 +64,8 @@ public class GuiScreenResourcePacks extends GuiScreen {
 	public void initGui() {
 		this.buttonList.add(new GuiOptionButton(2, this.width / 2 - 154, this.height - 48,
 				I18n.format("resourcePack.openFolder", new Object[0])));
-		this.buttonList.add(new GuiOptionButton(3, this.width / 2 - 75, this.height - 48,
-				"Create Resource Pack"));
 		this.buttonList.add(
-				new GuiOptionButton(1, this.width / 2 + 80, this.height - 48, I18n.format("gui.done", new Object[0])));
+				new GuiOptionButton(1, this.width / 2 - 75, this.height - 48, I18n.format("gui.done", new Object[0])));
 		if (!this.changed) {
 			this.availableResourcePacks = Lists.newArrayList();
 			this.selectedResourcePacks = Lists.newArrayList();
@@ -144,8 +142,6 @@ public class GuiScreenResourcePacks extends GuiScreen {
 		if (parGuiButton.enabled) {
 			if (parGuiButton.id == 2) {
 				EagRuntime.displayFileChooser("application/zip", "zip");
-			} else if (parGuiButton.id == 3) {
-				this.mc.displayGuiScreen(new GuiTexturePackCreator(this));
 			} else if (parGuiButton.id == 1) {
 				if (this.changed) {
 					ArrayList<ResourcePackRepository.Entry> arraylist = Lists.newArrayList();
