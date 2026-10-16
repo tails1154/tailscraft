@@ -1,6 +1,7 @@
 package net.lax1dude.eaglercraft.replay;
 
 import org.teavm.jso.JSBody;
+import org.teavm.jso.webaudio.MediaStream;
 
 /** Browser bridge for local canvas video capture. Nothing is uploaded. */
 public final class ReplayVideoPlatform {
@@ -10,19 +11,22 @@ public final class ReplayVideoPlatform {
     @JSBody(params = {}, script = "return !!(window.MediaRecorder && HTMLCanvasElement.prototype.captureStream && document.querySelector('canvas')); ")
     public static native boolean isSupported();
 
-    @JSBody(params = {}, script = ""
+    @JSBody(params = { "audioStream" }, script = ""
         + "if (window.__tailscraftReplayRecorder) return true;"
         + "var canvas = document.querySelector('canvas');"
         + "if (!canvas || !canvas.captureStream || !window.MediaRecorder) return false;"
         + "try {"
-        + "var stream = canvas.captureStream(30);"
+        + "var canvasStream = canvas.captureStream(60);"
+        + "var stream = new MediaStream();"
+        + "canvasStream.getVideoTracks().forEach(function(track) { stream.addTrack(track); });"
+        + "if (audioStream) audioStream.getAudioTracks().forEach(function(track) { stream.addTrack(track); });"
         + "var mime = '';"
-        + "var choices = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];"
+        + "var choices = ['video/webm;codecs=vp8', 'video/webm'];"
         + "for (var i = 0; i < choices.length; ++i) {"
         + "if (MediaRecorder.isTypeSupported(choices[i])) { mime = choices[i]; break; }"
         + "}"
         + "var chunks = [];"
-        + "var recorder = new MediaRecorder(stream, mime ? {mimeType: mime} : undefined);"
+        + "var recorder = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: 4000000} : {videoBitsPerSecond: 4000000});"
         + "recorder.ondataavailable = function(e) { if (e.data && e.data.size) chunks.push(e.data); };"
         + "recorder.onstop = function() {"
         + "try {"
@@ -34,7 +38,7 @@ public final class ReplayVideoPlatform {
         + "document.body.appendChild(link); link.click(); link.remove();"
         + "setTimeout(function() { URL.revokeObjectURL(url); }, 1000);"
         + "} finally {"
-        + "stream.getTracks().forEach(function(track) { track.stop(); });"
+        + "canvasStream.getTracks().forEach(function(track) { track.stop(); });"
         + "window.__tailscraftReplayRecorder = null;"
         + "}"
         + "};"
@@ -42,7 +46,7 @@ public final class ReplayVideoPlatform {
         + "window.__tailscraftReplayRecorder = recorder;"
         + "return true;"
         + "} catch (e) { window.__tailscraftReplayRecorder = null; return false; }")
-    public static native boolean start();
+    public static native boolean start(MediaStream audioStream);
 
     @JSBody(params = {}, script = "if(window.__tailscraftReplayRecorder) { try { window.__tailscraftReplayRecorder.stop(); } catch(e) {} }")
     public static native void stop();

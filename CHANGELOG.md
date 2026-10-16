@@ -15,6 +15,8 @@ for context and are not part of the current client.
   the game canvas to a downloadable `.webm` video.
 - Replay recording is browser-local and does not retain player/world frames or
   upload anything to a server.
+- Replay videos now include the client’s game audio stream and prefer the
+  lighter VP8 encoder for smoother capture.
 - Removed TailsConnect heartbeat traffic and added clearer connection errors.
 - Added the AuthMe register/login prompt with masked password fields.
 - Added a native-style AuthMe “Remember me” checkbox. Credentials are saved

@@ -474,6 +474,15 @@ public class PlatformAudio {
 		}
 	}
 
+	/** Audio output used by the local browser replay recorder. */
+	public static MediaStream beginReplayRecording() {
+		return initRecordingStream(1.0F, 0.0F);
+	}
+
+	public static void endReplayRecording() {
+		destroyRecordingStream();
+	}
+
 	static void destroyRecordingStream() {
 		if(recDestSilenceNode != null) {
 			try {

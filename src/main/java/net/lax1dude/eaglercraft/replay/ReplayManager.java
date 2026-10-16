@@ -1,6 +1,8 @@
 package net.lax1dude.eaglercraft.replay;
 
 import net.minecraft.client.Minecraft;
+import net.lax1dude.eaglercraft.internal.PlatformAudio;
+import org.teavm.jso.webaudio.MediaStream;
 
 /** Local, singleplayer-only browser video capture. It never sends replay data to a server. */
 public final class ReplayManager {
@@ -30,13 +32,18 @@ public final class ReplayManager {
 			return;
 		}
 		if (ReplayVideoPlatform.isSupported()) {
-			recording = ReplayVideoPlatform.start();
+			MediaStream audioStream = PlatformAudio.beginReplayRecording();
+			recording = ReplayVideoPlatform.start(audioStream);
+			if (!recording) {
+				PlatformAudio.endReplayRecording();
+			}
 		}
 	}
 
 	public static void stopRecording() {
 		if (recording) {
 			ReplayVideoPlatform.stop();
+			PlatformAudio.endReplayRecording();
 		}
 		recording = false;
 	}
