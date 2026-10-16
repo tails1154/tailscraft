@@ -1,11 +1,7 @@
 package net.minecraft.client.ai;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -20,7 +16,7 @@ public final class AICopilotController {
 	private static boolean active;
 	private static int targetX, targetY, targetZ;
 	private static int recalc;
-	private static List<Node> path = Collections.emptyList();
+	private static List<BlockPos> path = Collections.emptyList();
 	private static List<AICraftScriptLangPlus.Step> script;
 	private static int scriptIndex;
 	private static BlockPos objective;
@@ -124,16 +120,20 @@ public final class AICopilotController {
 	}
 
 	private static void moveTo(int x, int y, int z, EntityPlayerSP player, World world) {
-		if (++recalc >= 10 || path.isEmpty()) { path = findPath(world, new BlockPos(player), new BlockPos(x, y, z)); recalc = 0; }
-		Node next = path.isEmpty() ? new Node(x, y, z) : path.get(0);
-		float yaw = (float) (Math.atan2(-(next.x + 0.5D - player.posX), next.z + 0.5D - player.posZ) * 180.0D / Math.PI);
+		if (++recalc >= 10 || path.isEmpty()) { path = BaritonePathfinder.findPath(world, new BlockPos(player), new BlockPos(x, y, z)); recalc = 0; }
+		BlockPos next = path.isEmpty() ? new BlockPos(x, y, z) : path.get(0);
+		float yaw = (float) (Math.atan2(-(next.getX() + 0.5D - player.posX), next.getZ() + 0.5D - player.posZ) * 180.0D / Math.PI);
 		player.rotationYaw = yaw; player.prevRotationYaw = yaw;
 		KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindForward.getKeyCode(), true);
 		KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindSprint.getKeyCode(), true);
-		KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindJump.getKeyCode(), player.isCollidedHorizontally || next.y > (int) Math.floor(player.posY));
+		KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindJump.getKeyCode(), player.isCollidedHorizontally || next.getY() > (int) Math.floor(player.posY));
 	}
 
 	private static boolean nearTarget(EntityPlayerSP player) { return Math.abs(player.posX - targetX) < 1.2D && Math.abs(player.posY - targetY) < 2.0D && Math.abs(player.posZ - targetZ) < 1.2D; }
+	private static boolean canStand(World world, int x, int y, int z) {
+		BlockPos feet = new BlockPos(x, y, z);
+		return world.isAirBlock(feet) && world.isAirBlock(feet.up()) && !world.isAirBlock(feet.down());
+	}
 	private static boolean selectHotbarItem(EntityPlayerSP player, String wanted) {
 		String needle = wanted == null ? "" : wanted.toLowerCase();
 		for (int slot = 0; slot < 9; ++slot) {
@@ -164,28 +164,7 @@ public final class AICopilotController {
 		return best;
 	}
 
-	private static List<Node> findPath(World world, BlockPos start, BlockPos target) {
-		final int radius = 16; final Map<Long, Node> nodes = new HashMap<Long, Node>(); List<Node> open = new ArrayList<Node>();
-		Node origin = new Node(start.getX(), start.getY(), start.getZ()); origin.g = 0; origin.h = distance(origin, target); open.add(origin); nodes.put(origin.key(), origin);
-		while (!open.isEmpty()) {
-			Collections.sort(open, Comparator.comparingInt(AICopilotController::score)); Node current = open.remove(0);
-			if (Math.abs(current.x - target.getX()) <= 1 && Math.abs(current.z - target.getZ()) <= 1) return buildPath(current);
-			if (Math.abs(current.x - start.getX()) > radius || Math.abs(current.z - start.getZ()) > radius) continue;
-			for (int i = 0; i < 4; ++i) {
-				int nx = current.x + (i == 0 ? 1 : i == 1 ? -1 : 0), nz = current.z + (i == 2 ? 1 : i == 3 ? -1 : 0);
-				for (int ny = current.y - 1; ny <= current.y + 1; ++ny) if (canStand(world, nx, ny, nz)) {
-					Node candidate = new Node(nx, ny, nz), known = nodes.get(candidate.key()); int cost = current.g + 1 + Math.abs(ny - current.y) * 2;
-					if (known == null || cost < known.g) { candidate.parent = current; candidate.g = cost; candidate.h = distance(candidate, target); nodes.put(candidate.key(), candidate); open.add(candidate); }
-				}
-			}
-		}
-		return Collections.emptyList();
-	}
 
-	private static boolean canStand(World world, int x, int y, int z) { BlockPos feet = new BlockPos(x, y, z); return world.isAirBlock(feet) && world.isAirBlock(feet.up()) && !world.isAirBlock(feet.down()); }
-	private static int distance(Node n, BlockPos target) { return Math.abs(n.x - target.getX()) + Math.abs(n.y - target.getY()) + Math.abs(n.z - target.getZ()); }
-	private static int score(Node n) { return n.g + n.h; }
-	private static List<Node> buildPath(Node end) { List<Node> ret = new ArrayList<Node>(); for (Node n = end; n.parent != null; n = n.parent) ret.add(n); Collections.reverse(ret); return ret; }
 
 	private static void releaseKeys() {
 		Minecraft mc = Minecraft.getMinecraft(); if (mc == null) return;
@@ -195,5 +174,4 @@ public final class AICopilotController {
 		KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
 	}
 
-	private static class Node { final int x, y, z; int g, h; Node parent; Node(int x, int y, int z) { this.x = x; this.y = y; this.z = z; } long key() { return (((long) x) << 42) ^ (((long) y) << 21) ^ (z & 0x1FFFFF); } }
 }

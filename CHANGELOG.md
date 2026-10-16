@@ -20,6 +20,8 @@
 - Added bounded text-only block observations to AI Copilot context, including nearby block IDs, coordinates, and the targeted block; no screenshots are sent.
 - Added explicit copilot phase/status reporting and clean restart handling after Stop.
 - Removed the confusing look-around command from the copilot language and planner.
+- Added paged in-game credits and third-party notices, including Baritone LGPL attribution.
+- Replaced the copilot's small synchronous path search with a bounded Baritone-style A* adapter supporting diagonal movement, steps, falls, and hazard avoidance.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.
