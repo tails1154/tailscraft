@@ -5,7 +5,10 @@
 - Uses the asynchronous public Pollinations text endpoint with a local fallback.
 - Sends only a small surroundings snapshot; no passwords, inventory, or world files.
 
-## Constrained AI Copilot
+## Baritone command client
+- Removed the remote AI planner and AICraftScriptLangPlus execution path.
+- Added Baritone-style `#goto`, `#mine`, and `#stop` commands handled locally by the client.
+- Removed the AI Copilot pause-menu UI and overlay.
 - Added an opt-in AI Copilot panel with bounded block-grid pathfinding to XYZ targets.
 - Added a look-around action; the copilot cannot chat, attack, place blocks, use inventory, or interact with containers.
 - Stop and closing the panel release all copilot movement keys.
@@ -22,6 +25,7 @@
 - Removed the confusing look-around command from the copilot language and planner.
 - Added paged in-game credits and third-party notices, including Baritone LGPL attribution.
 - Replaced the copilot's small synchronous path search with a bounded Baritone-style A* adapter supporting diagonal movement, steps, falls, and hazard avoidance.
+- Improved Baritone-style path execution by consuming reached nodes, recalculating when a path is exhausted, and reporting live node progress to the AI status overlay.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.

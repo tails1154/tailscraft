@@ -10,6 +10,7 @@ import net.lax1dude.eaglercraft.notifications.GuiButtonNotifBell;
 import net.lax1dude.eaglercraft.notifications.GuiScreenNotifications;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.client.ai.BaritoneController;
 import net.minecraft.util.ITabCompleter;
 import net.minecraft.util.TabCompleter;
 import net.minecraft.util.math.BlockPos;
@@ -145,7 +146,7 @@ public class GuiChat extends GuiScreenVisualViewport implements ITabCompleter {
 			String s = this.inputField.getText().trim();
 
 			if (!s.isEmpty()) {
-				this.sendChatMessage(s);
+				if (!BaritoneController.handleCommand(s)) this.sendChatMessage(s);
 			}
 
 			this.mc.displayGuiScreen((GuiScreen) null);

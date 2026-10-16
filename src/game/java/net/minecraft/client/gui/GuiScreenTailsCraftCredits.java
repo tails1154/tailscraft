@@ -12,15 +12,15 @@ public class GuiScreenTailsCraftCredits extends GuiScreen {
 	private static final String[][] PAGES = new String[][] {
 			{
 				"TailsCraft Credits", "", "TailsCraft client additions",
-				"TailsConnect, friends, UI, and client features", "AI Copilot and AICraftScriptLangPlus",
+				"TailsConnect, friends, UI, and client features", "Baritone-compatible command client",
 				"TailsCraft project", "https://github.com/tails1154/tailscraft", "",
 				"Minecraft and Eaglercraft assets/code remain the property of their respective authors."
 			},
 			{
 				"Pathfinding and Baritone", "", "Baritone", "Copyright (c) 2018-2026 Baritone contributors",
 				"https://github.com/cabaletta/baritone", "License: GNU LGPL-3.0-or-later",
-				"TailsCraft includes an independent 1.12.2/WASM adaptation of Baritone-style",
-				"A* movement-search concepts; it does not bundle Baritone's newer mixins.",
+				"TailsCraft ports the basic 1.12.2-era Baritone command surface:",
+				"#goto, #mine, and #stop. See the third-party notice for the source commit.",
 				"See THIRD_PARTY_NOTICES.md for source and license information."
 			},
 			{
