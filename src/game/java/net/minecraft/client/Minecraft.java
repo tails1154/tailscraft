@@ -2451,6 +2451,7 @@ public class Minecraft implements IThreadListener {
 
 		if (i != 0 && !Keyboard.isRepeatEvent()) {
 			if (Keyboard.getEventKeyState() && net.lax1dude.eaglercraft.CheatMenuState.handleKey(i)) return;
+			if (Keyboard.getEventKeyState() && net.lax1dude.eaglercraft.PathfindingMenuState.handleKey(i)) return;
 			if (!(this.currentScreen instanceof GuiControls)
 					|| ((GuiControls) this.currentScreen).time <= getSystemTime() - 20L) {
 				if (Keyboard.getEventKeyState()) {

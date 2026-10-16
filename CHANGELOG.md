@@ -10,9 +10,13 @@
 - Added Baritone-style `#goto <block>` and optional `#mine <quantity> <block>...` commands, including quota completion messages.
 - Made block discovery incremental: `#mine` and `#goto <block>` scan 512 loaded positions per tick instead of freezing the game thread on a full-volume scan.
 - Made Baritone path searches incremental too: A* advances 128 nodes per tick and reports calculation progress without blocking movement or rendering.
+- Matched Baritone's single-coordinate `#goto <y>` behavior with a Y-level goal; named two-token targets still resolve as blocks.
 - Added automatic bounded retries for failed server handshakes, with Cancel still available and a clear retry count.
 - Increased handshake retry tolerance to 1000 attempts with a five-second maximum delay between attempts for unreliable servers.
 - Added paged in-game credits and third-party notices, including Baritone LGPL attribution.
+- Replaced the Forge-dependent path search adapter with a dependency-free incremental A* core and a small Minecraft movement adapter.
+- Added the TailsCraft Pathfindinganator 9000 GUI, opened with Ctrl+K, then release and press P. Pathfinding no longer runs from chat commands.
+- Added visible in-world route lines for active paths.
 
 ## Historical removed experiments
 - Removed the former AI chatbot, remote planner, copilot panel, observation loop, status overlay, and look-around action.

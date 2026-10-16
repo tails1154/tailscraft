@@ -9,6 +9,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.settings.KeyBinding;
+import net.lax1dude.eaglercraft.opengl.EaglercraftGPU;
+import net.lax1dude.eaglercraft.opengl.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.EnumFacing;
@@ -21,6 +25,7 @@ import net.minecraft.world.World;
 import baritone.api.pathing.goals.Goal;
 import baritone.api.pathing.goals.GoalBlock;
 import baritone.api.pathing.goals.GoalXZ;
+import baritone.api.pathing.goals.GoalYLevel;
 
 /**
  * Small Baritone command surface for the 1.12.2 client.
@@ -53,11 +58,9 @@ public final class BaritoneController {
 	private static List<Block> searchBlocks = Collections.emptyList();
 	private static boolean scanActive;
 	private static boolean searchFinished;
-	private static int scanMinX, scanMaxX, scanMinY, scanMaxY, scanMinZ, scanMaxZ;
+	private static int scanMinY, scanMaxY;
+	private static int scanCenterX, scanCenterZ, scanRadius, scanRingIndex;
 	private static int scanX, scanY, scanZ;
-	private static BlockPos scanBest;
-	private static Block scanBestBlock;
-	private static double scanBestDistance;
 
 	private BaritoneController() { }
 
@@ -79,9 +82,15 @@ public final class BaritoneController {
 		}
 		if ("goto".equals(command)) {
 			if (args.length == 2) {
-				Block block = Block.getBlockFromName(args[1].toLowerCase());
-				if (block == null) { message("Baritone: unknown block " + args[1]); return true; }
-				startGotoBlock(block);
+				EntityPlayerSP player = Minecraft.getMinecraft().player;
+				int originY = player == null ? 64 : (int)Math.floor(player.posY);
+				try {
+					startGotoY(parseCoordinate(args[1], originY));
+				} catch (NumberFormatException ex) {
+					Block block = Block.getBlockFromName(args[1].toLowerCase());
+					if (block == null) { message("Baritone: unknown block " + args[1]); return true; }
+					startGotoBlock(block);
+				}
 				return true;
 			}
 			if (args.length != 3 && args.length != 4) { message("Usage: #goto <x> [y] <z>"); return true; }
@@ -138,6 +147,14 @@ public final class BaritoneController {
 		searchBlocks = Collections.singletonList(block);
 		resetSearch();
 		status = "Searching for " + blockName(block);
+		message("Baritone: " + status);
+	}
+
+	private static void startGotoY(int y) {
+		active = true; mining = false; goingToBlock = false; gotoBlock = null; gotoTarget = null; mineBlock = null; mineBlocks = Collections.emptyList(); mineTarget = null; mineLimit = 0;
+		searchBlocks = Collections.emptyList(); resetSearch();
+		targetY = y; pathGoal = new GoalYLevel(y); path = Collections.emptyList(); pathSearch = null; recalc = 10;
+		status = "Going to Y=" + y;
 		message("Baritone: " + status);
 	}
 
@@ -266,11 +283,9 @@ public final class BaritoneController {
 	private static BlockPos findBlock(World world, EntityPlayerSP player) {
 		if (!scanActive && !searchFinished) {
 			int px = (int)Math.floor(player.posX), py = (int)Math.floor(player.posY), pz = (int)Math.floor(player.posZ);
-			scanMinX = px - 24; scanMaxX = px + 24;
 			scanMinY = Math.max(0, py - 48); scanMaxY = Math.min(255, py + 16);
-			scanMinZ = pz - 24; scanMaxZ = pz + 24;
-			scanX = scanMinX; scanY = scanMinY; scanZ = scanMinZ;
-			scanBest = null; scanBestBlock = null; scanBestDistance = Double.MAX_VALUE;
+			scanCenterX = px; scanCenterZ = pz; scanRadius = 0; scanRingIndex = 0;
+			scanX = px; scanY = scanMinY; scanZ = pz;
 			scanActive = true;
 		}
 		int budget = SEARCH_BATCH;
@@ -278,38 +293,116 @@ public final class BaritoneController {
 			if (world.getChunkProvider().getLoadedChunk(scanX >> 4, scanZ >> 4) != null) {
 				BlockPos pos = new BlockPos(scanX, scanY, scanZ);
 				Block found = world.getBlockState(pos).getBlock();
-				double distance = player.getDistanceSq(pos);
-				if (searchBlocks.contains(found) && distance < scanBestDistance) {
-					scanBestDistance = distance; scanBest = pos; scanBestBlock = found;
+				if (searchBlocks.contains(found)) {
+					mineBlock = found;
+					searchFinished = true;
+					scanActive = false;
+					return pos;
 				}
 			}
 			advanceSearchCursor();
 		}
 		if (scanActive) return null;
 		searchFinished = true;
-		mineBlock = scanBestBlock;
-		return scanBest;
+		return null;
 	}
 
 	private static void advanceSearchCursor() {
 		if (++scanY <= scanMaxY) return;
 		scanY = scanMinY;
-		if (++scanZ <= scanMaxZ) return;
-		scanZ = scanMinZ;
-		if (++scanX <= scanMaxX) return;
-		scanActive = false;
+		if (scanRadius == 0) {
+			scanRadius = 1;
+			scanRingIndex = 0;
+			setRingPosition();
+			return;
+		}
+		if (++scanRingIndex < scanRadius * 8) {
+			setRingPosition();
+			return;
+		}
+		if (++scanRadius > 24) {
+			scanActive = false;
+			return;
+		}
+		scanRingIndex = 0;
+		setRingPosition();
+	}
+
+	private static void setRingPosition() {
+		int r = scanRadius;
+		if (r == 0) {
+			scanX = scanCenterX;
+			scanZ = scanCenterZ;
+			return;
+		}
+		int side = r * 2 + 1;
+		int i = scanRingIndex;
+		if (i < side) {
+			scanX = scanCenterX - r + i;
+			scanZ = scanCenterZ - r;
+		} else if ((i -= side) < r * 2) {
+			scanX = scanCenterX + r;
+			scanZ = scanCenterZ - r + 1 + i;
+		} else if ((i -= r * 2) < r * 2) {
+			scanX = scanCenterX + r - 1 - i;
+			scanZ = scanCenterZ + r;
+		} else {
+			scanX = scanCenterX - r;
+			scanZ = scanCenterZ + r - 1 - (i - r * 2);
+		}
 	}
 
 	private static void resetSearch() {
 		searchBlocks = searchBlocks == null ? Collections.<Block>emptyList() : searchBlocks;
 		scanActive = false;
 		searchFinished = false;
-		scanBest = null;
-		scanBestBlock = null;
+	}
+
+	/** Draw the current Baritone route over the world, including an in-progress route. */
+	public static void renderPath(double cameraX, double cameraY, double cameraZ) {
+		if (!active || path.isEmpty()) return;
+		Tessellator tessellator = Tessellator.getInstance();
+		GlStateManager.pushMatrix();
+		GlStateManager.enableBlend();
+		GlStateManager.tryBlendFuncSeparate(net.lax1dude.eaglercraft.opengl.RealOpenGLEnums.GL_SRC_ALPHA,
+				net.lax1dude.eaglercraft.opengl.RealOpenGLEnums.GL_ONE_MINUS_SRC_ALPHA,
+				net.lax1dude.eaglercraft.opengl.RealOpenGLEnums.GL_ONE,
+				net.lax1dude.eaglercraft.opengl.RealOpenGLEnums.GL_ZERO);
+		GlStateManager.disableTexture2D();
+		GlStateManager.disableDepth();
+		EaglercraftGPU.glLineWidth(3.0F);
+		EntityPlayerSP player = Minecraft.getMinecraft().player;
+		WorldRendererCompat.beginPath(tessellator, player, cameraX, cameraY, cameraZ);
+		tessellator.draw();
+		EaglercraftGPU.glLineWidth(1.0F);
+		GlStateManager.enableDepth();
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
+		GlStateManager.popMatrix();
+	}
+
+	private static final class WorldRendererCompat {
+		private static void beginPath(Tessellator tessellator, EntityPlayerSP player, double cameraX, double cameraY, double cameraZ) {
+			net.lax1dude.eaglercraft.opengl.WorldRenderer buffer = tessellator.getBuffer();
+			buffer.begin(Tessellator.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+			if (player != null) {
+				buffer.pos(player.posX - cameraX, player.posY + 0.1D - cameraY, player.posZ - cameraZ)
+						.color(64, 255, 64, 230).endVertex();
+			}
+			int count = Math.min(path.size(), 512);
+			for (int i = 0; i < count; ++i) {
+				BlockPos point = path.get(i);
+				int red = Math.min(255, 64 + i / 2);
+				buffer.pos(point.getX() + 0.5D - cameraX, point.getY() + 0.15D - cameraY,
+						point.getZ() + 0.5D - cameraZ).color(red, 255, 64, 230).endVertex();
+			}
+		}
 	}
 
 	private static boolean nearTarget(EntityPlayerSP player) {
-		return pathGoal instanceof GoalXZ
+		return pathGoal instanceof GoalYLevel
+				? Math.abs(player.posY - targetY) < 1.2D
+				: pathGoal instanceof GoalXZ
 				? Math.abs(player.posX - targetX) < 1.2D && Math.abs(player.posZ - targetZ) < 1.2D
 				: Math.abs(player.posX - targetX) < 1.2D && Math.abs(player.posY - targetY) < 2.0D && Math.abs(player.posZ - targetZ) < 1.2D;
 	}
