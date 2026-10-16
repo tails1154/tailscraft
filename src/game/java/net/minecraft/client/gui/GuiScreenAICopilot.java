@@ -2,8 +2,12 @@ package net.minecraft.client.gui;
 
 import java.io.IOException;
 
+import net.minecraft.block.Block;
 import net.minecraft.client.ai.AICopilotAgent;
 import net.minecraft.client.ai.AICopilotController;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 
 /** Simple natural-language entry point for the bounded AI copilot agent. */
 public class GuiScreenAICopilot extends GuiScreen {
@@ -56,8 +60,35 @@ public class GuiScreenAICopilot extends GuiScreen {
 				items.append(i < 9 ? "hotbar:" : "inventory:").append(stack.getDisplayName()).append(" x").append(stack.func_190916_E());
 			}
 		}
-		return "player position=" + (int) mc.player.posX + "," + (int) mc.player.posY + "," + (int) mc.player.posZ
-				+ " dimension=" + mc.player.dimension + " items=" + items.toString();
+		StringBuilder observation = new StringBuilder();
+		int px = (int) Math.floor(mc.player.posX);
+		int py = (int) Math.floor(mc.player.posY);
+		int pz = (int) Math.floor(mc.player.posZ);
+		int seen = 0;
+		for (int y = py - 2; y <= py + 2 && seen < 120; ++y) {
+			for (int z = pz - 4; z <= pz + 4 && seen < 120; ++z) {
+				for (int x = px - 4; x <= px + 4 && seen < 120; ++x) {
+					BlockPos pos = new BlockPos(x, y, z);
+					if (mc.world.getChunkProvider().getLoadedChunk(x >> 4, z >> 4) == null || mc.world.isAirBlock(pos)) continue;
+					Block block = mc.world.getBlockState(pos).getBlock();
+					ResourceLocation id = Block.REGISTRY.getNameForObject(block);
+					if (observation.length() > 0) observation.append(";");
+					observation.append(id == null ? block.getLocalizedName() : id.toString()).append("@").append(x).append(",").append(y).append(",").append(z);
+					++seen;
+				}
+			}
+		}
+		String targeted = "none";
+		if (mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK) {
+			BlockPos target = mc.objectMouseOver.getBlockPos();
+			if (target != null) {
+				Block block = mc.world.getBlockState(target).getBlock();
+				ResourceLocation id = Block.REGISTRY.getNameForObject(block);
+				targeted = (id == null ? block.getLocalizedName() : id.toString()) + "@" + target.getX() + "," + target.getY() + "," + target.getZ();
+			}
+		}
+		return "player position=" + px + "," + py + "," + pz + " dimension=" + mc.player.dimension
+				+ " items=" + items.toString() + " targeted_block=" + targeted + " nearby_blocks=" + observation.toString();
 	}
 
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
