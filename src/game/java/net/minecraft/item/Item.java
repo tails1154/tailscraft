@@ -1116,8 +1116,8 @@ public class Item {
 		registerItem(461, new ResourceLocation("tailscraft:lantern"),
 				new ItemLantern(Blocks.LANTERN, "lantern"));
 		registerItem(462, new ResourceLocation("tailscraft:soul_lantern"),
-				new ItemLantern(Blocks.SOUL_LANTERN, "soul_lantern"));
-		registerItem(463, new ResourceLocation("tailscraft:chain"), new ItemChain(Blocks.IRON_BARS));
+				new ItemLantern(Blocks.LANTERN, "soul_lantern"));
+		registerItem(463, new ResourceLocation("tailscraft:chain"), new ItemChain(Blocks.CHAIN));
 		registerItem(2256, "record_13", (new ItemRecord("13", SoundEvents.RECORD_13)).setUnlocalizedName("record"));
 		registerItem(2257, "record_cat", (new ItemRecord("cat", SoundEvents.RECORD_CAT)).setUnlocalizedName("record"));
 		registerItem(2258, "record_blocks",

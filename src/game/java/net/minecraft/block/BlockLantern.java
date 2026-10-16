@@ -19,12 +19,13 @@ import net.minecraft.world.World;
 /** Lantern block shared by the normal and soul variants. */
 public class BlockLantern extends Block {
 	public static final PropertyBool HANGING = PropertyBool.create("hanging");
+	public static final PropertyBool SOUL = PropertyBool.create("soul");
 	private static final AxisAlignedBB BOX = new AxisAlignedBB(0.3125D, 0.0D, 0.3125D, 0.6875D, 0.4375D, 0.6875D);
 	private static final AxisAlignedBB HANGING_BOX = new AxisAlignedBB(0.3125D, 0.0625D, 0.3125D, 0.6875D, 0.5D, 0.6875D);
 
 	public BlockLantern() {
 		super(Material.IRON);
-		setDefaultState(blockState.getBaseState().withProperty(HANGING, Boolean.FALSE));
+		setDefaultState(blockState.getBaseState().withProperty(HANGING, Boolean.FALSE).withProperty(SOUL, Boolean.FALSE));
 		setHardness(3.5F);
 		setLightLevel(1.0F);
 		setCreativeTab(CreativeTabs.DECORATIONS);
@@ -53,21 +54,24 @@ public class BlockLantern extends Block {
 	@Override
 	public IBlockState onBlockPlaced(World world, BlockPos pos, EnumFacing facing, float hitX, float hitY,
 			float hitZ, int meta, EntityLivingBase placer) {
-		return getDefaultState().withProperty(HANGING, Boolean.valueOf((meta & 1) != 0));
+		return getDefaultState().withProperty(HANGING, Boolean.valueOf(facing == EnumFacing.DOWN || (meta & 2) != 0)).withProperty(SOUL, Boolean.valueOf((meta & 1) != 0));
 	}
 
 	@Override
+	public int getLightValue(IBlockState state) { return ((Boolean) state.getValue(SOUL)).booleanValue() ? 10 : 15; }
+
+	@Override
 	public IBlockState getStateFromMeta(int meta) {
-		return getDefaultState().withProperty(HANGING, Boolean.valueOf((meta & 1) != 0));
+		return getDefaultState().withProperty(HANGING, Boolean.valueOf((meta & 2) != 0)).withProperty(SOUL, Boolean.valueOf((meta & 1) != 0));
 	}
 
 	@Override
 	public int getMetaFromState(IBlockState state) {
-		return ((Boolean) state.getValue(HANGING)).booleanValue() ? 1 : 0;
+		return (((Boolean) state.getValue(SOUL)).booleanValue() ? 1 : 0) | (((Boolean) state.getValue(HANGING)).booleanValue() ? 2 : 0);
 	}
 
 	@Override
-	protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, new IProperty[] { HANGING }); }
+	protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, new IProperty[] { HANGING, SOUL }); }
 
 	@Override
 	public BlockRenderLayer getBlockLayer() { return BlockRenderLayer.CUTOUT; }

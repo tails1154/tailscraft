@@ -15,9 +15,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Server-side compatibility layer for TailsCraft lanterns.
  *
- * Barrier is the 1.12 wire/fallback block: TailsCraft renders it as a lantern,
- * while older clients still receive a legal vanilla block. The item name is
- * intentionally stable so the client can resolve it without a new protocol.
+ * Uses legal 1.12 item stacks for compatibility, then upgrades placed blocks
+ * to TailsCraft's dedicated client block IDs.
  */
 public final class TailsCraftLanternsPlugin extends JavaPlugin implements Listener {
     @Override public void onEnable() { getServer().getPluginManager().registerEvents(this, this); }
@@ -27,8 +26,11 @@ public final class TailsCraftLanternsPlugin extends JavaPlugin implements Listen
         ItemStack item = event.getItemInHand();
         if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) return;
         String name = ChatColor.stripColor(item.getItemMeta().getDisplayName());
-        if ("Lantern".equalsIgnoreCase(name)) event.getBlockPlaced().setTypeIdAndData(253, (byte) 0, false);
-        else if ("Soul Lantern".equalsIgnoreCase(name)) event.getBlockPlaced().setTypeIdAndData(254, (byte) 0, false);
+        byte data = (byte) ("Soul Lantern".equalsIgnoreCase(name) ? 1 : 0);
+        if (event.getBlockAgainst().getY() > event.getBlockPlaced().getY()) data |= 2;
+        if ("Lantern".equalsIgnoreCase(name) || "Soul Lantern".equalsIgnoreCase(name))
+            event.getBlockPlaced().setTypeIdAndData(253, data, false);
+        else if ("Chain".equalsIgnoreCase(name)) event.getBlockPlaced().setTypeIdAndData(254, (byte) 0, false);
     }
 
     @Override

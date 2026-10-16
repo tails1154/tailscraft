@@ -1579,7 +1579,7 @@ public class Block {
 		registerBlock(252, "concrete_powder", (new BlockConcretePowder()).setHardness(0.5F).setSoundType(SoundType.SAND)
 				.setUnlocalizedName("concretePowder"));
 		registerBlock(253, "lantern", (new BlockLantern()).setUnlocalizedName("lantern"));
-		registerBlock(254, "soul_lantern", (new BlockLantern()).setUnlocalizedName("soulLantern"));
+		registerBlock(254, "chain", (new BlockChain()).setUnlocalizedName("chain"));
 		registerBlock(255, "structure_block", (new BlockStructure()).setBlockUnbreakable().setResistance(6000000.0F)
 				.setUnlocalizedName("structureBlock"));
 		REGISTRY.validateKey();
