@@ -32,7 +32,12 @@ public final class ReplayManager {
 			return;
 		}
 		if (ReplayVideoPlatform.isSupported()) {
-			MediaStream audioStream = PlatformAudio.beginReplayRecording();
+			MediaStream audioStream = null;
+			try {
+				audioStream = PlatformAudio.beginReplayRecording();
+			} catch (Throwable ignored) {
+				// Video capture remains available when the browser audio context is unavailable.
+			}
 			recording = ReplayVideoPlatform.start(audioStream);
 			if (!recording) {
 				PlatformAudio.endReplayRecording();
