@@ -151,8 +151,8 @@ public class GuiConnecting extends GuiScreen {
 				this.connectionDetail = "The server previously blocked this client";
 				mc.displayGuiScreen(GuiDisconnected.createRateLimitKick(previousGuiScreen));
 			} else if (webSocket == null) {
-				this.connectionPhase = "Opening WebSocket";
-				this.connectionDetail = "Creating a browser transport to " + currentAddress;
+				this.connectionPhase = "Opening WebSocket transport";
+				this.connectionDetail = "Creating a secure browser connection";
 				logger.info("Connecting to: {}", currentAddress);
 				webSocket = PlatformNetworking.openWebSocket(currentAddress);
 				if (webSocket == null) {
@@ -161,13 +161,13 @@ public class GuiConnecting extends GuiScreen {
 				}
 			} else {
 				if (webSocket.getState() == EnumEaglerConnectionState.CONNECTED) {
-					this.connectionPhase = "WebSocket connected";
-					this.connectionDetail = "Transport is open; starting the Eagler handshake";
+					this.connectionPhase = "Handshaking with server";
+					this.connectionDetail = "WebSocket transport is open";
 					if (!hasOpened) {
 						hasOpened = true;
 						logger.info("Logging in: {}", currentAddress);
-						this.connectionPhase = "Authenticating";
-						this.connectionDetail = "Negotiating protocol, profile, cookies, and server capabilities";
+						this.connectionPhase = "Authenticating with server";
+						this.connectionDetail = "Negotiating protocol and server capabilities";
 						byte[] cookieData = null;
 						if (allowCookies) {
 							ServerCookieDataStore.ServerCookie cookie = ServerCookieDataStore
@@ -283,7 +283,7 @@ public class GuiConnecting extends GuiScreen {
 	public void initGui() {
 		this.buttonList.clear();
 		this.buttonList.add(
-				new GuiButton(0, this.width / 2 - 100, this.height / 2 + 58, I18n.format("gui.cancel", new Object[0])));
+				new GuiButton(0, this.width / 2 - 100, this.height / 2 - 10, I18n.format("gui.cancel", new Object[0])));
 	}
 
 	/**+
@@ -311,15 +311,10 @@ public class GuiConnecting extends GuiScreen {
 	public void drawScreen(int i, int j, float f) {
 		this.drawDefaultBackground();
 		int top = this.height / 2 - 112;
-		this.drawCenteredString(this.fontRendererObj, "Connecting to server", this.width / 2, top, 0xFFFFFF);
-		this.drawCenteredString(this.fontRendererObj, this.connectionPhase, this.width / 2, top + 24, 0x55FFFF);
-		this.drawCenteredString(this.fontRendererObj, this.connectionDetail, this.width / 2, top + 40, 0xDDDDDD);
-		this.drawConnectionDetail("Target: " + (currentAddress == null ? "unknown" : currentAddress), top + 68, 0xFFFFFF);
-		this.drawConnectionDetail("Elapsed: " + ((System.currentTimeMillis() - connectionStartedAt) / 1000L) + " seconds", top + 82, 0xAAAAAA);
-		this.drawConnectionDetail("Transport: " + (webSocket == null ? "not opened" : webSocket.getState()), top + 96, 0xAAAAAA);
-		this.drawConnectionDetail("Handshake: " + (hasOpened ? "started" : "not started") + " | Network manager: " + (networkManager == null ? "not created" : "created"), top + 110, 0xAAAAAA);
-		this.drawConnectionDetail("Options: plaintext=" + allowPlaintext + " | cookies=" + allowCookies, top + 124, 0xAAAAAA);
-		this.drawConnectionDetail("Packets are processed on the normal game loop; Cancel remains available below.", top + 148, 0x777777);
+		this.drawCenteredString(this.fontRendererObj, this.connectionPhase, this.width / 2, top, 0xFFFFFF);
+		this.drawConnectionDetail(this.connectionDetail, top + 26, 0xDDDDDD);
+		this.drawConnectionDetail("Target: " + (currentAddress == null ? "unknown" : currentAddress), top + 58, 0xFFFFFF);
+		this.drawConnectionDetail("Elapsed: " + ((System.currentTimeMillis() - connectionStartedAt) / 1000L) + " seconds", top + 74, 0xAAAAAA);
 
 		super.drawScreen(i, j, f);
 	}
