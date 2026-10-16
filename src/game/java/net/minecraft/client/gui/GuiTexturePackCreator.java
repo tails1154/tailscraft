@@ -1,6 +1,8 @@
 package net.minecraft.client.gui;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +42,7 @@ public class GuiTexturePackCreator extends GuiScreen {
 			"textures/entity/steve.png", "textures/particle/particles.png" };
 	private static final int[] PALETTE = { 0xFFFFFFFF, 0xFF000000, 0xFFFF3333, 0xFFFFCC33, 0xFF33CC66,
 			0xFF3399FF, 0xFF9933CC, 0xFF996633, 0xFF777777, 0x00000000 };
+	private static final String PROJECT_STORAGE = "tailscraft_texture_pack_creator_project";
 
 	private final GuiScreen parent;
 	private final List<TextureEntry> entries = new ArrayList<TextureEntry>();
@@ -68,6 +71,8 @@ public class GuiTexturePackCreator extends GuiScreen {
 		buttonList.clear();
 		packName = new GuiTextField(20, fontRendererObj, width / 2 - 70, 8, 140, 20);
 		packName.setText("My TailsCraft Pack");
+		buttonList.add(new GuiButton(107, 8, 8, 80, 20, "Save project"));
+		buttonList.add(new GuiButton(108, 92, 8, 80, 20, "Load project"));
 		buttonList.add(new GuiButton(0, 8, height - 28, 70, 20, I18n.format("gui.back")));
 		buttonList.add(new GuiButton(2, width / 2 - 190, height - 28, 90, 20, "Import texture"));
 		buttonList.add(new GuiButton(3, width / 2 - 45, height - 28, 90, 20, "Export pack"));
@@ -149,6 +154,8 @@ public class GuiTexturePackCreator extends GuiScreen {
 		else if (button.id == 4) { recordUndo(); image = new ImageData(image.width, image.height, true); markEdited(); }
 		else if (button.id == 5) undo();
 		else if (button.id == 6) redo();
+		else if (button.id == 107) saveProject();
+		else if (button.id == 108) loadProject();
 		else if (button.id >= 40 && button.id <= 43) tool = button.id - 40;
 		else if (button.id >= 50 && button.id <= 52) brushSize = 1 << (button.id - 50);
 		else if (button.id >= 20 && button.id < 20 + PALETTE.length) selectedColor = PALETTE[button.id - 20];
@@ -207,6 +214,63 @@ public class GuiTexturePackCreator extends GuiScreen {
 			dirty = false;
 		} catch (Throwable t) {
 			EagRuntime.showPopup("Could not export texture pack: " + t.getClass().getSimpleName());
+		}
+	}
+
+	private void saveProject() {
+		try {
+			ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+			DataOutputStream out = new DataOutputStream(bytes);
+			out.writeInt(0x54435031); // TCP1
+			out.writeUTF(packName.getText());
+			out.writeInt(editedTextures.size());
+			for (Map.Entry<String, ImageData> entry : editedTextures.entrySet()) {
+				ImageData data = entry.getValue();
+				out.writeUTF(entry.getKey());
+				out.writeShort(data.width);
+				out.writeShort(data.height);
+				out.writeBoolean(data.alpha);
+				for (int pixel : data.pixels) out.writeInt(pixel);
+			}
+			out.close();
+			EagRuntime.setStorage(PROJECT_STORAGE, bytes.toByteArray());
+			EagRuntime.showPopup("Project saved locally.");
+		} catch (Throwable t) {
+			EagRuntime.showPopup("Could not save project: " + t.getClass().getSimpleName());
+		}
+	}
+
+	private void loadProject() {
+		byte[] saved = EagRuntime.getStorage(PROJECT_STORAGE);
+		if (saved == null || saved.length == 0) {
+			EagRuntime.showPopup("No saved texture project found.");
+			return;
+		}
+		try {
+			DataInputStream in = new DataInputStream(new java.io.ByteArrayInputStream(saved));
+			if (in.readInt() != 0x54435031) throw new IOException("Unknown project format");
+			String savedName = in.readUTF();
+			int count = in.readInt();
+			if (count < 0 || count > 256) throw new IOException("Invalid project texture count");
+			Map<String, ImageData> loaded = new HashMap<String, ImageData>();
+			for (int i = 0; i < count; ++i) {
+				String path = in.readUTF();
+				int w = in.readUnsignedShort(), h = in.readUnsignedShort();
+				if (w < 1 || h < 1 || w > 128 || h > 128) throw new IOException("Invalid project texture size");
+				ImageData data = new ImageData(w, h, in.readBoolean());
+				for (int p = 0; p < data.pixels.length; ++p) data.pixels[p] = in.readInt();
+				loaded.put(path, data);
+			}
+			editedTextures.clear();
+			editedTextures.putAll(loaded);
+			packName.setText(savedName);
+			undoStack.clear();
+			redoStack.clear();
+			if (!editedTextures.isEmpty()) loadTexture(editedTextures.keySet().iterator().next());
+			dirty = false;
+			EagRuntime.showPopup("Project loaded.");
+		} catch (Throwable t) {
+			EagRuntime.showPopup("Could not load project: " + t.getClass().getSimpleName());
 		}
 	}
 
