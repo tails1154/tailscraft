@@ -5,6 +5,8 @@ for context and are not part of the current client.
 
 ## Current client
 
+- Replaced the `record.wait` music disc audio and label with “Sonic Blaster”
+  by F-777. Source: https://soundcloud.com/f-777/sonic-blaster
 - Added TailsConnect multiplayer integration, including the menu, room controls,
   world names, private room joining, TC3 transport, and background connection
   handling.
