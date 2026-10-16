@@ -24,20 +24,27 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 
 /** A small local texture-pack workbench for the browser client. */
-public class GuiTexturePackCreator extends GuiScreen {
+public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback {
 	private static final String[] TEXTURES = {
 			"textures/block/stone.png", "textures/block/grass_top.png", "textures/block/dirt.png",
+			"textures/block/grass_side.png", "textures/block/grass_side_overlay.png", "textures/block/sandstone.png",
 			"textures/block/cobblestone.png", "textures/block/planks_oak.png", "textures/block/planks_spruce.png",
-			"textures/block/sand.png", "textures/block/gravel.png", "textures/block/log_oak.png",
+			"textures/block/planks_birch.png", "textures/block/planks_jungle.png", "textures/block/planks_acacia.png",
+			"textures/block/planks_big_oak.png", "textures/block/sand.png", "textures/block/gravel.png", "textures/block/log_oak.png",
+			"textures/block/log_spruce.png", "textures/block/log_birch.png", "textures/block/log_jungle.png",
 			"textures/block/leaves_oak.png", "textures/block/glass.png", "textures/block/brick.png",
 			"textures/block/obsidian.png", "textures/block/coal_ore.png", "textures/block/iron_ore.png",
 			"textures/block/gold_ore.png", "textures/block/diamond_ore.png", "textures/block/torch_on.png",
-			"textures/block/bookshelf.png", "textures/block/tnt_side.png", "textures/block/glowstone.png",
+			"textures/block/emerald_ore.png", "textures/block/lapis_ore.png", "textures/block/redstone_ore.png",
+			"textures/block/bookshelf.png", "textures/block/tnt_side.png", "textures/block/tnt_top.png", "textures/block/glowstone.png",
+			"textures/block/netherrack.png", "textures/block/end_stone.png", "textures/block/snow.png", "textures/block/ice.png",
+			"textures/block/water_still.png", "textures/block/lava_still.png",
 			"textures/item/diamond.png", "textures/item/iron_ingot.png", "textures/item/gold_ingot.png",
 			"textures/item/coal.png", "textures/item/stick.png", "textures/item/apple.png",
-			"textures/item/bread.png", "textures/item/arrow.png", "textures/item/bucket_empty.png",
+			"textures/item/bread.png", "textures/item/cookie.png", "textures/item/arrow.png", "textures/item/bucket_empty.png",
 			"textures/item/diamond_sword.png", "textures/item/diamond_pickaxe.png",
 			"textures/item/diamond_axe.png", "textures/item/bow_standby.png", "textures/item/fishing_rod_uncast.png",
+			"textures/item/clock.png", "textures/item/compass.png", "textures/item/map_filled.png", "textures/item/shears.png",
 			"textures/gui/title/minecraft.png", "textures/gui/widgets.png", "textures/gui/container/inventory.png",
 			"textures/entity/steve.png", "textures/particle/particles.png" };
 	private static final int[] PALETTE = { 0xFFFFFFFF, 0xFF000000, 0xFFFF3333, 0xFFFFCC33, 0xFF33CC66,
@@ -59,6 +66,8 @@ public class GuiTexturePackCreator extends GuiScreen {
 	private boolean paintGesture;
 	private int tool = 0;
 	private int brushSize = 1;
+	private int zoomOffset = 0;
+	private boolean grid = true;
 	private int canvasX, canvasY, canvasScale;
 
 	public GuiTexturePackCreator(GuiScreen parent) {
@@ -73,6 +82,7 @@ public class GuiTexturePackCreator extends GuiScreen {
 		packName.setText("My TailsCraft Pack");
 		buttonList.add(new GuiButton(107, 8, 8, 80, 20, "Save project"));
 		buttonList.add(new GuiButton(108, 92, 8, 80, 20, "Load project"));
+		buttonList.add(new GuiButton(109, width - 86, 8, 78, 20, "New project"));
 		buttonList.add(new GuiButton(0, 8, height - 28, 70, 20, I18n.format("gui.back")));
 		buttonList.add(new GuiButton(2, width / 2 - 190, height - 28, 90, 20, "Import texture"));
 		buttonList.add(new GuiButton(3, width / 2 - 45, height - 28, 90, 20, "Export pack"));
@@ -86,6 +96,9 @@ public class GuiTexturePackCreator extends GuiScreen {
 		buttonList.add(new GuiButton(50, width / 2 - 95, height - 82, 30, 20, "1px"));
 		buttonList.add(new GuiButton(51, width / 2 - 62, height - 82, 30, 20, "2px"));
 		buttonList.add(new GuiButton(52, width / 2 - 29, height - 82, 30, 20, "4px"));
+		buttonList.add(new GuiButton(60, width / 2 + 100, height - 82, 48, 20, "Zoom -"));
+		buttonList.add(new GuiButton(61, width / 2 + 151, height - 82, 48, 20, "Zoom +"));
+		buttonList.add(new GuiButton(62, width / 2 + 202, height - 82, 48, 20, "Grid: on"));
 		for (int i = 0; i < PALETTE.length; ++i) {
 			GuiButton b = new GuiButton(20 + i, width / 2 + 20 + (i % 5) * 22, height - 56 + (i / 5) * 22, 20, 20, "");
 			buttonList.add(b);
@@ -158,9 +171,27 @@ public class GuiTexturePackCreator extends GuiScreen {
 		else if (button.id == 6) redo();
 		else if (button.id == 107) saveProject();
 		else if (button.id == 108) loadProject();
+		else if (button.id == 109) mc.displayGuiScreen(new GuiYesNo(this, "Start a new texture project?", "Unsaved edits will be cleared.", "Start over", "Cancel", 109));
 		else if (button.id >= 40 && button.id <= 43) tool = button.id - 40;
 		else if (button.id >= 50 && button.id <= 52) brushSize = 1 << (button.id - 50);
+		else if (button.id == 60) zoomOffset = Math.max(-4, zoomOffset - 1);
+		else if (button.id == 61) zoomOffset = Math.min(8, zoomOffset + 1);
+		else if (button.id == 62) { grid = !grid; button.displayString = grid ? "Grid: on" : "Grid: off"; }
 		else if (button.id >= 20 && button.id < 20 + PALETTE.length) selectedColor = PALETTE[button.id - 20];
+	}
+
+	@Override
+	public void confirmClicked(boolean result, int id) {
+		if (result && id == 109) {
+			editedTextures.clear();
+			undoStack.clear();
+			redoStack.clear();
+			packName.setText("My TailsCraft Pack");
+			dirty = false;
+			loadTexture(TEXTURES[0]);
+			EagRuntime.showPopup("New project started.");
+		}
+		mc.displayGuiScreen(this);
 	}
 
 	private void markEdited() {
@@ -369,12 +400,16 @@ public class GuiTexturePackCreator extends GuiScreen {
 		drawString(fontRendererObj, "Texture: " + selectedPath, 224, 38, 0xCCCCCC);
 		drawString(fontRendererObj, "Tool: " + (tool == 0 ? "Pencil" : tool == 1 ? "Eraser" : tool == 2 ? "Fill" : "Picker") + "  Brush: " + brushSize + "px", 224, height - 70, 0xAAAAAA);
 		if (image != null) {
-			canvasScale = Math.max(1, Math.min(8, 220 / Math.max(image.width, image.height)));
+			canvasScale = Math.max(1, Math.min(12, 220 / Math.max(image.width, image.height) + zoomOffset));
 			canvasX = width / 2 - 90; canvasY = 58;
 			for (int y = 0; y < image.height; ++y) for (int x = 0; x < image.width; ++x) {
 				int c = image.pixels[y * image.width + x];
 				if ((c >>> 24) == 0) c = 0xFF555555;
 				drawRect(canvasX + x * canvasScale, canvasY + y * canvasScale, canvasX + (x + 1) * canvasScale, canvasY + (y + 1) * canvasScale, c);
+			}
+			if (grid && canvasScale >= 3) {
+				for (int x = 0; x <= image.width; ++x) drawRect(canvasX + x * canvasScale, canvasY, canvasX + x * canvasScale + 1, canvasY + image.height * canvasScale, 0x55333333);
+				for (int y = 0; y <= image.height; ++y) drawRect(canvasX, canvasY + y * canvasScale, canvasX + image.width * canvasScale, canvasY + y * canvasScale + 1, 0x55333333);
 			}
 			int right = canvasX + image.width * canvasScale;
 			int bottom = canvasY + image.height * canvasScale;
@@ -418,14 +453,13 @@ public class GuiTexturePackCreator extends GuiScreen {
 			TextureEntry entry = owner.entries.get(slot);
 			ImageData preview = owner.getPreview(entry);
 			if (preview != null) {
-				int max = Math.max(preview.width, preview.height);
-				int scale = Math.max(1, 16 / max);
-				int pw = Math.max(1, preview.width * scale), ph = Math.max(1, preview.height * scale);
-				for (int py = 0; py < preview.height; ++py) for (int px = 0; px < preview.width; ++px) {
-					int color = preview.pixels[py * preview.width + px];
+				int thumbWidth = Math.min(16, preview.width), thumbHeight = Math.min(16, preview.height);
+				for (int py = 0; py < thumbHeight; ++py) for (int px = 0; px < thumbWidth; ++px) {
+					int sourceX = px * preview.width / thumbWidth;
+					int sourceY = py * preview.height / thumbHeight;
+					int color = preview.pixels[sourceY * preview.width + sourceX];
 					if ((color >>> 24) == 0) color = 0xFF555555;
-					owner.drawRect(x + 2 + px * scale, y + 2 + py * scale,
-							x + 2 + Math.min(pw, (px + 1) * scale), y + 2 + Math.min(ph, (py + 1) * scale), color);
+					owner.drawRect(x + 2 + px, y + 2 + py, x + 3 + px, y + 3 + py, color);
 				}
 			}
 			owner.drawString(owner.fontRendererObj, entry.path.substring(entry.path.lastIndexOf('/') + 1), x + 22, y + 5, 0xFFFFFF);
