@@ -22,7 +22,6 @@ public abstract class TabCompleter {
 	private boolean popupVisible;
 	private String requestedPrefix;
 	private boolean automaticRequest;
-	private List<String> rootCompletions;
 
 	public TabCompleter(GuiTextField textFieldIn, boolean hasTargetBlockIn) {
 		this.textField = textFieldIn;
@@ -46,16 +45,7 @@ public abstract class TabCompleter {
 			this.completions.clear();
 			this.completionIdx = 0;
 			String s = this.textField.getText().substring(0, this.textField.getCursorPosition());
-			List<String> filteredRoot = this.getRootCompletions(s);
-			if (filteredRoot != null) {
-				this.completions.addAll(filteredRoot);
-				if ("/".equals(s)) {
-					this.popupVisible = !this.completions.isEmpty();
-					return;
-				}
-			} else {
-				this.requestCompletions(s);
-			}
+			this.requestCompletions(s);
 
 			if (this.completions.isEmpty()) return;
 			this.didComplete = true;
@@ -94,6 +84,13 @@ public abstract class TabCompleter {
 	public void setCompletions(String... newCompl) {
 		if (this.requestedCompletions) {
 			this.requestedCompletions = false;
+			String currentPrefix = this.textField.getText().substring(0, this.textField.getCursorPosition());
+			if (!currentPrefix.equals(this.requestedPrefix)) {
+				this.completions.clear();
+				this.popupVisible = false;
+				this.updateSuggestions();
+				return;
+			}
 			boolean automaticRequest = this.automaticRequest;
 			this.automaticRequest = false;
 			this.didComplete = false;
@@ -105,9 +102,6 @@ public abstract class TabCompleter {
 				}
 			}
 			boolean rootRequest = "/".equals(this.requestedPrefix);
-			if (rootRequest) {
-				this.rootCompletions = new ArrayList<String>(this.completions);
-			}
 
 			String s1 = this.textField.getText().substring(this.textField.getNthWordFromPosWS(-1, this.textField.getCursorPosition(), false));
 			String s2 = rootRequest || automaticRequest ? "" : org.apache.commons.lang3.StringUtils.getCommonPrefix(newCompl);
@@ -130,45 +124,17 @@ public abstract class TabCompleter {
 		}
 	}
 
-	private List<String> getRootCompletions(String prefix) {
-		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0) {
-			if (this.rootCompletions != null) {
-				List<String> filtered = new ArrayList<String>();
-				for (String completion : this.rootCompletions) {
-					if (completion.regionMatches(true, 0, prefix, 0, prefix.length())) {
-						filtered.add(completion);
-					}
-				}
-				return filtered;
-			}
-		}
-		return null;
-	}
-
-	/** Refreshes the visible command list from the cached root command index. */
+	/** Requests server-filtered completions for the exact text currently entered. */
 	public void updateSuggestions() {
 		if (this.requestedCompletions) return;
 		String prefix = this.textField.getText().substring(0, this.textField.getCursorPosition());
-		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0 && this.rootCompletions == null) {
-			this.requestCompletions("/");
-			return;
-		}
-		if (prefix.startsWith("/") && prefix.endsWith(" ")) {
+		if (prefix.startsWith("/") && (prefix.indexOf(' ') < 0 || prefix.endsWith(" "))) {
 			this.automaticRequest = true;
 			this.requestCompletions(prefix);
 			return;
 		}
-		if (prefix.startsWith("/") && prefix.indexOf(' ') < 0 && this.rootCompletions != null) {
-			List<String> filtered = this.getRootCompletions(prefix);
-			this.completions.clear();
-			this.completions.addAll(filtered);
-			this.completionIdx = 0;
-			this.didComplete = false;
-			this.popupVisible = !this.completions.isEmpty();
-		} else {
-			this.popupVisible = false;
-			this.didComplete = false;
-		}
+		this.popupVisible = false;
+		this.didComplete = false;
 	}
 
 	public boolean isPopupVisible() { return this.popupVisible && !this.completions.isEmpty(); }
