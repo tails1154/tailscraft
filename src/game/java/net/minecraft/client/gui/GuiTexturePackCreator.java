@@ -68,6 +68,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 	private int brushSize = 1;
 	private int zoomOffset = 0;
 	private boolean grid = true;
+	private int gestureX, gestureY;
 	private int canvasX, canvasY, canvasScale;
 
 	public GuiTexturePackCreator(GuiScreen parent) {
@@ -93,6 +94,8 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		buttonList.add(new GuiButton(41, width / 2 - 40, height - 56, 52, 20, "Eraser"));
 		buttonList.add(new GuiButton(42, width / 2 + 15, height - 56, 45, 20, "Fill"));
 		buttonList.add(new GuiButton(43, width / 2 + 63, height - 56, 52, 20, "Pick"));
+		buttonList.add(new GuiButton(44, width / 2 + 118, height - 56, 48, 20, "Line"));
+		buttonList.add(new GuiButton(45, width / 2 + 171, height - 56, 55, 20, "Rect"));
 		buttonList.add(new GuiButton(50, width / 2 - 95, height - 82, 30, 20, "1px"));
 		buttonList.add(new GuiButton(51, width / 2 - 62, height - 82, 30, 20, "2px"));
 		buttonList.add(new GuiButton(52, width / 2 - 29, height - 82, 30, 20, "4px"));
@@ -172,7 +175,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		else if (button.id == 107) saveProject();
 		else if (button.id == 108) loadProject();
 		else if (button.id == 109) mc.displayGuiScreen(new GuiYesNo(this, "Start a new texture project?", "Unsaved edits will be cleared.", "Start over", "Cancel", 109));
-		else if (button.id >= 40 && button.id <= 43) tool = button.id - 40;
+		else if (button.id >= 40 && button.id <= 45) tool = button.id - 40;
 		else if (button.id >= 50 && button.id <= 52) brushSize = 1 << (button.id - 50);
 		else if (button.id == 60) zoomOffset = Math.max(-4, zoomOffset - 1);
 		else if (button.id == 61) zoomOffset = Math.min(8, zoomOffset + 1);
@@ -196,6 +199,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 
 	private void markEdited() {
 		editedTextures.put(selectedPath, image);
+		for (TextureEntry entry : entries) if (entry.path.equals(selectedPath)) entry.preview = image;
 		dirty = true;
 	}
 
@@ -365,12 +369,42 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		markEdited();
 	}
 
+	private void drawLine(int x0, int y0, int x1, int y1) {
+		int dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+		int dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+		int error = dx + dy;
+		while (true) {
+			paintPoint(x0, y0);
+			if (x0 == x1 && y0 == y1) break;
+			int twice = 2 * error;
+			if (twice >= dy) { error += dy; x0 += sx; }
+			if (twice <= dx) { error += dx; y0 += sy; }
+		}
+	}
+
+	private void drawRectangle(int x0, int y0, int x1, int y1) {
+		int left = Math.min(x0, x1), right = Math.max(x0, x1);
+		int top = Math.min(y0, y1), bottom = Math.max(y0, y1);
+		drawLine(left, top, right, top);
+		drawLine(left, bottom, right, bottom);
+		drawLine(left, top, left, bottom);
+		drawLine(right, top, right, bottom);
+	}
+
+	private void paintPoint(int x, int y) {
+		if (x >= 0 && y >= 0 && x < image.width && y < image.height)
+			image.pixels[y * image.width + x] = selectedColor;
+	}
+
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 		packName.mouseClicked(mouseX, mouseY, mouseButton);
 		if ((mouseButton == 0 || mouseButton == 1) && isOnCanvas(mouseX, mouseY)) {
 			recordUndo(); paintGesture = true;
+			gestureX = (mouseX - canvasX) / canvasScale;
+			gestureY = (mouseY - canvasY) / canvasScale;
+			if (tool == 4 || tool == 5) return;
 			if (mouseButton == 1 && tool == 0) { int oldTool = tool; tool = 1; paint(mouseX, mouseY); tool = oldTool; }
 			else paint(mouseX, mouseY);
 		}
@@ -381,9 +415,21 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		super.keyTyped(typedChar, keyCode);
 	}
 	@Override
-	protected void mouseClickMove(int mouseX, int mouseY, int button, long time) { super.mouseClickMove(mouseX, mouseY, button, time); if (button == 0 || button == 1) paint(mouseX, mouseY); }
+	protected void mouseClickMove(int mouseX, int mouseY, int button, long time) {
+		super.mouseClickMove(mouseX, mouseY, button, time);
+		if ((button == 0 || button == 1) && tool < 2) paint(mouseX, mouseY);
+	}
 	@Override
-	protected void mouseReleased(int mouseX, int mouseY, int state) { super.mouseReleased(mouseX, mouseY, state); paintGesture = false; }
+	protected void mouseReleased(int mouseX, int mouseY, int state) {
+		super.mouseReleased(mouseX, mouseY, state);
+		if (paintGesture && image != null && (tool == 4 || tool == 5) && isOnCanvas(mouseX, mouseY)) {
+			int endX = (mouseX - canvasX) / canvasScale, endY = (mouseY - canvasY) / canvasScale;
+			if (tool == 4) drawLine(gestureX, gestureY, endX, endY);
+			else drawRectangle(gestureX, gestureY, endX, endY);
+			markEdited();
+		}
+		paintGesture = false;
+	}
 
 	private boolean isOnCanvas(int mouseX, int mouseY) {
 		return image != null && mouseX >= canvasX && mouseY >= canvasY && mouseX < canvasX + image.width * canvasScale && mouseY < canvasY + image.height * canvasScale;
@@ -398,7 +444,7 @@ public class GuiTexturePackCreator extends GuiScreen implements GuiYesNoCallback
 		drawCenteredString(fontRendererObj, "Texture Pack Creator 9000", width / 2, 2, 0xFFFFFF);
 		packName.drawTextBox();
 		drawString(fontRendererObj, "Texture: " + selectedPath, 224, 38, 0xCCCCCC);
-		drawString(fontRendererObj, "Tool: " + (tool == 0 ? "Pencil" : tool == 1 ? "Eraser" : tool == 2 ? "Fill" : "Picker") + "  Brush: " + brushSize + "px", 224, height - 70, 0xAAAAAA);
+		drawString(fontRendererObj, "Tool: " + (tool == 0 ? "Pencil" : tool == 1 ? "Eraser" : tool == 2 ? "Fill" : tool == 3 ? "Picker" : tool == 4 ? "Line" : "Rectangle") + "  Brush: " + brushSize + "px", 224, height - 70, 0xAAAAAA);
 		if (image != null) {
 			canvasScale = Math.max(1, Math.min(12, 220 / Math.max(image.width, image.height) + zoomOffset));
 			canvasX = width / 2 - 90; canvasY = 58;
