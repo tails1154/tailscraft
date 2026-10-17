@@ -945,7 +945,8 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 				authMeGuiOpened = true;
 				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, true));
 			} else if (chat.contains("login")) {
-				String remembered = getRememberedAuthMePassword();
+				String remembered = authMeRememberMe && authMeRememberPassword != null
+						&& authMeRememberPassword.length() > 0 ? authMeRememberPassword : getRememberedAuthMePassword();
 				if (remembered != null && remembered.length() > 0) {
 					// A server may repeat its login prompt after a reconnect, timeout, or
 					// delayed authentication response. Replay only an explicitly saved
