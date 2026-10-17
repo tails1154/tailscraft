@@ -1313,6 +1313,7 @@ public class Minecraft implements IThreadListener {
 	 */
 	public void runTick() throws IOException {
 		TailsConnectFriends.update();
+		net.lax1dude.eaglercraft.CheatMenuState.tick();
 		if (this.rightClickDelayTimer > 0) {
 			--this.rightClickDelayTimer;
 		}

@@ -4,6 +4,13 @@
 - Removed the former AI chatbot, remote planner, copilot panel, observation loop, status overlay, and look-around action.
 - Removed AICraftScriptLangPlus, inventory-aware planning, and natural-language action chains.
 
+## Singleplayer QOL menu
+- Expanded Ctrl+K, release, then C into Visual, Movement, and Actions tabs.
+- Added local Player ESP, Night Vision, Flight, No Fall Damage, Speed Boost, Heal,
+  Refill Hunger, and Clear Effects controls.
+- Added a playful safety limit: excessive cheat-menu activations autosave the
+  singleplayer world and disconnect with “CHEATER!!!!!!!!!!!!!!!!!!!!!”.
+
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.
 
