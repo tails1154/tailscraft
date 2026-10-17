@@ -932,6 +932,12 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 		if (!isIntegratedServer && packetIn.getChatComponent() != null) {
 			String unformatted = packetIn.getChatComponent().getUnformattedText();
 			net.minecraft.client.gui.CCTVOutputState.record(unformatted);
+			// AuthMe prompts are server/system messages. Never interpret ordinary
+			// player chat as an authentication request.
+			if (!packetIn.isSystem()) {
+				this.gameController.ingameGUI.func_191742_a(packetIn.func_192590_c(), packetIn.getChatComponent());
+				return;
+			}
 			String chat = unformatted.toLowerCase(Locale.ROOT);
 			if (chat.contains("successful login!")) {
 				if (authMeRememberMe && authMeRememberPassword != null && authMeRememberPassword.length() > 0) {
