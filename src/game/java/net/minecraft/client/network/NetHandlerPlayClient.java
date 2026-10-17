@@ -322,6 +322,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 	private boolean authMeLoginPending = false;
 	private boolean authMeRememberMe = false;
 	private String authMeRememberPassword = null;
+	private long authMeLastAutomaticLogin = 0L;
 
 	public NetHandlerPlayClient(Minecraft mcIn, GuiScreen p_i46300_2_, NetworkManager networkManagerIn,
 			GameProfile profileIn) {
@@ -938,16 +939,25 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 				}
 				authMeRememberMe = false;
 				authMeRememberPassword = null;
+				authMeLoginPending = false;
+				authMeLastAutomaticLogin = 0L;
 			} else if (!authMeGuiOpened && chat.contains("register")) {
 				authMeGuiOpened = true;
 				this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, true));
-			} else if (!authMeGuiOpened && chat.contains("login")) {
-				authMeGuiOpened = true;
+			} else if (chat.contains("login")) {
 				String remembered = getRememberedAuthMePassword();
 				if (remembered != null && remembered.length() > 0) {
-					this.gameController.player.sendChatMessage("/login " + remembered);
-					this.authMeLoginPending = true;
-				} else {
+					// A server may repeat its login prompt after a reconnect, timeout, or
+					// delayed authentication response. Replay only an explicitly saved
+					// credential, and debounce duplicate chat lines from the same prompt.
+					long now = System.currentTimeMillis();
+					if (now - authMeLastAutomaticLogin >= 1500L) {
+						this.gameController.player.sendChatMessage("/login " + remembered);
+						this.authMeLoginPending = true;
+						this.authMeLastAutomaticLogin = now;
+					}
+				} else if (!authMeGuiOpened) {
+					authMeGuiOpened = true;
 					this.gameController.displayGuiScreen(new net.minecraft.client.gui.GuiScreenAuthMe(this.gameController.currentScreen, false));
 				}
 			}
@@ -957,6 +967,9 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 
 	public void markAuthMeLoginPending() {
 		authMeLoginPending = true;
+		// Allow a later server prompt to reopen the dialog when the player did
+		// not opt into saving credentials.
+		authMeGuiOpened = false;
 	}
 
 	public void setAuthMeRememberMe(String password, boolean remember) {
