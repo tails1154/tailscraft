@@ -68,6 +68,8 @@ public class GuiScreenResourcePacks extends GuiScreen {
 				new GuiOptionButton(1, this.width / 2 + 80, this.height - 48, I18n.format("gui.done", new Object[0])));
 		this.buttonList.add(new GuiButton(3, this.width / 2 + 80, this.height - 24, 150, 20,
 				"Texture Pack Creator"));
+		this.buttonList.add(new GuiButton(4, this.width / 2 - 154, this.height - 24, 150, 20,
+				I18n.format("resourcePack.modernArch")));
 		if (!this.changed) {
 			this.availableResourcePacks = Lists.newArrayList();
 			this.selectedResourcePacks = Lists.newArrayList();
@@ -146,6 +148,8 @@ public class GuiScreenResourcePacks extends GuiScreen {
 				EagRuntime.displayFileChooser("application/zip", "zip");
 			} else if (parGuiButton.id == 3) {
 				EagRuntime.openLink("https://tails1154.com:9782/textpack");
+			} else if (parGuiButton.id == 4) {
+				EagRuntime.openLink("https://www.curseforge.com/minecraft/texture-packs/modernarch");
 			} else if (parGuiButton.id == 1) {
 				if (this.changed) {
 					ArrayList<ResourcePackRepository.Entry> arraylist = Lists.newArrayList();

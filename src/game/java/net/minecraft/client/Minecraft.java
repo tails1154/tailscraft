@@ -2213,6 +2213,7 @@ public class Minecraft implements IThreadListener {
 
 	private static final String MS_PAINT_PACK_URL = "https://cdn.modrinth.com/data/OlXbJrCZ/versions/kqrtgIxV/ms%20paintcraft.zip";
 	private static final String REALISTIC_PACK_NAME = "realistic-128-v2";
+	private static final String MODERNARCH_PACK_MATCH = "modernarch";
 
 	/** Selects an already-imported built-in pack without creating another copy. */
 	private boolean selectInstalledResourcePack(String packName) {
@@ -2231,6 +2232,35 @@ public class Minecraft implements IThreadListener {
 		this.gameSettings.resourcePacks.add(packName);
 		this.scheduleResourcesRefresh();
 		return true;
+	}
+
+	/** Selects a user-installed pack whose display name contains the requested text. */
+	private boolean selectInstalledResourcePackContaining(String name) {
+		this.mcResourcePackRepository.updateRepositoryEntriesAll();
+		List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
+		for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntriesAll()) {
+			if (entry.getResourcePackName().toLowerCase().contains(name.toLowerCase())) {
+				selected.add(entry);
+			}
+		}
+		if (selected.isEmpty()) {
+			return false;
+		}
+		this.mcResourcePackRepository.setRepositories(selected);
+		this.gameSettings.resourcePacks.clear();
+		this.gameSettings.resourcePacks.add(selected.get(0).getResourcePackName());
+		this.scheduleResourcesRefresh();
+		return true;
+	}
+
+	private void removeInstalledResourcePackContaining(String name) {
+		List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
+		for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntries()) {
+			if (!entry.getResourcePackName().toLowerCase().contains(name.toLowerCase())) {
+				selected.add(entry);
+			}
+		}
+		this.mcResourcePackRepository.setRepositories(selected);
 	}
 
 	/** Applies the MS Paint pack to the normal local pack store and selects it. */
@@ -2309,6 +2339,7 @@ public class Minecraft implements IThreadListener {
 			}
 			this.mcResourcePackRepository.setRepositories(selected);
 			this.gameSettings.resourcePacks.remove(REALISTIC_PACK_NAME);
+			removeInstalledResourcePackContaining(MODERNARCH_PACK_MATCH);
 			this.scheduleResourcesRefresh();
 			return;
 		}
@@ -2322,6 +2353,11 @@ public class Minecraft implements IThreadListener {
 		if (bundled == null) {
 			this.gameSettings.realisticMode = false;
 			this.gameSettings.saveOptions();
+			return;
+		}
+		// Prefer the player's own ModernArch download when it is installed. The
+		// pack is not bundled because its author reserves redistribution rights.
+		if (this.selectInstalledResourcePackContaining(MODERNARCH_PACK_MATCH)) {
 			return;
 		}
 		if (this.selectInstalledResourcePack(REALISTIC_PACK_NAME)) {
