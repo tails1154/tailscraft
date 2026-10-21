@@ -8,14 +8,15 @@
 - Expanded Ctrl+K, release, then C into Visual, Movement, and Actions tabs.
 - Added local Player ESP, Night Vision, Flight, No Fall Damage, Speed Boost, Heal,
   Refill Hunger, and Clear Effects controls.
-- Added a playful safety limit: excessive cheat-menu activations autosave the
-  singleplayer world and disconnect with “CHEATER!!!!!!!!!!!!!!!!!!!!!”.
+- Removed the cheat-menu activation limit and its forced singleplayer disconnect.
 
 This is a project-history changelog. Entries marked removed or reverted are kept
 for context and are not part of the current client.
 
 ## Current client
 
+- Restored the full four-track C418 title-screen music rotation so the menu no
+  longer falls back to the single bundled track.
 - Realistic Mode now prefers ModernArch 128x and includes an official download
   link on the Resource Packs screen.
 - Bundled the authorized ModernArch 128x conversion for offline environments;

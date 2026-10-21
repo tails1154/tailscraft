@@ -191,7 +191,7 @@ public class GameSettings {
 	public boolean hudCoords = true;
 	public boolean fog = false;
 	public boolean rainSnow = false;
-	public boolean lightingBypass = true;
+	public boolean lightingBypass = false;
 	public boolean msPaintMode = false;
 	public boolean realisticMode = false;
 	
@@ -214,7 +214,10 @@ public class GameSettings {
 		GameSettings.Options.RENDER_DISTANCE.setValueMax(16.0F);
 		this.renderDistanceChunks = 8;
 		this.loadOptions();
-		LightingBypass.setEnabled(this.lightingBypass);
+		// TailsCraft startup defaults: use vanilla lighting and maximum brightness.
+		this.lightingBypass = false;
+		this.gammaSetting = 1.0F;
+		LightingBypass.setEnabled(false);
 		// TailsCraft always starts at the stable 8-chunk default, even when an
 		// older saved options file contains a different render distance.
 		this.renderDistanceChunks = 8;

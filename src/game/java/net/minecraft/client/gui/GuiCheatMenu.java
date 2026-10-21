@@ -40,7 +40,6 @@ public class GuiCheatMenu extends GuiScreen {
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.id >= 100 && button.id <= 102) { activeTab = button.id - 100; initGui(); }
 		else if (button.id == 0) mc.displayGuiScreen(null);
-		else if (button.id >= 1 && button.id <= 8 && CheatMenuState.registerCheatUse()) { return; }
 		else if (button.id == 1) { CheatMenuState.togglePlayerEsp(); initGui(); }
 		else if (button.id == 2) { CheatMenuState.toggleNightVision(); initGui(); }
 		else if (button.id == 3) { CheatMenuState.toggleFlight(); initGui(); }

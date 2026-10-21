@@ -5,12 +5,9 @@ import java.util.ArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiCheatMenu;
-import net.minecraft.client.gui.GuiDisconnected;
-import net.minecraft.client.gui.GuiMainMenu;
 import net.lax1dude.eaglercraft.sp.SingleplayerServerController;
 import net.minecraft.init.MobEffects;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.text.TextComponentString;
 
 /** Local-only cheat toggles. Never active on external multiplayer servers. */
 public final class CheatMenuState {
@@ -22,9 +19,6 @@ public final class CheatMenuState {
     private static boolean flightOverride;
     private static boolean previousAllowFlying;
     private static boolean previousFlying;
-    private static int cheatClicks;
-    private static boolean kickPending;
-    private static final int CHEAT_CLICK_LIMIT = 12;
     private static boolean ctrlKArmed;
     private static long ctrlKDeadline;
 
@@ -121,18 +115,6 @@ public final class CheatMenuState {
         if (speedBoost && (!player.isPotionActive(MobEffects.SPEED)
                 || player.getActivePotionEffect(MobEffects.SPEED).getDuration() < 40))
             player.addPotionEffect(new PotionEffect(MobEffects.SPEED, 220, 1, false, false));
-    }
-
-    /** Counts menu activations and safely ends the local world after excessive use. */
-    public static boolean registerCheatUse() {
-        if (!isAllowed() || kickPending) return kickPending;
-        if (++cheatClicks < CHEAT_CLICK_LIMIT) return false;
-        kickPending = true;
-        SingleplayerServerController.autoSave();
-        Minecraft mc = Minecraft.getMinecraft();
-        mc.shutdownIntegratedServer(new GuiDisconnected(new GuiMainMenu(), "disconnect.genericReason",
-                new TextComponentString("CHEATER!!!!!!!!!!!!!!!!!!!!!")));
-        return true;
     }
 
     public static boolean handleKey(int keyCode) {
