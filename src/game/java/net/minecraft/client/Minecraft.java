@@ -2214,6 +2214,7 @@ public class Minecraft implements IThreadListener {
 	private static final String MS_PAINT_PACK_URL = "https://cdn.modrinth.com/data/OlXbJrCZ/versions/kqrtgIxV/ms%20paintcraft.zip";
 	private static final String REALISTIC_PACK_NAME = "realistic-128-v2";
 	private static final String MODERNARCH_PACK_MATCH = "modernarch";
+	private static final String MODERNARCH_BUNDLED_NAME = "modernarch-128";
 
 	/** Selects an already-imported built-in pack without creating another copy. */
 	private boolean selectInstalledResourcePack(String packName) {
@@ -2339,45 +2340,62 @@ public class Minecraft implements IThreadListener {
 			}
 			this.mcResourcePackRepository.setRepositories(selected);
 			this.gameSettings.resourcePacks.remove(REALISTIC_PACK_NAME);
+			for (int i = this.gameSettings.resourcePacks.size() - 1; i >= 0; --i) {
+				if (this.gameSettings.resourcePacks.get(i).toLowerCase().contains(MODERNARCH_PACK_MATCH)) {
+					this.gameSettings.resourcePacks.remove(i);
+				}
+			}
 			removeInstalledResourcePackContaining(MODERNARCH_PACK_MATCH);
 			this.scheduleResourcesRefresh();
 			return;
 		}
 
 		byte[] bundled = null;
+		String bundledName = MODERNARCH_BUNDLED_NAME;
 		try {
-			bundled = EagRuntime.getRequiredResourceBytes("/assets/tailscraft/realistic-128-v2.zip");
+			bundled = EagRuntime.getRequiredResourceBytes("/assets/tailscraft/modernarch-128.zip");
 		} catch (Throwable ignored) {
-			// The mode is only available in builds containing the bundled pack.
+			// Fall back to the original bundled pack for older builds.
+			bundledName = REALISTIC_PACK_NAME;
+			try {
+				bundled = EagRuntime.getRequiredResourceBytes("/assets/tailscraft/realistic-128-v2.zip");
+			} catch (Throwable ignoredLegacy) {
+				// The mode is only available in builds containing a bundled pack.
+			}
 		}
 		if (bundled == null) {
 			this.gameSettings.realisticMode = false;
 			this.gameSettings.saveOptions();
 			return;
 		}
-		// Prefer the player's own ModernArch download when it is installed. The
-		// pack is not bundled because its author reserves redistribution rights.
+		// Prefer an existing ModernArch import; otherwise install the bundled,
+		// authorized conversion below.
 		if (this.selectInstalledResourcePackContaining(MODERNARCH_PACK_MATCH)) {
 			return;
 		}
-		if (this.selectInstalledResourcePack(REALISTIC_PACK_NAME)) {
+		if (REALISTIC_PACK_NAME.equals(bundledName) && this.selectInstalledResourcePack(REALISTIC_PACK_NAME)) {
 			return;
 		}
 		final byte[] bundledPack = bundled;
+		final String importedPackName = bundledName;
 		this.addScheduledTask(() -> {
 			try {
-				EaglerFolderResourcePack.importResourcePack("realistic-128-v2.zip",
+				EaglerFolderResourcePack.importResourcePack(importedPackName + ".zip",
 						EaglerFolderResourcePack.RESOURCE_PACKS, bundledPack);
 				this.mcResourcePackRepository.updateRepositoryEntriesAll();
 				List<ResourcePackRepository.Entry> selected = Lists.newArrayList();
 				for (ResourcePackRepository.Entry entry : this.mcResourcePackRepository.getRepositoryEntriesAll()) {
-					if (REALISTIC_PACK_NAME.equalsIgnoreCase(entry.getResourcePackName())) {
+					if (MODERNARCH_BUNDLED_NAME.equals(importedPackName)
+							? entry.getResourcePackName().toLowerCase().contains(MODERNARCH_PACK_MATCH)
+							: REALISTIC_PACK_NAME.equalsIgnoreCase(entry.getResourcePackName())) {
 						selected.add(entry);
 					}
 				}
 				this.mcResourcePackRepository.setRepositories(selected);
 				this.gameSettings.resourcePacks.clear();
-				this.gameSettings.resourcePacks.add(REALISTIC_PACK_NAME);
+				if (!selected.isEmpty()) {
+					this.gameSettings.resourcePacks.add(selected.get(0).getResourcePackName());
+				}
 				this.scheduleResourcesRefresh();
 			} catch (Throwable t) {
 				this.gameSettings.realisticMode = false;

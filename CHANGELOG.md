@@ -16,9 +16,10 @@ for context and are not part of the current client.
 
 ## Current client
 
-- Realistic Mode now prefers a locally installed ModernArch 128x pack, with an
-  official CurseForge link on the Resource Packs screen; the pack remains
-  external because its license does not permit bundling.
+- Realistic Mode now prefers ModernArch 128x and includes an official download
+  link on the Resource Packs screen.
+- Bundled the authorized ModernArch 128x conversion for offline environments;
+  unsupported modern models are omitted for 1.12.2 compatibility.
 - Removed the looping connection-screen music and its bundled audio assets.
 - Added a main-menu Credits button with attribution for bundled music and
   resource-pack content.

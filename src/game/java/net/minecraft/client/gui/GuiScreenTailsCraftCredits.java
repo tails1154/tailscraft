@@ -20,7 +20,8 @@ public class GuiScreenTailsCraftCredits extends GuiScreen {
 				"Bundled resources", "", "Sonic Blaster - F-777",
 				"https://soundcloud.com/f-777/sonic-blaster", "Shiawase VIP (Remix) - razaplays",
 				"https://www.newgrounds.com/audio/listen/1296027", "MS Paintcraft resource pack",
-				"https://modrinth.com/resourcepack/mspaintcraft", "", "Open-source dependencies retain their own notices."
+				"https://modrinth.com/resourcepack/mspaintcraft", "ModernArch 128x - Designio Graphics",
+				"https://modrinth.com/project/modernarch", "Open-source dependencies retain their own notices."
 			}
 	};
 
