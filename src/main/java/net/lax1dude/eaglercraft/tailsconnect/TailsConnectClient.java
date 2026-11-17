@@ -24,7 +24,7 @@ import org.json.JSONObject;
 
 /** One host plus three independently routed guests over the broadcast relay. */
 public final class TailsConnectClient {
-    public static final String SERVER = "wss://tailsconnect.tails1154.com:443";
+    public static final String SERVER = "wss://tc.tails1154.com:443";
     public static final String CHANNEL_PREFIX = "tailsconnect-v3-";
     public static final String GAME_ID = "tailscraft-1.12.2-packets-v2";
     private static final String GAME = GAME_ID;
