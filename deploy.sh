@@ -59,6 +59,8 @@ sed -i "s/__TAILSCRAFT_COMMIT__/$commit/g" "$deploy_dir/tailscraft-updater.js.ne
 if [ -f "$deploy_dir/index.html" ]; then
 	# Keep the updater script cache-busted without replacing the site's existing index.
 	sed -i -E "s#tailscraft-updater\\.js\\?v=[^\"']*#tailscraft-updater.js?v=$commit#g" "$deploy_dir/index.html"
+	# Cache-bust the runtime, client, and EPK URLs so browsers don't reuse an old client.
+	sed -i -E "s#(eagruntime\\.js|classes\\.wasm|assets\\.epk)\\?v=[^\"']*#\\1?v=$commit#g" "$deploy_dir/index.html"
 fi
 mv "$deploy_dir/classes.wasm.new" "$deploy_dir/classes.wasm"
 mv "$deploy_dir/eagruntime.js.new" "$deploy_dir/eagruntime.js"
