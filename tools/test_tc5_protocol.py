@@ -2,7 +2,7 @@ import asyncio, gzip, hashlib, importlib.util, json, os, pathlib, shutil, ssl, s
 import websockets
 
 LIVE = os.environ.get("TC5_TEST_LIVE") == "1"
-SERVER = "wss://tails1154.com:9842" if LIVE else "ws://127.0.0.1:19842"
+SERVER = "wss://tailsconnect.tails1154.com:9842" if LIVE else "ws://127.0.0.1:19842"
 
 def byte_tag(name, value):
     return b"\x01" + bytes([len(name)]) + name.encode() + bytes([value & 255])
